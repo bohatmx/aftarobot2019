@@ -4,75 +4,97 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { AdminDTO } from '../models/aftarobot';
+import { AdminDTO, AssociationDTO } from "../models/aftarobot";
 const uuid = require("uuid/v1");
 //curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 
-
 export const addAssociation = functions.https.onRequest(
   async (request, response) => {
-    if (!request.body) {
-      console.log("ERROR - request has no body");
-      return response.sendStatus(400);
+    if (!request.body.data.association) {
+      console.log("ERROR - request has no association");
+      return response
+        .status(400)
+        .send(
+          "Request has no association json object"
+        );
     }
-    const administartor: AdminDTO = new AdminDTO();
-    administartor.instance(request.body);
+    if (!request.body.data.administrator) {
+      console.log("ERROR - request has no administrator");
+      return response
+        .status(400)
+        .send(
+          "Request has no administrator json object"
+        );
+    }
 
     try {
       const firestore = admin.firestore();
       const settings = { /* your settings... */ timestampsInSnapshots: true };
       firestore.settings(settings);
-      console.log(
-        "Firebase settings completed. Should be free of annoying messages from Google"
-      );
     } catch (e) {
       console.log(e);
     }
 
+    console.log(`##### Incoming administrator ${request.body.administrator}`);
+    console.log(
+      `##### Incoming association ${JSON.stringify(request.body.association)}`
+    );
 
-    console.log(`##### Incoming debug ${request.body.debug}`);
-    console.log(`##### Incoming data ${JSON.stringify(request.body.data)}`);
+    const administrator: AdminDTO = new AdminDTO();
+    administrator.instance(request.body.administrator);
+    const association: AssociationDTO = new AssociationDTO();
+    association.instance(request.body.association);
 
-    const debug = request.body.debug;
-    const data = request.body.data;
-    const fs = admin.firestore()
-    const apiSuffix = "AcceptInvoice";
+    const fs = admin.firestore();
 
-    if (validate()) {
-      await writeToBFN();
-    }
-
+    await writeAssociation();
     return null;
-    function validate() {
-      if (!request.body) {
-        console.log("ERROR - request has no body");
-        return response.status(400).send("request has no body");
+
+    async function writeAssociation() {
+      console.log("writeToFirestore");
+      try {
+        const ref = await fs.collection('associations').add(association);
+        association.path = ref.path
+        await ref.set(association)
+        console.log(`association added to Firestore`)
+        const ref2 = await ref.collection('administrators').add(administrator);
+        administrator.path = ref2.path
+        await ref2.set(administrator)
+        console.log(`administrator added to Firestore`)
+        await sendMessageToTopic()
+        const result = {
+          association: association,
+          administrator: administrator
+        }
+        return response.status(200).send(result);
+      } catch (e) {
+        console.log(e);
+        response.status(400).send(e);
+        return null;
       }
-      if (!request.body.debug) {
-        console.log("ERROR - request has no debug flag");
-        return response.status(400).send(" request has no debug flag");
-      }
-      if (!request.body.data) {
-        console.log("ERROR - request has no data");
-        return response.status(400).send(" request has no data");
-      }
-      return true;
     }
-    async function writeToBFN() {
-      console.log('')
+    async function sendMessageToTopic() {
+      const topic = 'associationsAdded'
+      const payload = {
+        data: {
+          messageType: "ASSOCIATION_ADDED",
+          json: JSON.stringify(association)
+        },
+        notification: {
+          title: "Association Added",
+          body: `${association.associationName}`
+        }
+      };
+
+      console.log(
+        "sending data to topic: " + topic);
+      try {
+        await admin.messaging().sendToTopic(topic,payload);
+      } catch (e) {
+        console.error(e);
+      }
+      return null;
     }
 
-    async function writeToFirestore(mdata) {
-      console.log('')
-    }
-    async function sendMessageToTopic(mdata) {
-      console.log('')
-    }
-
-
-    function handleError(message) {
-      console.error("--- ERROR !!! --- sending error payload: msg:" + message);
-      throw new Error(message)
-    }
   }
 );
