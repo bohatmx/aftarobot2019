@@ -5,7 +5,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
-export const updateAssociation = functions.https.onRequest(
+export const addVehicleOwner = functions.https.onRequest(
   async (request, response) => {
     if (!request.body) {
       console.log("ERROR - request has no body");
@@ -32,8 +32,7 @@ export const updateAssociation = functions.https.onRequest(
     // const fs = admin.firestore()
     // const apiSuffix = "AcceptInvoice";
 
-
     return null;
-
+   
   }
 );

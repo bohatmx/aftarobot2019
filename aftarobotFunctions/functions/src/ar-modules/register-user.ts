@@ -1,73 +1,104 @@
 // ######################################################################
-// Accept Invoice to BFN and Firestore
+// Add User to Firestore
 // ######################################################################
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-const uuid = require("uuid/v1");
+import { AdminDTO, AssociationDTO, UserDTO } from '../models/aftarobot';
+//curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 
 export const registerUser = functions.https.onRequest(
   async (request, response) => {
-    if (!request.body) {
-      console.log("ERROR - request has no body");
-      return response.sendStatus(400);
+    console.log(request.body);
+    if (!request.body.user) {
+      console.log("ERROR - request has no user");
+      return response
+        .status(400)
+        .send("Request has no user json object");
     }
     
+    const fs = admin.firestore();
     try {
-      const firestore = admin.firestore();
       const settings = { /* your settings... */ timestampsInSnapshots: true };
-      firestore.settings(settings);
-      console.log(
-        "Firebase settings completed. Should be free of annoying messages from Google"
-      );
-    } catch (e) {
-      console.log(e);
+      fs.settings(settings);
+    } catch (e) {}
+
+    console.log(
+      `##### Incoming user ${JSON.stringify(
+        request.body.user
+      )}`
+    );
+
+    ;
+    const user: UserDTO = new UserDTO()
+    let userRecord
+    user.instance(request.body.user)
+
+    if (request.body.userRecord) {
+      userRecord = request.body.userRecord
+    } else {
+      userRecord = await createAuthUser();
     }
-
-
-    console.log(`##### Incoming debug ${request.body.debug}`);
-    console.log(`##### Incoming data ${JSON.stringify(request.body.data)}`);
-
-    const debug = request.body.debug;
-    const data = request.body.data;
-    const fs = admin.firestore()
-    const apiSuffix = "AcceptInvoice";
-
-    if (validate()) {
-      await writeToBFN();
-    }
-
+    
+    await writeUser();
     return null;
-    function validate() {
-      if (!request.body) {
-        console.log("ERROR - request has no body");
-        return response.status(400).send("request has no body");
-      }
-      if (!request.body.debug) {
-        console.log("ERROR - request has no debug flag");
-        return response.status(400).send(" request has no debug flag");
-      }
-      if (!request.body.data) {
-        console.log("ERROR - request has no data");
-        return response.status(400).send(" request has no data");
-      }
-      return true;
-    }
-    async function writeToBFN() {
-      console.log('')
-    }
 
-    async function writeToFirestore(mdata) {
-      console.log('')
+    async function createAuthUser() {
+      try {
+        const ur = await admin.auth().createUser({
+          email: user.email,
+          emailVerified: false,
+          phoneNumber: user.cellphone,
+          password: user.password,
+          displayName: user.name,
+          disabled: false
+        });
+        console.log("Successfully created new user:", ur.uid);
+        return ur;
+      } catch (e) {
+        console.log("Error creating new user:", e);
+        throw e;
+      }
     }
-    async function sendMessageToTopic(mdata) {
-      console.log('')
+    async function writeUser() {
+      try {
+        const userData = user.toFirestoreMap();
+        userData.uid = userRecord.uid
+        const ref = await fs.collection("users").add(userData);
+        console.log(`user added to Firestore: ${ref.path}`);
+
+        userData.path = ref.path;
+        await ref.set(userData);
+        console.log(`user updated with path ${ref.path}`);
+        await sendMessageToTopic();
+        return response.status(200).send(userData);
+      } catch (e) {
+        console.log(e);
+        response.status(400).send(e);
+        return null;
+      }
     }
+    async function sendMessageToTopic() {
+      const topic = "usersAdded";
+      console.log(`...sending message to topic ${topic}`);
+      const payload = {
+        data: {
+          messageType: "USER_ADDED",
+          json: JSON.stringify(user)
+        },
+        notification: {
+          title: "User Added",
+          body: `${user.name} - ${user.email}`
+        }
+      };
 
-
-    function handleError(message) {
-      console.error("--- ERROR !!! --- sending error payload: msg:" + message);
-      throw new Error(message)
+      console.log("sending data to topic: " + topic);
+      try {
+        await admin.messaging().sendToTopic(topic, payload);
+      } catch (e) {
+        console.error(e);
+      }
+      return null;
     }
   }
 );

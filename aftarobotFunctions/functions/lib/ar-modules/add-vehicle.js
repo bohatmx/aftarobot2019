@@ -1,6 +1,6 @@
 "use strict";
 // ######################################################################
-// Accept Invoice to BFN and Firestore
+// Add Vehicle to Firestore
 // ######################################################################
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -19,58 +19,47 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
         console.log("ERROR - request has no body");
         return response.sendStatus(400);
     }
+    const fs = admin.firestore();
     try {
-        const firestore = admin.firestore();
         const settings = { /* your settings... */ timestampsInSnapshots: true };
-        firestore.settings(settings);
-        console.log("Firebase settings completed. Should be free of annoying messages from Google");
+        fs.settings(settings);
     }
     catch (e) {
-        console.log(e);
     }
     console.log(`##### Incoming debug ${request.body.debug}`);
-    console.log(`##### Incoming data ${JSON.stringify(request.body.data)}`);
-    const debug = request.body.debug;
-    const data = request.body.data;
-    const fs = admin.firestore();
-    const apiSuffix = "AcceptInvoice";
-    if (validate()) {
-        yield writeToBFN();
+    console.log(`##### Incoming vehicleType ${JSON.stringify(request.body.vehicle)}`);
+    const vehicle = request.body.vehicle;
+    if (!vehicle.vehicleType) {
+        console.error('Vehicle has no type');
+        return response.status(400).send('Vehicle does not have a type');
     }
+    yield writeVehicle();
     return null;
-    function validate() {
-        if (!request.body) {
-            console.log("ERROR - request has no body");
-            return response.status(400).send("request has no body");
-        }
-        if (!request.body.debug) {
-            console.log("ERROR - request has no debug flag");
-            return response.status(400).send(" request has no debug flag");
-        }
-        if (!request.body.data) {
-            console.log("ERROR - request has no data");
-            return response.status(400).send(" request has no data");
-        }
-        return true;
-    }
-    function writeToBFN() {
+    function writeVehicle() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('');
+            try {
+                if (!vehicle.assocPath) {
+                    return response.status(400).send('Missing vehicle.assocPath');
+                }
+                const ref = yield fs.doc(vehicle.assocPath).collection('vehicles').add(vehicle);
+                vehicle.path = ref.path;
+                yield ref.set(vehicle);
+                if (vehicle.ownerPath) {
+                    const ref2 = yield fs.doc(vehicle.ownerPath).collection('vehicles').add(vehicle);
+                    vehicle.path = ref2.path;
+                    yield ref.set(vehicle);
+                }
+                else {
+                    console.log(`car has no owner path, please check: ${vehicle.vehicleReg}`);
+                }
+                console.log(`car written to Firestore ${ref.path}`);
+                return response.status(200).send();
+            }
+            catch (e) {
+                console.log(e);
+                return response.status(400).send(e);
+            }
         });
-    }
-    function writeToFirestore(mdata) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log('');
-        });
-    }
-    function sendMessageToTopic(mdata) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log('');
-        });
-    }
-    function handleError(message) {
-        console.error("--- ERROR !!! --- sending error payload: msg:" + message);
-        throw new Error(message);
     }
 }));
 //# sourceMappingURL=add-vehicle.js.map

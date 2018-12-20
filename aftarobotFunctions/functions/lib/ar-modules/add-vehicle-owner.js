@@ -13,8 +13,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const uuid = require("uuid/v1");
-exports.registerCommuter = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
+exports.addVehicleOwner = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
     if (!request.body) {
         console.log("ERROR - request has no body");
         return response.sendStatus(400);
@@ -36,4 +35,4 @@ exports.registerCommuter = functions.https.onRequest((request, response) => __aw
     // const apiSuffix = "AcceptInvoice";
     return null;
 }));
-//# sourceMappingURL=register-commuter.js.map
+//# sourceMappingURL=add-vehicle-owner.js.map

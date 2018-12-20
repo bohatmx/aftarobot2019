@@ -13,8 +13,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const uuid = require("uuid/v1");
-exports.registerCommuter = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
+exports.addVehicleType = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
     if (!request.body) {
         console.log("ERROR - request has no body");
         return response.sendStatus(400);
@@ -23,17 +22,29 @@ exports.registerCommuter = functions.https.onRequest((request, response) => __aw
         const firestore = admin.firestore();
         const settings = { /* your settings... */ timestampsInSnapshots: true };
         firestore.settings(settings);
-        console.log("Firebase settings completed. Should be free of annoying messages from Google");
     }
     catch (e) {
-        console.log(e);
     }
     console.log(`##### Incoming debug ${request.body.debug}`);
-    console.log(`##### Incoming data ${JSON.stringify(request.body.data)}`);
-    // const debug = request.body.debug;
-    // const data = request.body.data;
-    // const fs = admin.firestore()
-    // const apiSuffix = "AcceptInvoice";
+    console.log(`##### Incoming vehicleType ${JSON.stringify(request.body.vehicleType)}`);
+    const vehicleType = request.body.vehicleType;
+    const fs = admin.firestore();
+    yield writeType();
     return null;
+    function writeType() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const ref = yield fs.collection('vehicleTypes').add(vehicleType);
+                vehicleType.path = ref.path;
+                yield ref.set(vehicleType);
+                console.log(`car type written to Firestore ${ref.path}`);
+                return response.status(200).send(vehicleType);
+            }
+            catch (e) {
+                console.error(e);
+                return response.status(400).send(e);
+            }
+        });
+    }
 }));
-//# sourceMappingURL=register-commuter.js.map
+//# sourceMappingURL=add-vehicle.type.js.map

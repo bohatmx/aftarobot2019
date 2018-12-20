@@ -1,6 +1,6 @@
 "use strict";
 // ######################################################################
-// Accept Invoice to BFN and Firestore
+// Add User to Firestore
 // ######################################################################
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,64 +13,98 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const uuid = require("uuid/v1");
+const aftarobot_1 = require("../models/aftarobot");
+//curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 exports.registerUser = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
-    if (!request.body) {
-        console.log("ERROR - request has no body");
-        return response.sendStatus(400);
+    console.log(request.body);
+    if (!request.body.user) {
+        console.log("ERROR - request has no user");
+        return response
+            .status(400)
+            .send("Request has no user json object");
     }
-    try {
-        const firestore = admin.firestore();
-        const settings = { /* your settings... */ timestampsInSnapshots: true };
-        firestore.settings(settings);
-        console.log("Firebase settings completed. Should be free of annoying messages from Google");
-    }
-    catch (e) {
-        console.log(e);
-    }
-    console.log(`##### Incoming debug ${request.body.debug}`);
-    console.log(`##### Incoming data ${JSON.stringify(request.body.data)}`);
-    const debug = request.body.debug;
-    const data = request.body.data;
     const fs = admin.firestore();
-    const apiSuffix = "AcceptInvoice";
-    if (validate()) {
-        yield writeToBFN();
+    try {
+        const settings = { /* your settings... */ timestampsInSnapshots: true };
+        fs.settings(settings);
     }
+    catch (e) { }
+    console.log(`##### Incoming user ${JSON.stringify(request.body.user)}`);
+    ;
+    const user = new aftarobot_1.UserDTO();
+    let userRecord;
+    user.instance(request.body.user);
+    if (request.body.userRecord) {
+        userRecord = request.body.userRecord;
+    }
+    else {
+        userRecord = yield createAuthUser();
+    }
+    yield writeUser();
     return null;
-    function validate() {
-        if (!request.body) {
-            console.log("ERROR - request has no body");
-            return response.status(400).send("request has no body");
-        }
-        if (!request.body.debug) {
-            console.log("ERROR - request has no debug flag");
-            return response.status(400).send(" request has no debug flag");
-        }
-        if (!request.body.data) {
-            console.log("ERROR - request has no data");
-            return response.status(400).send(" request has no data");
-        }
-        return true;
-    }
-    function writeToBFN() {
+    function createAuthUser() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('');
+            try {
+                const ur = yield admin.auth().createUser({
+                    email: user.email,
+                    emailVerified: false,
+                    phoneNumber: user.cellphone,
+                    password: user.password,
+                    displayName: user.name,
+                    disabled: false
+                });
+                console.log("Successfully created new user:", ur.uid);
+                return ur;
+            }
+            catch (e) {
+                console.log("Error creating new user:", e);
+                throw e;
+            }
         });
     }
-    function writeToFirestore(mdata) {
+    function writeUser() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('');
+            try {
+                const userData = user.toFirestoreMap();
+                userData.uid = userRecord.uid;
+                const ref = yield fs.collection("users").add(userData);
+                console.log(`user added to Firestore: ${ref.path}`);
+                userData.path = ref.path;
+                yield ref.set(userData);
+                console.log(`user updated with path ${ref.path}`);
+                yield sendMessageToTopic();
+                return response.status(200).send(userData);
+            }
+            catch (e) {
+                console.log(e);
+                response.status(400).send(e);
+                return null;
+            }
         });
     }
-    function sendMessageToTopic(mdata) {
+    function sendMessageToTopic() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('');
+            const topic = "usersAdded";
+            console.log(`...sending message to topic ${topic}`);
+            const payload = {
+                data: {
+                    messageType: "USER_ADDED",
+                    json: JSON.stringify(user)
+                },
+                notification: {
+                    title: "User Added",
+                    body: `${user.name} - ${user.email}`
+                }
+            };
+            console.log("sending data to topic: " + topic);
+            try {
+                yield admin.messaging().sendToTopic(topic, payload);
+            }
+            catch (e) {
+                console.error(e);
+            }
+            return null;
         });
-    }
-    function handleError(message) {
-        console.error("--- ERROR !!! --- sending error payload: msg:" + message);
-        throw new Error(message);
     }
 }));
 //# sourceMappingURL=register-user.js.map
