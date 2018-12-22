@@ -24,14 +24,13 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
         const settings = { /* your settings... */ timestampsInSnapshots: true };
         fs.settings(settings);
     }
-    catch (e) {
-    }
-    console.log(`##### Incoming debug ${request.body.debug}`);
-    console.log(`##### Incoming vehicleType ${JSON.stringify(request.body.vehicle)}`);
+    catch (e) { }
+    console.log(`##### Incoming debug; ${request.body.debug}`);
+    console.log(`##### Incoming vehicle: ${JSON.stringify(request.body.vehicle)}`);
     const vehicle = request.body.vehicle;
     if (!vehicle.vehicleType) {
-        console.error('Vehicle has no type');
-        return response.status(400).send('Vehicle does not have a type');
+        console.error("Vehicle has no type");
+        return response.status(400).send("Vehicle does not have a type");
     }
     yield writeVehicle();
     return null;
@@ -39,13 +38,19 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 if (!vehicle.assocPath) {
-                    return response.status(400).send('Missing vehicle.assocPath');
+                    return response.status(400).send("Missing vehicle.assocPath");
                 }
-                const ref = yield fs.doc(vehicle.assocPath).collection('vehicles').add(vehicle);
+                const ref = yield fs
+                    .doc(vehicle.assocPath)
+                    .collection("vehicles")
+                    .add(vehicle);
                 vehicle.path = ref.path;
                 yield ref.set(vehicle);
                 if (vehicle.ownerPath) {
-                    const ref2 = yield fs.doc(vehicle.ownerPath).collection('vehicles').add(vehicle);
+                    const ref2 = yield fs
+                        .doc(vehicle.ownerPath)
+                        .collection("vehicles")
+                        .add(vehicle);
                     vehicle.path = ref2.path;
                     yield ref.set(vehicle);
                 }
@@ -53,7 +58,7 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
                     console.log(`car has no owner path, please check: ${vehicle.vehicleReg}`);
                 }
                 console.log(`car written to Firestore ${ref.path}`);
-                return response.status(200).send();
+                return response.status(200).send(vehicle);
             }
             catch (e) {
                 console.log(e);

@@ -3,6 +3,8 @@
 ####### rigged up by AM Esq.
 */
 
+import 'package:aftarobotlibrary/data/citydto.dart';
+
 class CountryDTO {
   String countryID;
   String name;
@@ -12,6 +14,7 @@ class CountryDTO {
   int date;
   List provinceList;
   List vehicleTypeList;
+  List<CityDTO> cities;
   String path;
 
   CountryDTO({
@@ -21,6 +24,7 @@ class CountryDTO {
     this.latitude,
     this.longitude,
     this.date,
+    this.cities,
     this.provinceList,
     this.vehicleTypeList,
   });
@@ -34,18 +38,35 @@ class CountryDTO {
     this.date = data['date'];
     this.provinceList = data['provinceList'];
     this.vehicleTypeList = data['vehicleTypeList'];
+    this.cities = List();
+    if (data['cities'] != null) {
+      List mc = data['cities'];
+      mc.forEach((m) {
+        this.cities.add(CityDTO.fromJson(m));
+      });
+    }
     this.path = data['path'];
   }
 
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'countryID': countryID,
-        'name': name,
-        'status': status,
-        'latitude': latitude,
-        'longitude': longitude,
-        'date': date,
-        'provinceList': provinceList,
-        'vehicleTypeList': vehicleTypeList,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> mapx = Map();
+    if (this.cities.isNotEmpty) {
+      this.cities.forEach((c) {
+        mapx['${c.cityID}'] = c.toJson();
+      });
+    }
+    var map = {
+      'countryID': countryID,
+      'name': name,
+      'status': status,
+      'latitude': latitude,
+      'longitude': longitude,
+      'date': date,
+      'cities': mapx,
+      'provinceList': provinceList,
+      'vehicleTypeList': vehicleTypeList,
+      'path': path,
+    };
+    return map;
+  }
 }

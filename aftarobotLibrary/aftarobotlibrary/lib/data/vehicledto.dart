@@ -10,7 +10,7 @@ class VehicleDTO {
   String vehicleID;
   String ownerID;
   String associationID;
-  String countryID;
+  String countryID, ownerPath, assocPath;
   String ownerName;
   String associationName;
   int date;
@@ -41,6 +41,8 @@ class VehicleDTO {
     this.ownerName,
     this.associationName,
     this.date,
+    this.ownerPath,
+    this.assocPath,
     this.licenceExpiryDate,
     this.policyIssueDate,
     this.policyExpiryDate,
@@ -64,11 +66,15 @@ class VehicleDTO {
     this.ownerName = data['ownerName'];
     this.associationName = data['associationName'];
     this.date = data['date'];
+    this.ownerPath = data['ownerPath'];
+    this.assocPath = data['assocPath'];
     this.licenceExpiryDate = data['licenceExpiryDate'];
     this.policyIssueDate = data['policyIssueDate'];
     this.policyExpiryDate = data['policyExpiryDate'];
     this.cacheDate = data['cacheDate'];
-    this.vehicleType = data['vehicleType'];
+    if (data['vehicleType'] != null) {
+      this.vehicleType = VehicleTypeDTO.fromJson(data['vehicleType']);
+    }
     this.photoList = data['photoList'];
     this.year = data['year'];
     this.operatingLicence = data['operatingLicence'];
@@ -88,11 +94,13 @@ class VehicleDTO {
         'ownerName': ownerName,
         'associationName': associationName,
         'date': date,
+        'ownerPath': ownerPath,
+        'assocPath': assocPath,
         'licenceExpiryDate': licenceExpiryDate,
         'policyIssueDate': policyIssueDate,
         'policyExpiryDate': policyExpiryDate,
         'cacheDate': cacheDate,
-        'vehicleType': vehicleType,
+        'vehicleType': vehicleType.toJson(),
         'photoList': photoList,
         'year': year,
         'operatingLicence': operatingLicence,
