@@ -180,7 +180,6 @@ class _CityMapSearchState extends State<CityMapSearch>
         '\n\n_CityMapSearchState.onCityPicked +++++++++ city selected: ${city.name} -- YEBO!!!!!');
     this.city = city;
     controlMap();
-    return null;
   }
 
   @override
@@ -287,52 +286,6 @@ class _CitySearchBoxState extends State<CitySearchBox> {
     }
   }
 
-  Widget _getAllCitiesView() {
-    return ListView.builder(
-        itemCount: cities == null ? 0 : cities.length,
-        controller: scrollController,
-        itemBuilder: (BuildContext context, int index) {
-          return InkWell(
-            onTap: () {
-              city = cities.elementAt(index);
-              _handleCitySelected();
-            },
-            child: ListTile(
-              title: Text(
-                cities.elementAt(index).name,
-                style: widget.textStyle == null
-                    ? Styles.blackMedium
-                    : widget.textStyle,
-              ),
-              leading: widget.icon == null ? Icon(Icons.search) : widget.icon,
-            ),
-          );
-        });
-  }
-
-  Widget _getFilteredCitiesView() {
-    return ListView.builder(
-        itemCount: filteredCities == null ? 0 : filteredCities.length,
-        controller: scrollController,
-        itemBuilder: (BuildContext context, int index) {
-          return InkWell(
-            onTap: () {
-              city = filteredCities.elementAt(index);
-              _handleCitySelected();
-            },
-            child: ListTile(
-              title: Text(
-                filteredCities.elementAt(index).name,
-                style: widget.textStyle == null
-                    ? Styles.blackMedium
-                    : widget.textStyle,
-              ),
-              leading: widget.icon == null ? Icon(Icons.search) : widget.icon,
-            ),
-          );
-        });
-  }
-
   @override
   Widget build(BuildContext context) {
     print(
@@ -368,6 +321,11 @@ class _CitySearchBoxState extends State<CitySearchBox> {
                 itemSorter: (CityDTO a, CityDTO b) {
                   return a.name.compareTo(b.name);
                 },
+                decoration: InputDecoration(
+                    hintText: 'Tap here to search cities ...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                    )),
               ),
             ],
           );
