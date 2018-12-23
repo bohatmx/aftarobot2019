@@ -5,6 +5,7 @@ import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
+import 'package:datagenerator/city_map_search.dart';
 import 'package:datagenerator/country_gen.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,7 @@ class _CityMigratorState extends State<CityMigrator>
         countries.clear();
       }
     });
+    print('_CityMigratorState._getCountries --------------------------');
     await CountryGenerator.generateCountries(this);
     countries = await CountryGenerator.getCountries();
     print('countries found: ${countries.length}');
@@ -169,6 +171,14 @@ class _CityMigratorState extends State<CityMigrator>
             ));
   }
 
+  void _startCityMapSearch() {
+    print('_CityMigratorState._startCityMapSearch ..........');
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => CityMapSearch()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,8 +187,8 @@ class _CityMigratorState extends State<CityMigrator>
         title: Text("AftaRobot Migrator"),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _getCountries,
+            icon: Icon(Icons.search),
+            onPressed: _startCityMapSearch,
           ),
         ],
         bottom: PreferredSize(
@@ -277,7 +287,7 @@ class _CityMigratorState extends State<CityMigrator>
 
   CountryDTO country;
   @override
-  onCountryPicked(CountryDTO country) {
+  onCountryPicked(CountryDTO country) async {
     if (isBusy) return;
     this.country = country;
     print('\n\n_CityMigratorState.onCountryPicked -- ${country.name}');
@@ -315,6 +325,13 @@ class _CityMigratorState extends State<CityMigrator>
   List<CityDTO> activeCities = List();
   @override
   onCity(CityDTO city) {
+    print('_CityMigratorState.onCity ................ $city #$counter');
+    if (city == null) {
+      setState(() {
+        counter++;
+      });
+      return;
+    }
     assert(country != null);
     if (country.cities == null) {
       country.cities = List();

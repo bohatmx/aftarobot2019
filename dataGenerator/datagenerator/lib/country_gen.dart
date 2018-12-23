@@ -1,3 +1,4 @@
+import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +16,24 @@ abstract class CityListener {
 class CountryGenerator {
   static Firestore fs = Firestore.instance;
   static FirebaseDatabase fb = FirebaseDatabase.instance;
+
+  static Future<List<CityDTO>> getCountryCities(String countryPath) async {
+    List<CityDTO> list = List();
+    var start = DateTime.now();
+    var qs = await fs.document(countryPath).collection('cities').getDocuments();
+    qs.documents.forEach((doc) {
+      var map = doc.data;
+      list.add(CityDTO.fromJson(map));
+    });
+
+    await LocalDB.saveCities(Cities(list));
+    print(
+        '\n\n\nCountryGenerator.getCountryCities +++++++++++ cached ${list.length} cities in local cache');
+    var end = DateTime.now();
+    print(
+        'CountryGenerator.getCountryCities ########### found ${list.length} - elapsed ${end.difference(start).inSeconds}');
+    return list;
+  }
 
   static Future<List<CountryDTO>> getCountries() async {
     List<CountryDTO> list = List();
@@ -56,9 +75,9 @@ class CountryGenerator {
           status: 'Active',
           countryID: getKey(),
         );
-        await addCountry(country);
-        listener.onCountry(country);
-        list.add(country);
+        var mCountry = await addCountry(country);
+        listener.onCountry(mCountry);
+        list.add(mCountry);
       }
     } catch (e) {
       print(e);
@@ -67,24 +86,58 @@ class CountryGenerator {
     return list;
   }
 
+  static List<CityDTO> countryCities = List(), newCities = List();
   static Future<List<CityDTO>> addCities(
       {List<CityDTO> cities, CountryDTO country, CityListener listener}) async {
     print(
         'CountryGenerator.addCities -- #################### start loading cities');
     var start = DateTime.now();
+    var qs =
+        await fs.document(country.path).collection('cities').getDocuments();
+    qs.documents.forEach((doc) {
+      countryCities.add(CityDTO.fromJson(doc.data));
+    });
+    int badCnt = 0, goodCnt = 0;
     List<CityDTO> list = List();
     for (var city in cities) {
-      var mCity = await addCity(country: country, city: city);
-      list.add(mCity);
-      listener.onCity(mCity);
+      var isFound = false;
+      countryCities.forEach((cc) {
+        if (cc.name == city.name) {
+          if (cc.provinceName == city.provinceName) {
+            isFound = true;
+          }
+        }
+      });
+      var isFound2 = false;
+      newCities.forEach((cc) {
+        if (cc.name == city.name) {
+          if (cc.provinceName == city.provinceName) {
+            isFound2 = true;
+          }
+        }
+      });
+
+      if (!isFound && !isFound2) {
+        var mCity = await _addCity(country: country, city: city);
+        list.add(mCity);
+        listener.onCity(mCity);
+        goodCnt++;
+      } else {
+        badCnt++;
+        listener.onCity(null);
+        print(
+            'CountryGenerator.addCities #$badCnt --- ${city.name} ----- ignoring city. already in country list');
+      }
     }
+    print(
+        'CountryGenerator.addCities: ############# completed, good: $goodCnt bad: $badCnt');
     var end = DateTime.now();
     print(
         '\n\nCountryGenerator.addCities: COMPLETED: elapsed: ${end.difference(start).inMinutes}');
     return list;
   }
 
-  static Future<CityDTO> addCity({CityDTO city, CountryDTO country}) async {
+  static Future<CityDTO> _addCity({CityDTO city, CountryDTO country}) async {
     print('addCity ----------- ${country.name} - ${city.name}');
     int cnt = 0;
     try {
@@ -98,6 +151,7 @@ class CountryGenerator {
             .add(city.toJson());
         city.path = m.path;
         await m.setData(city.toJson());
+        newCities.add(city);
         cnt++;
         print(
             'CountryGenerator.addCity: #$cnt ${city.name}, ${city.provinceName} - added, path: ${m.path}');
@@ -118,8 +172,14 @@ class CountryGenerator {
           .collection('countries')
           .where('name', isEqualTo: country.name)
           .getDocuments();
-      if (qs.documents.isEmpty) {
-        await fs.collection('countries').add(country.toJson());
+
+      if (qs == null || qs.documents == null || qs.documents.isEmpty) {
+        print(
+            'CountryGenerator.addCountry - no country found - should go write country');
+
+        var ref0 = await fs.collection('countries').add(country.toJson());
+        country.path = ref0.path;
+        await ref0.setData(country.toJson());
         print('### country added');
         return country;
       } else {

@@ -41,6 +41,7 @@ flutter:
   assets:
   - assets/fincash.jpg
   - assets/fin3.jpeg
+  - assets/computers.png
   fonts:
   - family: Raleway
     fonts:

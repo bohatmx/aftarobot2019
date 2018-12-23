@@ -30,7 +30,6 @@ dependencies:
   cloud_firestore: ^0.8.2+3
   shared_preferences: ^0.4.3
   path_provider: ^0.4.1
-  json_annotation: ^1.1.0
   intl: ^0.15.7
   web_socket_channel: ^1.0.9
   email_validator: ^1.0.0
@@ -47,9 +46,10 @@ dependencies:
   google_maps_flutter: ^0.0.3+3
   location: ^1.4.1
   flutter_document_picker: ^1.2.0
-  csv: ^4.0.1
-#  geofence: ^1.0.3
+  autocomplete_textfield: ^1.6.4
+  #  geofence: ^1.0.3
   flutter_background_geolocation: '^0.1.0'
+
   url_launcher:
     git:
       url: git://github.com/flutter/plugins
@@ -59,7 +59,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec

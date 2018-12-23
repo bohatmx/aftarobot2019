@@ -50,11 +50,7 @@ class CountryDTO {
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> mapx = Map();
-    if (this.cities.isNotEmpty) {
-      this.cities.forEach((c) {
-        mapx['${c.cityID}'] = c.toJson();
-      });
-    }
+
     var map = {
       'countryID': countryID,
       'name': name,
@@ -62,7 +58,7 @@ class CountryDTO {
       'latitude': latitude,
       'longitude': longitude,
       'date': date,
-      'cities': mapx,
+      'cities': cities,
       'provinceList': provinceList,
       'vehicleTypeList': vehicleTypeList,
       'path': path,

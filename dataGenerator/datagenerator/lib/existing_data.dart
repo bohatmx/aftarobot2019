@@ -2,6 +2,7 @@ import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
+import 'package:datagenerator/city_map_search.dart';
 import 'package:datagenerator/city_migrate.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:datagenerator/main.dart';
@@ -52,6 +53,13 @@ class _ExistingDataPageState extends State<ExistingDataPage>
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => GenerationPage()),
+    );
+  }
+
+  void _startCitySearchPage() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => CityMapSearch()),
     );
   }
 
@@ -135,6 +143,10 @@ class _ExistingDataPageState extends State<ExistingDataPage>
           IconButton(
             icon: Icon(Icons.build),
             onPressed: _startGenerationPage,
+          ),
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: _startCitySearchPage,
           ),
         ],
       ),
