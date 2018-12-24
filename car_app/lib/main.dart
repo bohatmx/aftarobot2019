@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -32,6 +33,22 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _test();
+  }
+
+  void _test() async {
+    Firestore fs = Firestore.instance;
+    var qs = await fs.collection('associations').getDocuments();
+    print(
+        '_MyHomePageState._test ############# yay! asses found: ${qs.documents.length}');
+    setState(() {
+      _counter = 33333;
+    });
+  }
 
   void _incrementCounter() {
     setState(() {

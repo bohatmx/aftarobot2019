@@ -1,4 +1,4 @@
-name: car_app
+name: carapp
 description: AftaRobot vehicle App
 
 # The following defines the version and build number for your application.
@@ -16,8 +16,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-aftarobotlibrary:
-  path: /Users/mac/Documents/GitHub/aftarobot2019/aftarobotLibrary/aftarobotlibrary
+  aftarobotlibrary:
+    path: /Users/mac/Documents/GitHub/aftarobot2019/aftarobotLibrary/aftarobotlibrary
 
 dev_dependencies:
   flutter_test:
