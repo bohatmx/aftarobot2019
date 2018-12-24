@@ -21,9 +21,7 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
     console.log(request.body);
     if (!request.body.user) {
         console.log("ERROR - request has no user");
-        return response
-            .status(400)
-            .send("Request has no user json object");
+        return response.status(400).send("Request has no user json object");
     }
     const fs = admin.firestore();
     try {
@@ -32,10 +30,10 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
     }
     catch (e) { }
     console.log(`##### Incoming user ${JSON.stringify(request.body.user)}`);
-    ;
     const user = new aftarobot_1.UserDTO();
     let userRecord;
     user.instance(request.body.user);
+    user.userID = uuid();
     if (request.body.userRecord) {
         userRecord = request.body.userRecord;
     }
@@ -59,7 +57,7 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
                 return ur;
             }
             catch (e) {
-                console.error("Error creating new user:", e);
+                console.error("Error creating new Firebase auth user:", e);
                 throw e;
             }
         });
@@ -70,19 +68,53 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
                 const userData = user.toFirestoreMap();
                 userData.uid = userRecord.uid;
                 userData.userID = uuid();
-                const ref = yield fs.collection(constants.Constants.FS_USERS).add(userData);
-                console.log(`user added to Firestore: ${ref.path}`);
-                userData.path = ref.path;
-                yield ref.set(userData);
-                console.log(`user updated with path ${ref.path}`);
-                yield sendMessageToTopic();
-                return response.status(200).send(userData);
+                if (userData.associationID) {
+                    const qs = yield fs
+                        .collection(constants.Constants.FS_ASSOCIATIONS)
+                        .where("associationID", "==", userData.associationID)
+                        .get();
+                    if (qs.docs.length === 0) {
+                        const msg = "Association does not exist";
+                        console.error(msg);
+                        throw new Error(msg);
+                    }
+                    const ref = yield qs.docs[0].ref
+                        .collection(constants.Constants.FS_USERS)
+                        .add(userData);
+                    return finishUp(userData, ref);
+                }
+                else {
+                    if (userData.userType === constants.Constants.COMMUTER) {
+                        const ref = yield fs
+                            .collection(constants.Constants.FS_COMMUTERS)
+                            .add(userData);
+                        return finishUp(userData, ref);
+                    }
+                    else {
+                        if (userData.userType === constants.Constants.AFTAROBOT_STAFF) {
+                            const ref = yield fs
+                                .collection(constants.Constants.FS_STAFF)
+                                .add(userData);
+                            return finishUp(userData, ref);
+                        }
+                    }
+                }
             }
             catch (e) {
                 console.log(e);
                 response.status(400).send(e);
-                return null;
             }
+            return null;
+        });
+    }
+    function finishUp(userData, ref) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log(`user added to Firestore: ${ref.path}`);
+            userData.path = ref.path;
+            yield ref.set(userData);
+            console.log(`user updated with path ${ref.path}`);
+            yield sendMessageToTopic();
+            return response.status(200).send(userData);
         });
     }
     function sendMessageToTopic() {

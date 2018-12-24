@@ -3,3 +3,5 @@ firebase deploy --only functions:addLandmark,functions:addRoute,functions:addCou
 firebase firestore:delete --all-collections
 
 npm i -g firebase-tools 
+
+firebase deploy --only functions:addAssociation,functions:registerUser

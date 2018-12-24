@@ -25,11 +25,11 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
             .status(400)
             .send("Request has no association json object");
     }
-    if (!request.body.administrator) {
-        console.log("ERROR - request has no administrator");
+    if (!request.body.user) {
+        console.log("ERROR - request has no user");
         return response
             .status(400)
-            .send("Request has no administrator json object");
+            .send("Request has no user json object");
     }
     const fs = admin.firestore();
     try {
@@ -37,10 +37,10 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
         fs.settings(settings);
     }
     catch (e) { }
-    console.log(`##### Incoming administrator ${JSON.stringify(request.body.administrator)}`);
+    console.log(`##### Incoming user ${JSON.stringify(request.body.user)}`);
     console.log(`##### Incoming association ${JSON.stringify(request.body.association)}`);
-    const administrator = new aftarobot_1.AdminDTO();
-    administrator.instance(request.body.administrator);
+    const user = new aftarobot_1.UserDTO();
+    user.instance(request.body.user);
     const association = new aftarobot_1.AssociationDTO();
     association.instance(request.body.association);
     const incomingUserRecord = request.body.userRecord; //will be present if user already authenticated, ie, via Google means ...
@@ -57,11 +57,11 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const ur = yield admin.auth().createUser({
-                    email: administrator.email,
+                    email: user.email,
                     emailVerified: false,
-                    phoneNumber: administrator.phone,
-                    password: administrator.password,
-                    displayName: administrator.name,
+                    phoneNumber: user.cellphone,
+                    password: user.password,
+                    displayName: user.name,
                     disabled: false
                 });
                 console.log("Successfully created new user:", ur.uid);
@@ -94,17 +94,20 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
                 assocData.path = ref.path;
                 yield ref.set(assocData);
                 console.log(`association updated with path ${ref.path}`);
-                const adminData = administrator.toFirestoreMap();
+                const adminData = user.toFirestoreMap();
                 adminData.uid = userRecord.uid;
-                const ref2 = yield ref.collection(constants.Constants.FS_ADMINISTRATORS).add(adminData);
-                console.log(`administrator added to Firestore ${ref2.path}`);
+                adminData.userID = uuid();
+                adminData.userType = constants.Constants.ASSOC_ADMIN;
+                adminData.userDescription = constants.Constants.ASSOC_ADMIN_DESC;
+                const ref2 = yield ref.collection(constants.Constants.FS_USERS).add(adminData);
+                console.log(`user added to Firestore ${ref2.path}`);
                 adminData.path = ref2.path;
                 yield ref2.set(adminData);
-                console.log(`administrator added to Firestore`);
+                console.log(`user added to Firestore`);
                 yield sendMessageToTopic();
                 const result = {
                     association: assocData,
-                    administrator: adminData,
+                    user: adminData,
                 };
                 return response.status(200).send(result);
             }
