@@ -52,7 +52,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     asses = await ListAPI.getAssociations();
     carTypes = await ListAPI.getVehicleTypes();
     countries = await ListAPI.getCountries();
-    print('_AftaRobotMigratorPageState._checkMigratedStatus: '
+    print('_AftaRobotMigratorPageState._checkMigratedStatus: ###########  '
         'associations: ${asses.length} countries: ${countries.length} '
         'vehicleTypes: ${carTypes.length}');
 
@@ -182,20 +182,22 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
         context: context,
         builder: (_) => new AlertDialog(
               title: new Text(
-                "Confirm AftaRobot Migration",
+                "Confirm  Migration",
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).primaryColor),
               ),
               content: Container(
-                height: 120.0,
+                height: 200.0,
                 child: Column(
                   children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.all(8.0),
                       child: Text(
-                          'Do you want to migrate ALL the data from the Firebase Realtime Database to the shiny, new Cloud Firestore??'
-                          '\n\nThis will take quite a few minutes so I suggest yo go get a smoke and a coffee :)'),
+                        'Do you want to migrate ALL the data from the Firebase Realtime Database to the shiny, new Cloud Firestore?'
+                            '\n\nThis will take quite a few minutes so I suggest you go get a smoke and a coffee :):)',
+                        style: Styles.blackBoldSmall,
+                      ),
                     ),
                   ],
                 ),
@@ -255,8 +257,6 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           gridDelegate:
               SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
           itemBuilder: (BuildContext context, int index) {
-            print('_AftaRobotMigratorPageState._getGrid index $index');
-
             return CounterCard(
                 total: counters.elementAt(index).total,
                 title: counters.elementAt(index).title);
@@ -275,7 +275,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
                   color: Colors.pink,
                   onPressed: _showDialog,
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Text(
                       'Start Your Bloody Engines!',
                       style: Styles.whiteSmall,
@@ -353,9 +353,9 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   }
 
   @override
-  onComplete(int routeCnt, int landmarkCnt) {
+  onComplete() {
     print(
-        '\n\n_RouteMigratorState.onComplete -- ########################### routeCnt: $routeCnt  landmarkCnt: $landmarkCnt');
+        '\n\n_RouteMigratorState.onComplete -- ########################### FINISHED. DONE. CHECK!!!');
 
     if (timer != null) {
       if (timer.isActive) {

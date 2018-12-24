@@ -14,7 +14,7 @@ import 'package:firebase_database/firebase_database.dart';
 abstract class RouteMigrationListener {
   onRouteAdded(RouteDTO route);
   onLandmarkAdded(LandmarkDTO landmark);
-  onComplete(int routes, int landmarks);
+  onComplete();
 }
 
 abstract class AftaRobotMigrationListener {
@@ -284,7 +284,7 @@ class AftaRobotMigration {
         '@aftarobot.io';
     var res = await DataAPI.addAssociation(
         association: ass,
-        admin: UserDTO(
+        adminUser: UserDTO(
             email: mEmail,
             password: 'pass123',
             cellphone: '+27719990000',
@@ -329,7 +329,7 @@ class AftaRobotMigration {
     print(
         'RouteMigration.migrateRoutes -- COMPLETED, elapsed ${end.difference(start).inSeconds} seconds. '
         'processed $routeCount routes and $landmarkCount landmarks ');
-    listener.onComplete(routeCount, landmarkCount);
+    listener.onComplete();
     return 0;
   }
 

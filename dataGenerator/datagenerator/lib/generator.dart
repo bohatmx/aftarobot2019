@@ -216,7 +216,7 @@ class Generator {
       int cnt = 0;
       for (var aa in list) {
         var res = await DataAPI.addAssociation(
-            association: aa.association, admin: aa.admin);
+            association: aa.association, adminUser: aa.admin);
         asses.add(res);
         cnt++;
         generatorListener.onEvent(Msg(

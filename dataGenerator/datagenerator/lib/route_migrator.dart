@@ -282,9 +282,7 @@ class _RouteMigratorState extends State<RouteMigrator>
   }
 
   @override
-  onComplete(int routeCnt, int landmarkCnt) {
-    print(
-        '\n\n_RouteMigratorState.onComplete -- ########################### routeCnt: $routeCnt  landmarkCnt: $landmarkCnt');
+  onComplete() {
     newRoutes.forEach((r) {
       landmarkCount += r.spatialInfos.length;
     });
