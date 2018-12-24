@@ -2,6 +2,7 @@ import 'package:aftarobotlibrary/data/admindto.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
+import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
@@ -54,6 +55,17 @@ class ListAPI {
     if (qs.documents.isNotEmpty) {
       qs.documents.forEach((doc) {
         list.add(AssociationDTO.fromJson(doc.data));
+      });
+    }
+    return list;
+  }
+
+  static Future<List<LandmarkDTO>> getLandmarks() async {
+    List<LandmarkDTO> list = List();
+    var qs = await fs.collection('landmarks').getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(LandmarkDTO.fromJson(doc.data));
       });
     }
     return list;

@@ -23,16 +23,6 @@ abstract class AftaRobotMigrationListener {
   onUserAdded(UserDTO user);
 }
 
-/*
-var config = {
-    apiKey: "AIzaSyC5-hoDv-8lveX0VQwp2-nNitkvNThjJ9o",
-    authDomain: "aftarobot-production.firebaseapp.com",
-    databaseURL: "https://aftarobot-production.firebaseio.com",
-    projectId: "aftarobot-production",
-    storageBucket: "aftarobot-production.appspot.com",
-    messagingSenderId: "158116619777"
-  };
- */
 class AftaRobotMigration {
   static final FirebaseOptions options = FirebaseOptions(
       projectID: 'aftarobot-production',

@@ -1,14 +1,16 @@
 import 'dart:async';
 
+import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/spatialinfodto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
+import 'package:aftarobotlibrary/data/vehicletypedto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:datagenerator/aftarobot_migration.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +34,13 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   DateTime start, end;
   bool isMigrationDone = false, firestoreIsReady = false;
   List<Msg> messages = List();
+  List<AssociationDTO> asses = List();
+  List<VehicleDTO> vehicles = List();
+  List<LandmarkDTO> landmarks = List();
+  List<RouteDTO> routes = List();
+  List<VehicleTypeDTO> carTypes = List();
+  List<UserDTO> users = List();
+  List<CountryDTO> countries = List();
   @override
   void initState() {
     super.initState();
@@ -40,16 +49,14 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   }
 
   void _checkMigratedStatus() async {
-    Firestore fs = Firestore.instance;
-    var qs0 = await fs.collection('associations').getDocuments();
-    var qs1 = await fs.collection('vehicleTypes').getDocuments();
-    var qs2 = await fs.collection('countries').getDocuments();
-    print(
-        '_AftaRobotMigratorPageState._checkMigratedStatus: associations: ${qs0.documents.length} countries: ${qs2.documents.length} vehicleTypes: ${qs1.documents.length}');
+    asses = await ListAPI.getAssociations();
+    carTypes = await ListAPI.getVehicleTypes();
+    countries = await ListAPI.getCountries();
+    print('_AftaRobotMigratorPageState._checkMigratedStatus: '
+        'associations: ${asses.length} countries: ${countries.length} '
+        'vehicleTypes: ${carTypes.length}');
 
-    if (qs0.documents.isEmpty &&
-        qs1.documents.isEmpty &&
-        qs2.documents.isEmpty) {
+    if (countries.isEmpty && carTypes.isEmpty && asses.isEmpty) {
       firestoreIsReady = true;
     } else {
       firestoreIsReady = false;
@@ -59,6 +66,15 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   }
 
   void _getData() async {
+    landmarks = await ListAPI.getLandmarks();
+    routes = await ListAPI.getRoutes();
+
+    for (var ass in asses) {
+      var cars = await ListAPI.getAssociationVehicles(ass.path);
+      vehicles.addAll(cars);
+      var musers = await ListAPI.getAssociationUsers(ass.path);
+      users.addAll(musers);
+    }
     setState(() {});
   }
 
@@ -311,21 +327,28 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     );
   }
 
-  List<LandmarkDTO> newLandmarks = List();
   @override
   onLandmarkAdded(LandmarkDTO landmark) {
     print(
         '_RouteMigratorState.onLandmarkAdded -- %%%%%%%%%%%% ${landmark.landmarkName}');
-    newLandmarks.add(landmark);
-    landmarkCount = newLandmarks.length;
+    landmarks.add(landmark);
+    landmarkCount = landmarks.length;
+    var msg = Msg(
+        icon: Icon(Icons.location_on, color: getRandomColor()),
+        message: 'Landmark - ${landmark.landmarkName}');
+    messages.add(msg);
     _setCounters();
   }
 
-  List<RouteDTO> newRoutes = List();
   @override
   onRouteAdded(RouteDTO route) {
     print('\n\n_RouteMigratorState.onRouteAdded -- *********** ${route.name}');
-    newRoutes.add(route);
+    routes.add(route);
+    routeCount = routes.length;
+    var msg = Msg(
+        icon: Icon(Icons.airport_shuttle, color: getRandomColor()),
+        message: 'Route - ${route.name}');
+    messages.add(msg);
     _setCounters();
   }
 
@@ -333,43 +356,64 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   onComplete(int routeCnt, int landmarkCnt) {
     print(
         '\n\n_RouteMigratorState.onComplete -- ########################### routeCnt: $routeCnt  landmarkCnt: $landmarkCnt');
-    newRoutes.forEach((r) {
-      landmarkCount += r.spatialInfos.length;
-    });
+
     if (timer != null) {
       if (timer.isActive) {
         timer.cancel();
       }
     }
-    setState(() {});
+
+    setState(() {
+      isMigrationDone = true;
+      firestoreIsReady = false;
+    });
   }
 
-  List<AssociationDTO> asses = List();
   @override
   onAssociationAdded(AssociationDTO ass) {
     print(
         '_RouteMigratorState.onAssociationAdded ---- ### ${ass.associationName}');
     asses.add(ass);
     assCount = asses.length;
+    var msg = Msg(
+        icon: Icon(
+          Icons.apps,
+          color: getRandomColor(),
+        ),
+        message: 'Association - ${ass.associationName}');
+    messages.add(msg);
     _setCounters();
   }
 
-  List<VehicleDTO> cars = List();
   @override
   onVehicleAdded(VehicleDTO car) {
     print(
         '_RouteMigratorState.onVehicleAdded -- ${car.vehicleReg} ${car.path}');
-    cars.add(car);
-    carCount = cars.length;
+    vehicles.add(car);
+    carCount = vehicles.length;
+    var msg = Msg(
+        icon: Icon(
+          Icons.airport_shuttle,
+          color: getRandomColor(),
+        ),
+        message:
+            'Vehicle: - ${car.vehicleReg} - ${car.vehicleType.make} ${car.vehicleType.model}');
+    messages.add(msg);
     _setCounters();
   }
 
-  List<UserDTO> users = List();
   @override
   onUserAdded(UserDTO user) {
     print('_RouteMigratorState.onUserAdded ====> ${user.name}');
     users.add(user);
     userCount = users.length;
+    var msg = Msg(
+        icon: Icon(
+          Icons.person,
+          color: getRandomColor(),
+        ),
+        message: 'Users - ${user.name} ${user.email}');
+    messages.add(msg);
     _setCounters();
   }
 }
