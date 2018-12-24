@@ -7,6 +7,7 @@ import 'package:datagenerator/city_migrate.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:datagenerator/main.dart';
 import 'package:datagenerator/new_page.dart';
+import 'package:datagenerator/route_migrator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -53,6 +54,13 @@ class _ExistingDataPageState extends State<ExistingDataPage>
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => GenerationPage()),
+    );
+  }
+
+  void _startRouteMigrator() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => RouteMigrator()),
     );
   }
 
@@ -133,20 +141,8 @@ class _ExistingDataPageState extends State<ExistingDataPage>
         backgroundColor: Colors.purple.shade300,
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.loyalty),
-            onPressed: _startCityMigrator,
-          ),
-          IconButton(
-            icon: Icon(Icons.location_on),
-            onPressed: _startPage,
-          ),
-          IconButton(
-            icon: Icon(Icons.build),
-            onPressed: _startGenerationPage,
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: _startCitySearchPage,
+            icon: Icon(Icons.refresh),
+            onPressed: null,
           ),
         ],
       ),
@@ -169,6 +165,65 @@ class _ExistingDataPageState extends State<ExistingDataPage>
             scrollController: scrollController,
           ),
         ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.loyalty),
+            title: Text(
+              'Cities',
+              style: Styles.blackSmall,
+            ),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            title: Text(
+              'Search',
+              style: Styles.blackSmall,
+            ),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.location_on),
+            title: Text(
+              'Location',
+              style: Styles.blackSmall,
+            ),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.build),
+            title: Text(
+              'Build',
+              style: Styles.blackSmall,
+            ),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions),
+            title: Text(
+              'Routes',
+              style: Styles.blackSmall,
+            ),
+          ),
+        ],
+        type: BottomNavigationBarType.fixed,
+        onTap: (int index) {
+          switch (index) {
+            case 0:
+              _startCityMigrator();
+              break;
+            case 1:
+              _startCitySearchPage();
+              break;
+            case 2:
+              _startPage();
+              break;
+            case 3:
+              _startGenerationPage();
+              break;
+            case 4:
+              _startRouteMigrator();
+              break;
+          }
+        },
       ),
     );
   }
@@ -205,7 +260,7 @@ class _ExistingDataPageState extends State<ExistingDataPage>
   @override
   onBag(AssociationBag bag) {
     print(
-        '_ExistingDataPageState.onBag #################### bag coming in ....');
+        '_ExistingDataPageState.onBag #################### bag coming in ....${DateTime.now().toIso8601String()}');
     setState(() {
       activeBags.add(bag);
       counter++;
@@ -251,7 +306,9 @@ class AssocCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 Text(
-                  bag.association.associationID,
+                  bag.association.associationID == null
+                      ? ''
+                      : bag.association.associationID,
                   style: Styles.greyLabelSmall,
                 ),
               ],

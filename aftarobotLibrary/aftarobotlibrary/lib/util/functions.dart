@@ -666,6 +666,15 @@ String getFormattedDateHour(String date) {
   }
 }
 
+String getFormattedDateHourMinuteSecond() {
+  var format = new DateFormat.Hms();
+  try {
+    DateTime d = DateTime.now();
+    return format.format(d.toUtc());
+  } catch (e) {}
+  return null;
+}
+
 String getFormattedNumber(int number, BuildContext context) {
   Locale myLocale = Localizations.localeOf(context);
   var val = myLocale.languageCode + '_' + myLocale.countryCode;

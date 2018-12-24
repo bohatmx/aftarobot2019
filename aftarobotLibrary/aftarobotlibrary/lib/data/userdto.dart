@@ -84,36 +84,46 @@ class UserDTO {
     this.gender = data['gender'];
     this.address = data['address'];
     this.idNumber = data['idNumber'];
-    this.device = data['device'];
-    this.vehicle = data['vehicle'];
+    if (data['device'] != null) {
+      this.device = DeviceDTO.fromJson(data['device']);
+    }
+
+//    this.vehicle = data['vehicle'];
     this.path = data['path'];
   }
 
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'userType': userType,
-        'userID': userID,
-        'uid': uid,
-        'name': name,
-        'countryID': countryID,
-        'associationID': associationID,
-        'associationName': associationName,
-        'fcmToken': fcmToken,
-        'email': email,
-        'cellphone': cellphone,
-        'password': password,
-        'userDescription': userDescription,
-        'stringDateRegistered': stringDateRegistered,
-        'hyperTrackUserID': hyperTrackUserID,
-        'morningLandmark': morningLandmark,
-        'afternoonLandmark': afternoonLandmark,
-        'dateRegistered': dateRegistered,
-        'activeFlag': activeFlag,
-        'researchConsent': researchConsent,
-        'gender': gender,
-        'address': address,
-        'idNumber': idNumber,
-        'device': device,
-        'vehicle': vehicle,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> mDev;
+    if (device != null) {
+      mDev = device.toJson();
+    }
+    Map<String, dynamic> map = {
+      'userType': userType,
+      'userID': userID,
+      'uid': uid,
+      'name': name,
+      'countryID': countryID,
+      'associationID': associationID,
+      'associationName': associationName,
+      'fcmToken': fcmToken,
+      'email': email,
+      'cellphone': cellphone,
+      'password': password,
+      'userDescription': userDescription,
+      'stringDateRegistered': stringDateRegistered,
+      'hyperTrackUserID': hyperTrackUserID,
+      'morningLandmark': morningLandmark,
+      'afternoonLandmark': afternoonLandmark,
+      'dateRegistered': dateRegistered,
+      'activeFlag': activeFlag,
+      'researchConsent': researchConsent,
+      'gender': gender,
+      'address': address,
+      'idNumber': idNumber,
+      'device': mDev,
+      'vehicle': vehicle,
+      'path': path,
+    };
+    return map;
+  }
 }

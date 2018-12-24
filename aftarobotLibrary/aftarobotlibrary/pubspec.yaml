@@ -27,6 +27,7 @@ dependencies:
   firebase_storage: ^1.0.4
   firebase_remote_config: ^0.0.6+1
   firebase_database: ^1.0.5
+  firebase_core: ^0.2.5+1
   cloud_firestore: ^0.8.2+3
   shared_preferences: ^0.4.3
   path_provider: ^0.4.1

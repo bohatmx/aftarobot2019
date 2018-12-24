@@ -1,6 +1,7 @@
 import 'package:aftarobotlibrary/data/admindto.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
@@ -12,6 +13,30 @@ abstract class AssociationBagListener {
 
 class ListAPI {
   static Firestore fs = Firestore.instance;
+
+  static Future<List<RouteDTO>> getRoutes() async {
+    List<RouteDTO> list = List();
+    var qs = await fs.collection('routes').getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(RouteDTO.fromJson(qs.documents.first.data));
+      });
+    }
+    return list;
+  }
+
+  static Future<RouteDTO> getRouteByID(String routeID) async {
+    var qs = await fs
+        .collection('routes')
+        .where('routeID', isEqualTo: routeID)
+        .getDocuments();
+    if (qs.documents.isNotEmpty) {
+      return RouteDTO.fromJson(qs.documents.first.data);
+    } else {
+      throw Exception('Route not found');
+    }
+  }
+
   static Future<List<AssociationBag>> getAssociationBags(
       AssociationBagListener listener) async {
     List<VehicleTypeDTO> carTypes = List();
@@ -57,9 +82,8 @@ class ListAPI {
         }
       });
       bag.users = mUsers;
-      bag.carTypes = filter(ass, cars);
-      print(
-          '\nListAPI.getAssociationBags ---------- sending bag to listener ....$bag');
+      bag.carTypes = _filter(ass, cars);
+
       listener.onBag(bag);
       bags.add(bag);
     }
@@ -67,25 +91,28 @@ class ListAPI {
     return bags;
   }
 
-  static List<VehicleTypeDTO> filter(
+  static List<VehicleTypeDTO> _filter(
       AssociationDTO ass, List<VehicleDTO> cars) {
     List<VehicleTypeDTO> list = List();
     cars.forEach((car) {
-      if (!isVehicleTypeFound(list, car.vehicleType)) {
+      if (!_isVehicleTypeFound(list, car.vehicleType)) {
         list.add(car.vehicleType);
       }
     });
-    print(
-        'ListAPI.filter, list of vehicle types for ${ass.associationName}: ${list.length}');
+
     return list;
   }
 
-  static bool isVehicleTypeFound(
+  static bool _isVehicleTypeFound(
       List<VehicleTypeDTO> list, VehicleTypeDTO type) {
     var isFound = false;
     list.forEach((t) {
-      if (type.vehicleTypeID == t.vehicleTypeID) {
-        isFound = true;
+      if (type == null || t == null) {
+        //do nothing
+      } else {
+        if (type.vehicleTypeID == t.vehicleTypeID) {
+          isFound = true;
+        }
       }
     });
     return isFound;

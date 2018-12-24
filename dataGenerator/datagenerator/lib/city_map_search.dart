@@ -1,5 +1,8 @@
 import 'package:aftarobotlibrary/api/file_util.dart';
+import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/citydto.dart';
+import 'package:aftarobotlibrary/data/landmarkdto.dart';
+import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +11,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
 class CityMapSearch extends StatefulWidget {
+  final LandmarkDTO landmark;
+  final RouteDTO route;
+
+  CityMapSearch({this.landmark, this.route});
+
   @override
   _CityMapSearchState createState() => _CityMapSearchState();
 }
@@ -19,6 +27,7 @@ class _CityMapSearchState extends State<CityMapSearch>
       new GlobalKey();
   List<CityDTO> cities;
   CityDTO city;
+  RouteDTO route;
   double mLatitude, mLongitude;
   Location _location = new Location();
   Map<String, double> _startLocation;
@@ -26,12 +35,26 @@ class _CityMapSearchState extends State<CityMapSearch>
   bool _permission = false;
   String error;
   double bottomHeight;
-
+  bool mapIsReady = false;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     initPlatformState();
+    if (widget.landmark != null) {
+      _getRoute();
+    }
+  }
+
+  void _getRoute() async {
+    print('_CityMapSearchState._getRoute ......................');
+    try {
+      route = await ListAPI.getRouteByID(widget.landmark.routeID);
+      prettyPrint(route.toJson(), '################### ROUTE:');
+      _setRouteMarkers(route);
+    } catch (e) {
+      print(e);
+    }
   }
 
   initPlatformState() async {
@@ -62,6 +85,33 @@ class _CityMapSearchState extends State<CityMapSearch>
     });
   }
 
+  void _setRouteMarkers(RouteDTO mRoute) {
+    print('_CityMapSearchState._setRouteMarkers ****************************');
+    if (!mapIsReady) {
+      print('_CityMapSearchState._setRouteMarkers ------ map is NOT ready');
+      return;
+    }
+    try {
+      mRoute.spatialInfos.forEach((si) {
+        _mapController.animateCamera(CameraUpdate.newCameraPosition(
+            CameraPosition(
+                target:
+                    LatLng(si.fromLandmark.latitude, si.fromLandmark.longitude),
+                zoom: 12.0)));
+
+        _mapController.addMarker(MarkerOptions(
+          position: LatLng(si.fromLandmark.latitude, si.fromLandmark.longitude),
+//      icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+          zIndex: 4.0,
+          infoWindowText: InfoWindowText('${si.fromLandmark.landmarkName}',
+              '${si.fromLandmark.routeName}'),
+        ));
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
   void controlMap() {
     _mapController.updateMapOptions(GoogleMapOptions(
         zoomGesturesEnabled: true,
@@ -69,18 +119,35 @@ class _CityMapSearchState extends State<CityMapSearch>
         compassEnabled: true,
         mapType: MapType.normal));
 
-    if (city == null) {
+    if (city == null && widget.landmark == null) {
       print('_CityMapSearchState.setMapStuff -------- city is null. quit!');
       return;
     }
-    _mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-        target: LatLng(city.latitude, city.longitude), zoom: 12.0)));
-    _mapController.addMarker(MarkerOptions(
-      position: LatLng(city.latitude, city.longitude),
+    if (city != null) {
+      _mapController.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(
+              target: LatLng(city.latitude, city.longitude), zoom: 12.0)));
+      _mapController.addMarker(MarkerOptions(
+        position: LatLng(city.latitude, city.longitude),
 //      icon: BitmapDescriptor.fromAsset('assets/computers.png'),
-      zIndex: 4.0,
-      infoWindowText: InfoWindowText('${city.name}', '${city.provinceName}'),
-    ));
+        zIndex: 4.0,
+        infoWindowText: InfoWindowText('${city.name}', '${city.provinceName}'),
+      ));
+    }
+    if (widget.landmark != null) {
+      _mapController.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(
+              target:
+                  LatLng(widget.landmark.latitude, widget.landmark.longitude),
+              zoom: 12.0)));
+      _mapController.addMarker(MarkerOptions(
+        position: LatLng(widget.landmark.latitude, widget.landmark.longitude),
+//      icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+        zIndex: 4.0,
+        infoWindowText: InfoWindowText('${widget.landmark.landmarkName}',
+            '${widget.landmark.routeName} - ${widget.landmark.rankSequenceNumber}'),
+      ));
+    }
   }
 
   bool showMap = false;
@@ -96,7 +163,12 @@ class _CityMapSearchState extends State<CityMapSearch>
             onMapCreated: (controller) {
               print('_ContactUsState.build ------ onMapCreated');
               _mapController = controller;
-              controlMap();
+              mapIsReady = true;
+              if (widget.route != null) {
+                _setRouteMarkers(widget.route);
+              } else {
+                controlMap();
+              }
             },
             options: GoogleMapOptions(
               myLocationEnabled: true,
@@ -187,19 +259,11 @@ class _CityMapSearchState extends State<CityMapSearch>
     // TODO: implement onError
     return null;
   }
-
-  @override
-  onListRoomRequired() {
-    setState(() {
-      bottomHeight = 300.0;
-    });
-  }
 }
 
 abstract class CitySearchBoxListener {
   onCityPicked(CityDTO city);
   onError(String message);
-  onListRoomRequired();
 }
 
 class CitySearchBox extends StatefulWidget {

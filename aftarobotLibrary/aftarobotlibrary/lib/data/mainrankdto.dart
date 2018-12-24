@@ -16,14 +16,37 @@ class MainRankDTO {
   });
 
   MainRankDTO.fromJson(Map data) {
-    this.routeSnippets = data['routeSnippets'];
+    this.routeSnippets = List();
+    if (data['routeSnippets'] != null) {
+      try {
+        Map<dynamic, dynamic> map = data['routeSnippets'];
+        map.forEach((key, value) {
+          routeSnippets.add(RouteDTO.fromJson(value));
+        });
+      } catch (e) {
+        List map = data['routeSnippets'];
+        map.forEach((value) {
+          routeSnippets.add(RouteDTO.fromJson(value));
+        });
+      }
+    }
     this.nickName = data['nickName'];
     this.path = data['path'];
   }
 
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'routeSnippets': routeSnippets,
-        'nickName': nickName,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() {
+    List<Map<String, dynamic>> list = List();
+    if (routeSnippets != null && routeSnippets.isNotEmpty) {
+      routeSnippets.forEach((rs) {
+        list.add(rs.toJson());
+      });
+    }
+
+    Map<String, dynamic> map = {
+      'routeSnippets': list,
+      'nickName': nickName,
+      'path': path,
+    };
+    return map;
+  }
 }

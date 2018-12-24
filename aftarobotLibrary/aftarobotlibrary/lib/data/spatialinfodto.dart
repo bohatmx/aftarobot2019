@@ -31,27 +31,49 @@ class SpatialInfoDTO {
 
   SpatialInfoDTO.fromJson(Map data) {
     this.estimatedTime = data['estimatedTime'];
-    this.distance = data['distance'];
+    if (data['distance'] != null) {
+      if (data['distance'] is double) {
+        this.distance = data['distance'];
+      } else {
+        this.distance = double.parse(data['distance'].toString());
+      }
+    }
+
     this.routeID = data['routeID'];
     this.distanceID = data['distanceID'];
     this.codedPath = data['codedPath'];
     this.stringEstimatedTime = data['stringEstimatedTime'];
     this.stringDistance = data['stringDistance'];
-    this.fromLandmark = data['fromLandmark'];
-    this.toLandmark = data['toLandmark'];
+    if (data['fromLandmark'] != null) {
+      this.fromLandmark = LandmarkDTO.fromJson(data['fromLandmark']);
+    }
+    if (data['toLandmark'] != null) {
+      this.toLandmark = LandmarkDTO.fromJson(data['toLandmark']);
+    }
     this.path = data['path'];
   }
 
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'estimatedTime': estimatedTime,
-        'distance': distance,
-        'routeID': routeID,
-        'distanceID': distanceID,
-        'codedPath': codedPath,
-        'stringEstimatedTime': stringEstimatedTime,
-        'stringDistance': stringDistance,
-        'fromLandmark': fromLandmark,
-        'toLandmark': toLandmark,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> mFrom;
+    Map<String, dynamic> mTo;
+    if (fromLandmark != null) {
+      mFrom = fromLandmark.toJson();
+    }
+    if (toLandmark != null) {
+      mTo = toLandmark.toJson();
+    }
+    Map<String, dynamic> map = {
+      'estimatedTime': estimatedTime,
+      'distance': distance,
+      'routeID': routeID,
+      'distanceID': distanceID,
+      'codedPath': codedPath,
+      'stringEstimatedTime': stringEstimatedTime,
+      'stringDistance': stringDistance,
+      'fromLandmark': mFrom,
+      'toLandmark': mTo,
+      'path': path,
+    };
+    return map;
+  }
 }

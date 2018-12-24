@@ -86,29 +86,38 @@ class VehicleDTO {
     this.path = data['path'];
   }
 
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'vehicleID': vehicleID,
-        'ownerID': ownerID,
-        'associationID': associationID,
-        'countryID': countryID,
-        'ownerName': ownerName,
-        'associationName': associationName,
-        'date': date,
-        'ownerPath': ownerPath,
-        'assocPath': assocPath,
-        'licenceExpiryDate': licenceExpiryDate,
-        'policyIssueDate': policyIssueDate,
-        'policyExpiryDate': policyExpiryDate,
-        'cacheDate': cacheDate,
-        'vehicleType': vehicleType.toJson(),
-        'photoList': photoList,
-        'year': year,
-        'operatingLicence': operatingLicence,
-        'stringDate': stringDate,
-        'vehicleReg': vehicleReg,
-        'status': status,
-        'policyNumber': policyNumber,
-        'selected': selected,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() {
+    Map m;
+    if (vehicleType != null) {
+      m = vehicleType.toJson();
+    } else {
+      print('VehicleDTO.toJson ERROR ERROR vehicle has no type!!!!!!!!!');
+    }
+    Map<String, dynamic> map = {
+      'vehicleID': vehicleID,
+      'ownerID': ownerID,
+      'associationID': associationID,
+      'countryID': countryID,
+      'ownerName': ownerName,
+      'associationName': associationName,
+      'date': date,
+      'ownerPath': ownerPath,
+      'assocPath': assocPath,
+      'licenceExpiryDate': licenceExpiryDate,
+      'policyIssueDate': policyIssueDate,
+      'policyExpiryDate': policyExpiryDate,
+      'cacheDate': cacheDate,
+      'vehicleType': m,
+      'photoList': photoList,
+      'year': year,
+      'operatingLicence': operatingLicence,
+      'stringDate': stringDate,
+      'vehicleReg': vehicleReg,
+      'status': status,
+      'policyNumber': policyNumber,
+      'selected': selected,
+      'path': path,
+    };
+    return map;
+  }
 }

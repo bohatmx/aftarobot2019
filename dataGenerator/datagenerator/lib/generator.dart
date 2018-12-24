@@ -391,12 +391,17 @@ class Generator {
     var t2 = VehicleTypeDTO(
         capacity: 16,
         make: 'Toyota',
-        model: 'sesFikile',
+        model: 'ses\'Fikile',
         vehicleTypeID: getKey());
     var t3 = VehicleTypeDTO(
-        capacity: 20, make: 'Ford', model: 'Mover', vehicleTypeID: getKey());
+        capacity: 20, make: 'Nissan', model: 'E20', vehicleTypeID: getKey());
     var t4 = VehicleTypeDTO(
-        capacity: 16, make: 'Toyota', model: 'Quadro', vehicleTypeID: getKey());
+        capacity: 16, make: 'Toyota', model: 'HiAce', vehicleTypeID: getKey());
+    var t5 = VehicleTypeDTO(
+        capacity: 16,
+        make: 'Nissan',
+        model: 'Impendulo',
+        vehicleTypeID: getKey());
 
     try {
       var type1 = await DataAPI.addVehicleType(t1);
@@ -443,6 +448,17 @@ class Generator {
           style: Styles.blackSmall,
           message:
               "Added: ${type4.make}  ${type4.model} : ${type4.capacity} "));
+      var type5 = await DataAPI.addVehicleType(t5);
+      carTypes.add(type4);
+      generatorListener.onRecordAdded();
+      generatorListener.onEvent(Msg(
+          icon: Icon(
+            Icons.airport_shuttle,
+            color: Colors.indigo,
+          ),
+          style: Styles.blackSmall,
+          message:
+              "Added: ${type5.make}  ${type5.model} : ${type5.capacity} "));
     } catch (e) {
       print(e);
       generatorListener.onError('Failed to add car types $e');

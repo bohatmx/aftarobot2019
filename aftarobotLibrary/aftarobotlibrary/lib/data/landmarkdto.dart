@@ -76,9 +76,28 @@ class LandmarkDTO {
     this.routeName = data['routeName'];
     this.associationName = data['associationName'];
     this.rankSequenceNumber = data['rankSequenceNumber'];
-    this.latitude = data['latitude'];
-    this.longitude = data['longitude'];
-    this.accuracy = data['accuracy'];
+
+    if (data['accuracy'] != null) {
+      if (data['accuracy'] is double) {
+        this.accuracy = data['accuracy'];
+      } else {
+        this.accuracy = double.parse(data['accuracy'].toString());
+      }
+    }
+    if (data['latitude'] != null) {
+      if (data['latitude'] is double) {
+        this.latitude = data['latitude'];
+      } else {
+        this.latitude = double.parse(data['latitude'].toString());
+      }
+    }
+    if (data['longitude'] != null) {
+      if (data['longitude'] is double) {
+        this.longitude = data['longitude'];
+      } else {
+        this.longitude = double.parse(data['longitude'].toString());
+      }
+    }
     this.cacheDate = data['cacheDate'];
     this.gpsScanned = data['gpsScanned'];
     this.landmarkName = data['landmarkName'];
@@ -86,8 +105,10 @@ class LandmarkDTO {
     this.cityName = data['cityName'];
     this.stringDate = data['stringDate'];
     this.date = data['date'];
-    this.distanceFromMe = data['distanceFromMe'];
-    this.mainRank = data['mainRank'];
+
+    if (data['mainRank'] != null) {
+      this.mainRank = MainRankDTO.fromJson(data['mainRank']);
+    }
     this.thisIsMainRank = data['thisIsMainRank'];
     this.virtualLandmark = data['virtualLandmark'];
     this.sortByRankSequence = data['sortByRankSequence'];
@@ -96,33 +117,40 @@ class LandmarkDTO {
     this.path = data['path'];
   }
 
-  Map<String, dynamic> toJson() => <String, dynamic>{
-        'landmarkID': landmarkID,
-        'cityID': cityID,
-        'associationID': associationID,
-        'routeID': routeID,
-        'countryID': countryID,
-        'provinceID': provinceID,
-        'routeName': routeName,
-        'associationName': associationName,
-        'rankSequenceNumber': rankSequenceNumber,
-        'latitude': latitude,
-        'longitude': longitude,
-        'accuracy': accuracy,
-        'cacheDate': cacheDate,
-        'gpsScanned': gpsScanned,
-        'landmarkName': landmarkName,
-        'status': status,
-        'cityName': cityName,
-        'stringDate': stringDate,
-        'date': date,
-        'distanceFromMe': distanceFromMe,
-        'mainRank': mainRank,
-        'thisIsMainRank': thisIsMainRank,
-        'virtualLandmark': virtualLandmark,
-        'sortByRankSequence': sortByRankSequence,
-        'sortByName': sortByName,
-        'sortByDistance': sortByDistance,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> mRank;
+    if (mainRank != null) {
+      mRank = mainRank.toJson();
+    }
+    Map<String, dynamic> map = {
+      'landmarkID': landmarkID,
+      'cityID': cityID,
+      'associationID': associationID,
+      'routeID': routeID,
+      'countryID': countryID,
+      'provinceID': provinceID,
+      'routeName': routeName,
+      'associationName': associationName,
+      'rankSequenceNumber': rankSequenceNumber,
+      'latitude': latitude,
+      'longitude': longitude,
+      'accuracy': accuracy,
+      'cacheDate': cacheDate,
+      'gpsScanned': gpsScanned,
+      'landmarkName': landmarkName,
+      'status': status,
+      'cityName': cityName,
+      'stringDate': stringDate,
+      'date': date,
+      'distanceFromMe': distanceFromMe,
+      'mainRank': mRank,
+      'thisIsMainRank': thisIsMainRank,
+      'virtualLandmark': virtualLandmark,
+      'sortByRankSequence': sortByRankSequence,
+      'sortByName': sortByName,
+      'sortByDistance': sortByDistance,
+      'path': path,
+    };
+    return map;
+  }
 }
