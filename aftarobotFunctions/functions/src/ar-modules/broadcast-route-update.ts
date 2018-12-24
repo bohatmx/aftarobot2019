@@ -4,7 +4,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { AdminDTO } from '../models/aftarobot';
+import { AdminDTO } from "../models/aftarobot";
 
 export const broadcastRouteUpdate = functions.https.onRequest(
   async (request, response) => {
@@ -12,7 +12,6 @@ export const broadcastRouteUpdate = functions.https.onRequest(
       console.log("ERROR - request has no body");
       return response.sendStatus(400);
     }
-  
 
     console.log(`##### Incoming debug ${request.body.debug}`);
     console.log(`##### Incoming data ${JSON.stringify(request.body.data)}`);
@@ -23,8 +22,5 @@ export const broadcastRouteUpdate = functions.https.onRequest(
     // const apiSuffix = "AcceptInvoice";
 
     return null;
-
-
-
   }
 );

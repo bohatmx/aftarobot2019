@@ -13,6 +13,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const constants = require("../models/constants");
+const uuid = require("uuid/v1");
 const aftarobot_1 = require("../models/aftarobot");
 //curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 exports.registerUser = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
@@ -57,7 +59,7 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
                 return ur;
             }
             catch (e) {
-                console.log("Error creating new user:", e);
+                console.error("Error creating new user:", e);
                 throw e;
             }
         });
@@ -67,7 +69,8 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
             try {
                 const userData = user.toFirestoreMap();
                 userData.uid = userRecord.uid;
-                const ref = yield fs.collection("users").add(userData);
+                userData.userID = uuid();
+                const ref = yield fs.collection(constants.Constants.FS_USERS).add(userData);
                 console.log(`user added to Firestore: ${ref.path}`);
                 userData.path = ref.path;
                 yield ref.set(userData);

@@ -13,6 +13,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const constants = require("../models/constants");
+const uuid = require("uuid/v1");
 exports.addVehicleType = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
     if (!request.body) {
         console.log("ERROR - request has no body");
@@ -34,7 +36,22 @@ exports.addVehicleType = functions.https.onRequest((request, response) => __awai
     function writeType() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const ref = yield fs.collection('vehicleTypes').add(vehicleType);
+                if (!vehicleType.countryID) {
+                    const msg = "Missing countryID";
+                    console.error(msg);
+                    throw new Error(msg);
+                }
+                const qs = yield fs.collection(constants.Constants.FS_VEHICLE_TYPES).where('make', '==', vehicleType.make)
+                    .where('model', '==', vehicleType.model)
+                    .where('countryID', '==', vehicleType.countryID)
+                    .get();
+                if (qs.docs.length === 0) {
+                    const msg = 'Vehicle Type already exists in country';
+                    console.error(msg);
+                    throw new Error(msg);
+                }
+                vehicleType.vehicleTypeID = uuid();
+                const ref = yield fs.collection(constants.Constants.FS_VEHICLE_TYPES).add(vehicleType);
                 vehicleType.path = ref.path;
                 yield ref.set(vehicleType);
                 console.log(`car type written to Firestore ${ref.path}`);

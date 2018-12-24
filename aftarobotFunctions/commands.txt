@@ -1,0 +1,5 @@
+firebase deploy --only functions:addLandmark,functions:addRoute,functions:addCountry,functions:addVehicleType,functions:registerUser
+
+firebase firestore:delete --all-collections
+
+npm i -g firebase-tools 

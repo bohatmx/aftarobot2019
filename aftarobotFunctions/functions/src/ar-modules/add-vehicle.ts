@@ -4,6 +4,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import * as constants from '../models/constants'
 const uuid = require("uuid/v1");
 
 export const addVehicle = functions.https.onRequest(
@@ -35,18 +36,35 @@ export const addVehicle = functions.https.onRequest(
     async function writeVehicle() {
       try {
         if (!vehicle.assocPath) {
-          return response.status(400).send("Missing vehicle.assocPath");
+          const msg = `Missing vehicle.assocPath`;
+          console.error(msg);
+          return response.status(400).send(msg);
+        }
+        if (!vehicle.vehicleType) {
+          const msg = `Missing vehicleType`;
+          console.error(msg);
+          return response.status(400).send(msg);
+        }
+        const qs = await fs
+          .doc(vehicle.assocPath)
+          .collection(constants.Constants.FS_VEHICLES)
+          .where("vehicleReg", "==", vehicle.vehicleReg)
+          .get();
+        if (qs.docs.length === 0) {
+          const msg = `Vehicle already exists: ${vehicle.vehicleReg}`;
+          console.error(msg);
+          throw new Error(msg);
         }
         const ref = await fs
           .doc(vehicle.assocPath)
-          .collection("vehicles")
+          .collection(constants.Constants.FS_VEHICLES)
           .add(vehicle);
         vehicle.path = ref.path;
         await ref.set(vehicle);
         if (vehicle.ownerPath) {
           const ref2 = await fs
             .doc(vehicle.ownerPath)
-            .collection("vehicles")
+            .collection(constants.Constants.FS_VEHICLES)
             .add(vehicle);
           vehicle.path = ref2.path;
           await ref.set(vehicle);

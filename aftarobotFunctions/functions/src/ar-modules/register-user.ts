@@ -4,6 +4,8 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import * as constants from "../models/constants";
+const uuid = require("uuid/v1");
 import { AdminDTO, AssociationDTO, UserDTO } from '../models/aftarobot';
 //curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 
@@ -56,7 +58,7 @@ export const registerUser = functions.https.onRequest(
         console.log("Successfully created new user:", ur.uid);
         return ur;
       } catch (e) {
-        console.log("Error creating new user:", e);
+        console.error("Error creating new user:", e);
         throw e;
       }
     }
@@ -64,7 +66,8 @@ export const registerUser = functions.https.onRequest(
       try {
         const userData = user.toFirestoreMap();
         userData.uid = userRecord.uid
-        const ref = await fs.collection("users").add(userData);
+        userData.userID = uuid()
+        const ref = await fs.collection(constants.Constants.FS_USERS).add(userData);
         console.log(`user added to Firestore: ${ref.path}`);
 
         userData.path = ref.path;

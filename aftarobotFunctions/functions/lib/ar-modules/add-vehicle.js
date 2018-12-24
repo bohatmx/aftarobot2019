@@ -13,6 +13,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const constants = require("../models/constants");
 const uuid = require("uuid/v1");
 exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
     if (!request.body) {
@@ -38,18 +39,35 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 if (!vehicle.assocPath) {
-                    return response.status(400).send("Missing vehicle.assocPath");
+                    const msg = `Missing vehicle.assocPath`;
+                    console.error(msg);
+                    return response.status(400).send(msg);
+                }
+                if (!vehicle.vehicleType) {
+                    const msg = `Missing vehicleType`;
+                    console.error(msg);
+                    return response.status(400).send(msg);
+                }
+                const qs = yield fs
+                    .doc(vehicle.assocPath)
+                    .collection(constants.Constants.FS_VEHICLES)
+                    .where("vehicleReg", "==", vehicle.vehicleReg)
+                    .get();
+                if (qs.docs.length === 0) {
+                    const msg = `Vehicle already exists: ${vehicle.vehicleReg}`;
+                    console.error(msg);
+                    throw new Error(msg);
                 }
                 const ref = yield fs
                     .doc(vehicle.assocPath)
-                    .collection("vehicles")
+                    .collection(constants.Constants.FS_VEHICLES)
                     .add(vehicle);
                 vehicle.path = ref.path;
                 yield ref.set(vehicle);
                 if (vehicle.ownerPath) {
                     const ref2 = yield fs
                         .doc(vehicle.ownerPath)
-                        .collection("vehicles")
+                        .collection(constants.Constants.FS_VEHICLES)
                         .add(vehicle);
                     vehicle.path = ref2.path;
                     yield ref.set(vehicle);

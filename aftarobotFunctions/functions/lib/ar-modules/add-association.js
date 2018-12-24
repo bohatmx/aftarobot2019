@@ -13,6 +13,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const constants = require("../models/constants");
+const uuid = require("uuid/v1");
 const aftarobot_1 = require("../models/aftarobot");
 //curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 exports.addAssociation = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
@@ -66,7 +68,7 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
                 return ur;
             }
             catch (e) {
-                console.log("Error creating new user:", e);
+                console.error("Error creating new user:", e);
                 throw e;
             }
         });
@@ -75,14 +77,26 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const assocData = association.toFirestoreMap();
-                const ref = yield fs.collection("associations").add(assocData);
+                assocData.associationID = uuid();
+                const qs = yield fs
+                    .collection(constants.Constants.FS_ASSOCIATIONS)
+                    .where("associationName", "==", association.associationName)
+                    .get();
+                if (qs.docs.length === 0) {
+                    const msg = "Association already exists";
+                    console.error(msg);
+                    throw new Error(msg);
+                }
+                const ref = yield fs
+                    .collection(constants.Constants.FS_ASSOCIATIONS)
+                    .add(assocData);
                 console.log(`association added to Firestore: ${ref.path}`);
                 assocData.path = ref.path;
                 yield ref.set(assocData);
                 console.log(`association updated with path ${ref.path}`);
                 const adminData = administrator.toFirestoreMap();
                 adminData.uid = userRecord.uid;
-                const ref2 = yield ref.collection("administrators").add(adminData);
+                const ref2 = yield ref.collection(constants.Constants.FS_ADMINISTRATORS).add(adminData);
                 console.log(`administrator added to Firestore ${ref2.path}`);
                 adminData.path = ref2.path;
                 yield ref2.set(adminData);

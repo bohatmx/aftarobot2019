@@ -4,6 +4,9 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import * as constants from '../models/constants'
+const uuid = require("uuid/v1");
+
 import { AdminDTO, AssociationDTO } from "../models/aftarobot";
 //curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 
@@ -66,14 +69,26 @@ export const addAssociation = functions.https.onRequest(
         console.log("Successfully created new user:", ur.uid);
         return ur;
       } catch (e) {
-        console.log("Error creating new user:", e);
+        console.error("Error creating new user:", e);
         throw e;
       }
     }
     async function writeAssociation() {
       try {
         const assocData = association.toFirestoreMap();
-        const ref = await fs.collection("associations").add(assocData);
+        assocData.associationID = uuid()
+        const qs = await fs
+          .collection(constants.Constants.FS_ASSOCIATIONS)
+          .where("associationName", "==", association.associationName)
+          .get();
+        if (qs.docs.length === 0) {
+          const msg = "Association already exists";
+          console.error(msg);
+          throw new Error(msg)
+        }
+        const ref = await fs
+          .collection(constants.Constants.FS_ASSOCIATIONS)
+          .add(assocData);
         console.log(`association added to Firestore: ${ref.path}`);
 
         assocData.path = ref.path;
@@ -82,7 +97,7 @@ export const addAssociation = functions.https.onRequest(
 
         const adminData = administrator.toFirestoreMap();
         adminData.uid = userRecord.uid;
-        const ref2 = await ref.collection("administrators").add(adminData);
+        const ref2 = await ref.collection(constants.Constants.FS_ADMINISTRATORS).add(adminData);
         console.log(`administrator added to Firestore ${ref2.path}`);
 
         adminData.path = ref2.path;

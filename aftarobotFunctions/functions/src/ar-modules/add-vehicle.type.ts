@@ -4,6 +4,8 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import * as constants from '../models/constants'
+const uuid = require("uuid/v1");
 
 export const addVehicleType = functions.https.onRequest(
   async (request, response) => {
@@ -30,7 +32,23 @@ export const addVehicleType = functions.https.onRequest(
 
     async function writeType() {
       try {
-        const ref = await fs.collection('vehicleTypes').add(vehicleType);
+        if (!vehicleType.countryID) {
+          const msg = "Missing countryID";
+          console.error(msg);
+          throw new Error(msg);
+        }
+        const qs = await fs.collection(constants.Constants.FS_VEHICLE_TYPES).where('make', '==', vehicleType.make)
+          .where('model', '==', vehicleType.model)
+          .where('countryID','==', vehicleType.countryID)
+          .get()
+        if (qs.docs.length === 0) {
+          const msg = 'Vehicle Type already exists in country'
+          console.error(msg);
+          throw new Error(msg)
+        }
+
+        vehicleType.vehicleTypeID = uuid()
+        const ref = await fs.collection(constants.Constants.FS_VEHICLE_TYPES).add(vehicleType);
         vehicleType.path = ref.path;
         await ref.set(vehicleType);
         console.log(`car type written to Firestore ${ref.path}`)
