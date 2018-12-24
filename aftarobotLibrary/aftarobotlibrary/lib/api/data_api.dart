@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:aftarobotlibrary/data/admindto.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/countrydto.dart';
+import 'package:aftarobotlibrary/data/landmarkdto.dart';
+import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
@@ -31,7 +34,25 @@ class DataAPI {
   static const ADD_ASSOCIATION_URL = URL + 'addAssociation',
       ADD_VEHICLE_TYPE = URL + 'addVehicleType',
       ADD_VEHICLE = URL + 'addVehicle',
+      ADD_COUNTRY = URL + 'addCountry',
+      ADD_LANDMARK = URL + 'addLandmark',
+      ADD_ROUTE = URL + 'addRoute',
       REGISTER_USER = URL + 'registerUser';
+  static List<String> countries = [
+    'South Africa',
+    'Mozambique',
+    'Namibia',
+    'eSwatini',
+    'Zimbabwe',
+    'Tanzania',
+    'Kenya',
+    'Botswana',
+    'Angola',
+    'Uganda',
+    'Malawi',
+    'Zambia',
+    'Lesotho'
+  ];
 
   static Future<UserDTO> registerUser(UserDTO user) async {
     prettyPrint(user.toJson(), '######### User about to register::::');
@@ -52,6 +73,44 @@ class DataAPI {
       var userResult = UserDTO.fromJson(map1);
       prettyPrint(userResult.toJson(), '\n\n@@@@@@@@@@@@@@@@@@@ USER:');
       return userResult;
+    } catch (e) {
+      print(e);
+      throw Exception(e);
+    }
+  }
+
+  static Future<List<CountryDTO>> addCountries() async {
+    List<CountryDTO> list = List();
+    for (var name in countries) {
+      var cntry = await addCountry(CountryDTO(
+        name: name,
+        status: 'Active',
+        date: DateTime.now().millisecondsSinceEpoch,
+      ));
+      list.add(cntry);
+    }
+
+    return list;
+  }
+
+  static Future<CountryDTO> addCountry(CountryDTO country) async {
+    var map = {
+      'country': country.toJson(),
+    };
+
+    print('DataAPI.addCountry : sending to cloud function ..');
+    prettyPrint(map, "############ map;");
+    var res = await _callCloudFunction(ADD_VEHICLE_TYPE, map);
+    print('DataAPI.addCountry, result: ${res.body}');
+    if (res.statusCode != 200) {
+      throw Exception(res.body);
+    }
+
+    try {
+      var map1 = json.decode(res.body);
+      var car = CountryDTO.fromJson(map1);
+      prettyPrint(car.toJson(), '\n\n@@@@@@@@@@@@@@@@@@@ COUNTRY:');
+      return car;
     } catch (e) {
       print(e);
       throw Exception(e);
@@ -105,13 +164,81 @@ class DataAPI {
     }
   }
 
-  static Future<AssociationDTO> addAssociation(
-      {AssociationDTO association, AdminDTO admin}) async {
-    var map = AssociationAPIBag(association: association, administrator: admin);
+  static Future<RouteDTO> addRoute(RouteDTO route) async {
+    prettyPrint(route.toJson(), '\n############### route to create:');
+    var map = {
+      'route': route.toJson(),
+    };
 
+    var res = await _callCloudFunction(ADD_ROUTE, map);
+    print('\nDataAPI.addRoute, result: ${res.body}');
+    if (res.statusCode != 200) {
+      throw Exception(res.body);
+    }
+
+    try {
+      var map1 = json.decode(res.body);
+      var mRoute = RouteDTO.fromJson(map1);
+      prettyPrint(mRoute.toJson(), '\n\n@@@@@@@@@@@@@@@@@@@ ROUTE:');
+      return mRoute;
+    } catch (e) {
+      print(e);
+      throw Exception(e);
+    }
+  }
+
+  static Future<UserDTO> addUser(UserDTO user) async {
+    prettyPrint(user.toJson(), '\n############### user to create:');
+    var map = {
+      'user': user.toJson(),
+    };
+
+    var res = await _callCloudFunction(ADD_LANDMARK, map);
+    print('\nDataAPI.landmark, result: ${res.body}');
+    if (res.statusCode != 200) {
+      throw Exception(res.body);
+    }
+
+    try {
+      var map1 = json.decode(res.body);
+      var mMark = UserDTO.fromJson(map1);
+      prettyPrint(mMark.toJson(), '\n\n@@@@@@@@@@@@@@@@@@@ USER:');
+      return mMark;
+    } catch (e) {
+      print(e);
+      throw Exception(e);
+    }
+  }
+
+  static Future<LandmarkDTO> addLandmark(LandmarkDTO landmark) async {
+    prettyPrint(landmark.toJson(), '\n############### Landmark to create:');
+    var map = {
+      'landmark': landmark.toJson(),
+    };
+
+    var res = await _callCloudFunction(ADD_LANDMARK, map);
+    print('\nDataAPI.landmark, result: ${res.body}');
+    if (res.statusCode != 200) {
+      throw Exception(res.body);
+    }
+
+    try {
+      var map1 = json.decode(res.body);
+      var mMark = LandmarkDTO.fromJson(map1);
+      prettyPrint(mMark.toJson(), '\n\n@@@@@@@@@@@@@@@@@@@ LANDMARK:');
+      return mMark;
+    } catch (e) {
+      print(e);
+      throw Exception(e);
+    }
+  }
+
+  static Future<AssociationDTO> addAssociation(
+      {AssociationDTO association, UserDTO admin}) async {
+    var map = {'association': association.toJson(), 'user': admin.toJson()};
     print('DataAPI.addAssociation : sending to cloud function ..');
-    prettyPrint(map.toJson(), "############ map;");
-    var res = await _callCloudFunction(ADD_ASSOCIATION_URL, map.toJson());
+    prettyPrint(map, "############ map;");
+    var res = await _callCloudFunction(ADD_ASSOCIATION_URL, map);
     print('DataAPI.addAssociation, result: ${res.body}');
     if (res.statusCode != 200) {
       throw Exception(res.body);

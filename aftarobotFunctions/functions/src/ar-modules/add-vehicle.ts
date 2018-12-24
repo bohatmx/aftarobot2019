@@ -4,7 +4,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import * as constants from '../models/constants'
+import * as constants from "../models/constants";
 const uuid = require("uuid/v1");
 
 export const addVehicle = functions.https.onRequest(
@@ -37,6 +37,11 @@ export const addVehicle = functions.https.onRequest(
       try {
         if (!vehicle.assocPath) {
           const msg = `Missing vehicle.assocPath`;
+          console.error(msg);
+          return response.status(400).send(msg);
+        }
+        if (!vehicle.associationID) {
+          const msg = `Missing vehicle associationID`;
           console.error(msg);
           return response.status(400).send(msg);
         }

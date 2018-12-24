@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
+import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
-import 'package:datagenerator/city_map_search.dart';
 import 'package:datagenerator/country_gen.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:flutter/material.dart';

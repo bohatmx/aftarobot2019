@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
 import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
@@ -9,106 +8,131 @@ import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:datagenerator/aftarobot_migration.dart';
+import 'package:datagenerator/generator.dart';
 import 'package:flutter/material.dart';
 
-class RouteMigrator extends StatefulWidget {
+class AftaRobotMigratorPage extends StatefulWidget {
   @override
-  _RouteMigratorState createState() => _RouteMigratorState();
+  _AftaRobotMigratorPageState createState() => _AftaRobotMigratorPageState();
 }
 
-class _RouteMigratorState extends State<RouteMigrator>
+class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     implements RouteMigrationListener, AftaRobotMigrationListener {
-  List<RouteDTO> routes;
-  List<LandmarkDTO> landmarks;
   ScrollController scrollController = ScrollController();
-  String status = 'OLD AftaRobot Routes';
-  int routeCount = 0, landmarkCount = 0;
-  List<AssociationDTO> asses = List();
+  String status = 'The Great AftaRobot Data Migration';
+  int routeCount = 0,
+      landmarkCount = 0,
+      assCount = 0,
+      userCount = 0,
+      carCount = 0,
+      vehicleTypeCnt = 0,
+      countryCount = 0;
+  DateTime start, end;
+  bool isMigrationDone = false, firestoreIsReady = false;
+  List<Msg> messages = List();
   @override
   void initState() {
     super.initState();
-    _getOldRoutes();
-  }
-
-  void _getOldRoutes() async {
-    var tempRoutes = await AftaRobotMigration.getOldRoutes();
-    List<RouteDTO> filteredRoutes = List();
-    tempRoutes.forEach((r) {
-      if (r.spatialInfos.length > 0) {
-        filteredRoutes.add(r);
-      }
-    });
-    routes = filteredRoutes;
-    print(
-        '_RouteMigratorState._getOldRoutes - filtered routes. ${routes.length} routes are valid');
+    _checkMigratedStatus();
     _setCounters();
-
-    setState(() {
-      status = 'OLD AftaRobot Routes';
-    });
   }
+
+  void _checkMigratedStatus() async {
+    Firestore fs = Firestore.instance;
+    var qs0 = await fs.collection('associations').getDocuments();
+    var qs1 = await fs.collection('vehicleTypes').getDocuments();
+    var qs2 = await fs.collection('countries').getDocuments();
+    print(
+        '_AftaRobotMigratorPageState._checkMigratedStatus: associations: ${qs0.documents.length} countries: ${qs2.documents.length} vehicleTypes: ${qs1.documents.length}');
+
+    if (qs0.documents.isEmpty &&
+        qs1.documents.isEmpty &&
+        qs2.documents.isEmpty) {
+      firestoreIsReady = true;
+    } else {
+      firestoreIsReady = false;
+      _getData();
+    }
+    setState(() {});
+  }
+
+  void _getData() async {
+    setState(() {});
+  }
+
+  List<Counter> counters = List();
 
   void _setCounters() {
-    routeCount = routes.length;
-    routes.forEach((r) {
-      r.spatialInfos.forEach((si) {
-        landmarkCount++;
-      });
-    });
+    counters.clear();
+    var c1 = Counter(
+      title: 'Countries',
+      total: countryCount,
+    );
+    counters.add(c1);
+    var c2 = Counter(
+      title: 'Associations',
+      total: assCount,
+    );
+    counters.add(c2);
+    var c3 = Counter(
+      title: 'Users',
+      total: userCount,
+    );
+    counters.add(c3);
+    var c4 = Counter(
+      title: 'Cars',
+      total: carCount,
+    );
+    counters.add(c4);
+    var c5 = Counter(
+      title: 'Car Types',
+      total: vehicleTypeCnt,
+    );
+    counters.add(c5);
+    var c6 = Counter(
+      title: 'Landmarks',
+      total: landmarkCount,
+    );
+    counters.add(c6);
+    var c7 = Counter(
+      title: 'Routes',
+      total: routeCount,
+    );
+    counters.add(c7);
+    setState(() {});
   }
 
-  void _getNewRoutes() async {
-    routes = await ListAPI.getRoutes();
-    _setCounters();
-    setState(() {
-      status = 'NEW AftaRobot Routes';
-    });
-  }
-
-  void _migrateAss() async {
+  void _migrateAftaRobot() async {
     print(
-        '\n\n\n_RouteMigratorState._migrateRoutes -- @@@@@@@@@@@@@@@ START YOUR ENGINES! ...');
+        '\n\n\n_RouteMigratorState._migrateAftaRobot -- @@@@@@@@@@@@@@@ START YOUR ENGINES! ...');
     setState(() {
-      status = 'Migrating Routes ...';
+      status = 'Migrating _migrateAftaRobot ...';
     });
 
     _startTimer();
-    await AftaRobotMigration.migrateOldAftaRobot(
-        listener: this, routeMigrationListener: this);
-    RouteDTO mRoute;
-    routes.forEach((r) {
-      if (r.spatialInfos.isNotEmpty) {
-        mRoute = r;
-      }
-    });
-    print('_RouteMigratorState._migrateRoutes +++++++++++++++++ OFF WE GO!');
+    start = DateTime.now();
+    print('_RouteMigratorState._migrateAftaRobot +++++++++++++++++ OFF WE GO!');
     try {
-      List<RouteDTO> clonedRoutes = List();
-      List<RouteDTO> tempRoutes = List.from(routes);
-      tempRoutes.forEach((r) {
-        if (r.spatialInfos.length > 0) {
-          clonedRoutes.add(r);
-        }
-      });
+      print('_RouteMigratorState._migrateAftaRobot ... start the real work!!');
+      await AftaRobotMigration.migrateOldAftaRobot(
+          listener: this, routeMigrationListener: this);
       print(
-          '_RouteMigratorState._migrateRoutes - sending ${clonedRoutes.length} routes with defined spatialInfos');
-      await AftaRobotMigration.primeQueriesToGetIndexingLink(
-          route: mRoute,
-          landmark: mRoute.spatialInfos.elementAt(0).fromLandmark);
-      print('_RouteMigratorState._migrateRoutes ... start the real work!!');
-      await AftaRobotMigration.migrateRoutes(
-          routes: clonedRoutes, listener: this);
+          '\n\n\n_RouteMigratorState._migrateAftaRobot - migration done? #################b check Firestore');
+      end = DateTime.now();
       print(
-          '\n\n_RouteMigratorState._migrateRoutes - migration done? #################b check Firestore');
+          '_AftaRobotMigratorPageState._migrateAftaRobot - ######## COMPLETE - elapsed ${end.difference(start).inMinutes}');
     } catch (e) {
       print(e);
+      setState(() {
+        status = e.toString();
+      });
     }
   }
 
   Timer timer;
   String timerText;
-  DateTime start, end;
   void _startTimer() {
     if (timer != null) {
       if (timer.isActive) {
@@ -137,119 +161,153 @@ class _RouteMigratorState extends State<RouteMigrator>
     });
   }
 
-  Widget _getListView() {
+  void _showDialog() {
+    showDialog(
+        context: context,
+        builder: (_) => new AlertDialog(
+              title: new Text(
+                "Confirm AftaRobot Migration",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor),
+              ),
+              content: Container(
+                height: 120.0,
+                child: Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text(
+                          'Do you want to migrate ALL the data from the Firebase Realtime Database to the shiny, new Cloud Firestore??'
+                          '\n\nThis will take quite a few minutes so I suggest yo go get a smoke and a coffee :)'),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text(
+                    'NO',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: RaisedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _migrateAftaRobot();
+                    },
+                    elevation: 4.0,
+                    color: Colors.teal.shade500,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Start BigTime Migration',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ));
+  }
+
+  Widget _getList() {
     return ListView.builder(
-        itemCount: routes == null ? 0 : routes.length,
-        controller: scrollController,
+        itemCount: messages.length,
         itemBuilder: (BuildContext context, int index) {
-          return Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16),
-            child: RouteCard(
-              route: routes.elementAt(index),
-              number: index + 1,
+          return ListTile(
+            leading: messages.elementAt(index).icon,
+            title: Text(
+              messages.elementAt(index).message,
+              style: Styles.blackSmall,
             ),
           );
         });
+  }
+
+  Widget _getGrid() {
+    _setCounters();
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GridView.builder(
+          itemCount: 7,
+          gridDelegate:
+              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+          itemBuilder: (BuildContext context, int index) {
+            print('_AftaRobotMigratorPageState._getGrid index $index');
+
+            return CounterCard(
+                total: counters.elementAt(index).total,
+                title: counters.elementAt(index).title);
+          }),
+    );
+  }
+
+  Widget _getBottom() {
+    return PreferredSize(
+      preferredSize: Size.fromHeight(120),
+      child: Column(
+        children: <Widget>[
+          firestoreIsReady == true
+              ? RaisedButton(
+                  elevation: 16,
+                  color: Colors.pink,
+                  onPressed: _showDialog,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Start Your Bloody Engines!',
+                      style: Styles.whiteSmall,
+                    ),
+                  ),
+                )
+              : Container(
+                  color: Colors.brown.shade100,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Looks Migrated Already',
+                      style: Styles.blackBoldLarge,
+                    ),
+                  ),
+                ),
+          SizedBox(
+            height: 8,
+          ),
+          Text(
+            status,
+            style: Styles.whiteSmall,
+          ),
+          SizedBox(
+            height: 20,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('RouteMigrator'),
-        backgroundColor: Colors.indigo.shade300,
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(140),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    RaisedButton(
-                      elevation: 8,
-                      color: Colors.pink,
-                      onPressed: _migrateAss,
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Text(
-                          'Start Migration',
-                          style: Styles.whiteSmall,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    Column(
-                      children: <Widget>[
-                        Text(
-                          '$routeCount',
-                          style: Styles.blackBoldLarge,
-                        ),
-                        Text(
-                          'Routes',
-                          style: Styles.blackSmall,
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      width: 40,
-                    ),
-                    Column(
-                      children: <Widget>[
-                        Text(
-                          '$landmarkCount',
-                          style: Styles.blackBoldLarge,
-                        ),
-                        Text(
-                          'Landmarks',
-                          style: Styles.blackSmall,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 28,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    Text(
-                      status,
-                      style: Styles.whiteSmall,
-                    ),
-                    SizedBox(
-                      width: 40,
-                    ),
-                    Row(
-                      children: <Widget>[
-                        Text(
-                          'Elapsed:',
-                          style: Styles.whiteSmall,
-                        ),
-                        SizedBox(
-                          width: 6,
-                        ),
-                        Text(
-                          timerText == null ? '0' : timerText,
-                          style: Styles.blackBoldSmall,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-              ],
-            ),
-          ),
+        title: Text(
+          'AftaRobot Migrator',
+          style: Styles.whiteBoldMedium,
         ),
+        bottom: _getBottom(),
+        backgroundColor: Colors.indigo.shade300,
       ),
-      body: _getListView(),
-      backgroundColor: Colors.indigo.shade100,
+      body: Stack(
+        children: <Widget>[
+          _getList(),
+          _getGrid(),
+        ],
+      ),
     );
   }
 
@@ -259,9 +317,8 @@ class _RouteMigratorState extends State<RouteMigrator>
     print(
         '_RouteMigratorState.onLandmarkAdded -- %%%%%%%%%%%% ${landmark.landmarkName}');
     newLandmarks.add(landmark);
-    setState(() {
-      landmarkCount--;
-    });
+    landmarkCount = newLandmarks.length;
+    _setCounters();
   }
 
   List<RouteDTO> newRoutes = List();
@@ -269,16 +326,7 @@ class _RouteMigratorState extends State<RouteMigrator>
   onRouteAdded(RouteDTO route) {
     print('\n\n_RouteMigratorState.onRouteAdded -- *********** ${route.name}');
     newRoutes.add(route);
-    List<RouteDTO> mList = List();
-    routes.forEach((r) {
-      if (r.routeID != route.routeID) {
-        mList.add(r);
-      }
-    });
-    routes = mList;
-    setState(() {
-      routeCount = routes.length;
-    });
+    _setCounters();
   }
 
   @override
@@ -293,18 +341,17 @@ class _RouteMigratorState extends State<RouteMigrator>
         timer.cancel();
       }
     }
-    setState(() {
-      routes = newRoutes;
-      routeCount = routes.length;
-    });
+    setState(() {});
   }
 
+  List<AssociationDTO> asses = List();
   @override
   onAssociationAdded(AssociationDTO ass) {
     print(
         '_RouteMigratorState.onAssociationAdded ---- ### ${ass.associationName}');
     asses.add(ass);
-    return null;
+    assCount = asses.length;
+    _setCounters();
   }
 
   List<VehicleDTO> cars = List();
@@ -313,12 +360,64 @@ class _RouteMigratorState extends State<RouteMigrator>
     print(
         '_RouteMigratorState.onVehicleAdded -- ${car.vehicleReg} ${car.path}');
     cars.add(car);
+    carCount = cars.length;
+    _setCounters();
   }
 
+  List<UserDTO> users = List();
   @override
   onUserAdded(UserDTO user) {
     print('_RouteMigratorState.onUserAdded ====> ${user.name}');
-    return null;
+    users.add(user);
+    userCount = users.length;
+    _setCounters();
+  }
+}
+
+class CounterCard extends StatelessWidget {
+  final int total;
+  final String title;
+  final TextStyle totalStyle, titleStyle;
+  final Color cardColor;
+  final Icon icon;
+
+  CounterCard(
+      {@required this.total,
+      @required this.title,
+      this.totalStyle,
+      this.titleStyle,
+      this.cardColor,
+      this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 100,
+      width: 80,
+      child: Card(
+        elevation: 1.0,
+        color: cardColor == null ? getRandomPastelColor() : cardColor,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                '$total',
+                style: totalStyle == null ? Styles.blackBoldLarge : totalStyle,
+              ),
+              SizedBox(
+                height: 4,
+              ),
+              Text(
+                title,
+                style: titleStyle == null ? Styles.greyLabelSmall : titleStyle,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -508,4 +607,11 @@ class SpatialInfoPair extends StatelessWidget {
       );
     }
   }
+}
+
+class Counter {
+  String title;
+  int total;
+
+  Counter({this.title, this.total});
 }

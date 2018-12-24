@@ -4,10 +4,10 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import * as constants from '../models/constants'
+import * as constants from "../models/constants";
 const uuid = require("uuid/v1");
 
-import { AdminDTO, AssociationDTO, UserDTO } from '../models/aftarobot';
+import { AdminDTO, AssociationDTO, UserDTO } from "../models/aftarobot";
 //curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 
 export const addAssociation = functions.https.onRequest(
@@ -21,9 +21,7 @@ export const addAssociation = functions.https.onRequest(
     }
     if (!request.body.user) {
       console.log("ERROR - request has no user");
-      return response
-        .status(400)
-        .send("Request has no user json object");
+      return response.status(400).send("Request has no user json object");
     }
     const fs = admin.firestore();
     try {
@@ -31,11 +29,7 @@ export const addAssociation = functions.https.onRequest(
       fs.settings(settings);
     } catch (e) {}
 
-    console.log(
-      `##### Incoming user ${JSON.stringify(
-        request.body.user
-      )}`
-    );
+    console.log(`##### Incoming user ${JSON.stringify(request.body.user)}`);
     console.log(
       `##### Incoming association ${JSON.stringify(request.body.association)}`
     );
@@ -76,7 +70,9 @@ export const addAssociation = functions.https.onRequest(
     async function writeAssociation() {
       try {
         const assocData = association.toFirestoreMap();
-        assocData.associationID = uuid()
+        if (!assocData.associationID) {
+          assocData.associationID = uuid();
+        }
         const qs = await fs
           .collection(constants.Constants.FS_ASSOCIATIONS)
           .where("associationName", "==", association.associationName)
@@ -84,7 +80,7 @@ export const addAssociation = functions.https.onRequest(
         if (qs.docs.length === 0) {
           const msg = "Association already exists";
           console.error(msg);
-          throw new Error(msg)
+          throw new Error(msg);
         }
         const ref = await fs
           .collection(constants.Constants.FS_ASSOCIATIONS)
@@ -97,11 +93,14 @@ export const addAssociation = functions.https.onRequest(
 
         const adminData = user.toFirestoreMap();
         adminData.uid = userRecord.uid;
-        adminData.userID = uuid()
-        adminData.userType = constants.Constants.ASSOC_ADMIN
-        adminData.userDescription = constants.Constants.ASSOC_ADMIN_DESC
-        
-        const ref2 = await ref.collection(constants.Constants.FS_USERS).add(adminData);
+        adminData.userID = uuid();
+        adminData.associationID = assocData.associationID;
+        adminData.userType = constants.Constants.ASSOC_ADMIN;
+        adminData.userDescription = constants.Constants.ASSOC_ADMIN_DESC;
+
+        const ref2 = await ref
+          .collection(constants.Constants.FS_USERS)
+          .add(adminData);
         console.log(`user added to Firestore ${ref2.path}`);
 
         adminData.path = ref2.path;
@@ -111,7 +110,7 @@ export const addAssociation = functions.https.onRequest(
         await sendMessageToTopic();
         const result = {
           association: assocData,
-          user: adminData,
+          user: adminData
         };
         return response.status(200).send(result);
       } catch (e) {

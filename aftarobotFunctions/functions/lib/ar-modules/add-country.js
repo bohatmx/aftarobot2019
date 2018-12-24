@@ -43,10 +43,10 @@ exports.addCountry = functions.https.onRequest((request, response) => __awaiter(
                 country.countryID = uuid();
                 const qs0 = yield fs
                     .collection(constants.Constants.FS_COUNTRIES)
-                    .where("countryName", "==", country.countryName)
+                    .where("name", "==", country.name)
                     .get();
                 if (qs0.docs.length > 0) {
-                    const msg = `country already exists: ${country.countryName}`;
+                    const msg = `country already exists: ${country.name}`;
                     console.error(msg);
                     throw new Error(msg);
                 }

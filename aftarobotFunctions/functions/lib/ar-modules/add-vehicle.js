@@ -43,6 +43,11 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
                     console.error(msg);
                     return response.status(400).send(msg);
                 }
+                if (!vehicle.associationID) {
+                    const msg = `Missing vehicle associationID`;
+                    console.error(msg);
+                    return response.status(400).send(msg);
+                }
                 if (!vehicle.vehicleType) {
                     const msg = `Missing vehicleType`;
                     console.error(msg);

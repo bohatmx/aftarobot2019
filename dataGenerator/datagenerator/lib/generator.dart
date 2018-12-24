@@ -110,7 +110,6 @@ class Generator {
         style: Styles.blackBoldMedium,
         icon: Icon(Icons.airport_shuttle)));
 
-    await _generateCarTypes();
     generatorListener.onEvent(Msg(
         message: 'Added ${carTypes.length} car types',
         style: Styles.pinkBoldSmall,
@@ -382,91 +381,6 @@ class Generator {
         )));
   }
 
-  static Future _generateCarTypes() async {
-    var t1 = VehicleTypeDTO(
-        capacity: 16,
-        make: 'Toyota',
-        model: 'Quantum',
-        vehicleTypeID: getKey());
-    var t2 = VehicleTypeDTO(
-        capacity: 16,
-        make: 'Toyota',
-        model: 'ses\'Fikile',
-        vehicleTypeID: getKey());
-    var t3 = VehicleTypeDTO(
-        capacity: 20, make: 'Nissan', model: 'E20', vehicleTypeID: getKey());
-    var t4 = VehicleTypeDTO(
-        capacity: 16, make: 'Toyota', model: 'HiAce', vehicleTypeID: getKey());
-    var t5 = VehicleTypeDTO(
-        capacity: 16,
-        make: 'Nissan',
-        model: 'Impendulo',
-        vehicleTypeID: getKey());
-
-    try {
-      var type1 = await DataAPI.addVehicleType(t1);
-      carTypes.add(type1);
-      generatorListener.onRecordAdded();
-      generatorListener.onEvent(Msg(
-          icon: Icon(
-            Icons.airport_shuttle,
-            color: Colors.indigo,
-          ),
-          style: Styles.blackSmall,
-          message: "Added: ${type1.make} ${type1.model} ${type1.capacity}"));
-
-      var type2 = await DataAPI.addVehicleType(t2);
-      carTypes.add(type2);
-      generatorListener.onRecordAdded();
-      generatorListener.onEvent(Msg(
-          icon: Icon(
-            Icons.airport_shuttle,
-            color: Colors.indigo,
-          ),
-          style: Styles.blackSmall,
-          message: "Added: ${type2.make}  ${type2.model} ${type2.capacity}"));
-
-      var type3 = await DataAPI.addVehicleType(t3);
-      carTypes.add(type3);
-      generatorListener.onRecordAdded();
-      generatorListener.onEvent(Msg(
-          icon: Icon(
-            Icons.airport_shuttle,
-            color: Colors.indigo,
-          ),
-          style: Styles.blackSmall,
-          message: "Added: ${type3.make}  ${type3.model} : ${type3.capacity}"));
-
-      var type4 = await DataAPI.addVehicleType(t4);
-      carTypes.add(type4);
-      generatorListener.onRecordAdded();
-      generatorListener.onEvent(Msg(
-          icon: Icon(
-            Icons.airport_shuttle,
-            color: Colors.indigo,
-          ),
-          style: Styles.blackSmall,
-          message:
-              "Added: ${type4.make}  ${type4.model} : ${type4.capacity} "));
-      var type5 = await DataAPI.addVehicleType(t5);
-      carTypes.add(type4);
-      generatorListener.onRecordAdded();
-      generatorListener.onEvent(Msg(
-          icon: Icon(
-            Icons.airport_shuttle,
-            color: Colors.indigo,
-          ),
-          style: Styles.blackSmall,
-          message:
-              "Added: ${type5.make}  ${type5.model} : ${type5.capacity} "));
-    } catch (e) {
-      print(e);
-      generatorListener.onError('Failed to add car types $e');
-    }
-
-    return null;
-  }
-
   static List<String> assNames = [
     'Brits',
     'Madibeng',
@@ -555,15 +469,14 @@ class Generator {
         phone: '+27926557899',
         status: 'Active');
     var det = _getRandomDetails();
-    var adm1 = AdminDTO(
+    var adm1 = UserDTO(
       associationID: ass1.associationID,
-      phone: det.phone,
-      adminID: getKey(),
+      cellphone: det.phone,
+      userID: getKey(),
       name: det.name,
-      date: getUTCDateInt(),
+      dateRegistered: getUTCDateInt(),
       email: det.email,
       password: det.password,
-      status: 'Active',
     );
     list.add(AssocAdminBag(admin: adm1, association: ass1));
 
@@ -582,15 +495,14 @@ class Generator {
         countryName: 'South Africa',
         phone: '+27926557891',
         status: 'Active');
-    var adm2 = AdminDTO(
-      associationID: ass1.associationID,
-      phone: det2.phone,
-      adminID: getKey(),
+    var adm2 = UserDTO(
+      associationID: ass2.associationID,
+      cellphone: det2.phone,
+      userID: getKey(),
       name: det2.name,
-      date: getUTCDateInt(),
+      dateRegistered: getUTCDateInt(),
       email: det2.email,
       password: det2.password,
-      status: 'Active',
     );
     list.add(AssocAdminBag(admin: adm2, association: ass2));
 
@@ -609,15 +521,14 @@ class Generator {
         countryName: 'South Africa',
         phone: det3.phone,
         status: 'Active');
-    var adm3 = AdminDTO(
-      associationID: ass1.associationID,
-      phone: det3.phone,
-      adminID: getKey(),
+    var adm3 = UserDTO(
+      associationID: ass3.associationID,
+      cellphone: det3.phone,
+      userID: getKey(),
       name: det3.name,
-      date: getUTCDateInt(),
+      dateRegistered: getUTCDateInt(),
       email: det3.email,
       password: det3.password,
-      status: 'Active',
     );
     list.add(AssocAdminBag(admin: adm3, association: ass3));
     var name4 = assNames.elementAt(rand.nextInt(assNames.length - 1)) +
@@ -635,15 +546,14 @@ class Generator {
         phone: '+27926557896',
         status: 'Active');
     var det4 = _getRandomDetails();
-    var adm4 = AdminDTO(
-      associationID: ass1.associationID,
-      phone: det4.phone,
-      adminID: getKey(),
+    var adm4 = UserDTO(
+      associationID: ass4.associationID,
+      cellphone: det4.phone,
+      userID: getKey(),
       name: det4.name,
-      date: getUTCDateInt(),
+      dateRegistered: getUTCDateInt(),
       email: det4.email,
       password: det4.password,
-      status: 'Active',
     );
     list.add(AssocAdminBag(admin: adm4, association: ass4));
     var det5 = _getRandomDetails();
@@ -661,15 +571,14 @@ class Generator {
         countryName: 'South Africa',
         phone: '+27926557898',
         status: 'Active');
-    var adm5 = AdminDTO(
-      associationID: ass1.associationID,
-      phone: det5.phone,
-      adminID: getKey(),
+    var adm5 = UserDTO(
+      associationID: ass5.associationID,
+      cellphone: det5.phone,
+      userID: getKey(),
       name: det5.name,
-      date: getUTCDateInt(),
+      dateRegistered: getUTCDateInt(),
       email: det5.email,
       password: det5.password,
-      status: 'Active',
     );
     list.add(AssocAdminBag(admin: adm5, association: ass5));
     return list;
@@ -678,7 +587,7 @@ class Generator {
 
 class AssocAdminBag {
   AssociationDTO association;
-  AdminDTO admin;
+  UserDTO admin;
 
   AssocAdminBag({this.association, this.admin});
 }

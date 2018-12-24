@@ -27,9 +27,7 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
     }
     if (!request.body.user) {
         console.log("ERROR - request has no user");
-        return response
-            .status(400)
-            .send("Request has no user json object");
+        return response.status(400).send("Request has no user json object");
     }
     const fs = admin.firestore();
     try {
@@ -77,7 +75,9 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const assocData = association.toFirestoreMap();
-                assocData.associationID = uuid();
+                if (!assocData.associationID) {
+                    assocData.associationID = uuid();
+                }
                 const qs = yield fs
                     .collection(constants.Constants.FS_ASSOCIATIONS)
                     .where("associationName", "==", association.associationName)
@@ -97,9 +97,12 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
                 const adminData = user.toFirestoreMap();
                 adminData.uid = userRecord.uid;
                 adminData.userID = uuid();
+                adminData.associationID = assocData.associationID;
                 adminData.userType = constants.Constants.ASSOC_ADMIN;
                 adminData.userDescription = constants.Constants.ASSOC_ADMIN_DESC;
-                const ref2 = yield ref.collection(constants.Constants.FS_USERS).add(adminData);
+                const ref2 = yield ref
+                    .collection(constants.Constants.FS_USERS)
+                    .add(adminData);
                 console.log(`user added to Firestore ${ref2.path}`);
                 adminData.path = ref2.path;
                 yield ref2.set(adminData);
@@ -107,7 +110,7 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
                 yield sendMessageToTopic();
                 const result = {
                     association: assocData,
-                    user: adminData,
+                    user: adminData
                 };
                 return response.status(200).send(result);
             }

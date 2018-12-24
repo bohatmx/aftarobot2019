@@ -1,8 +1,9 @@
 import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
+import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
-import 'package:datagenerator/city_map_search.dart';
+import 'package:datagenerator/aftarobot_migrator_page.dart';
 import 'package:datagenerator/city_migrate.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:datagenerator/main.dart';
@@ -43,7 +44,7 @@ class _ExistingDataPageState extends State<ExistingDataPage>
     });
   }
 
-  void _startPage() {
+  void _startLocationTestPage() {
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => LocationTestPage()),
@@ -75,6 +76,13 @@ class _ExistingDataPageState extends State<ExistingDataPage>
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => CityMigrator()),
+    );
+  }
+
+  void _startAftaMigrator() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => AftaRobotMigratorPage()),
     );
   }
 
@@ -199,7 +207,7 @@ class _ExistingDataPageState extends State<ExistingDataPage>
           BottomNavigationBarItem(
             icon: Icon(Icons.directions),
             title: Text(
-              'Routes',
+              'Migrate',
               style: Styles.blackSmall,
             ),
           ),
@@ -208,19 +216,29 @@ class _ExistingDataPageState extends State<ExistingDataPage>
         onTap: (int index) {
           switch (index) {
             case 0:
+              print(
+                  '_ExistingDataPageState.build -- #1 _startCityMigrator() index: $index');
               _startCityMigrator();
               break;
             case 1:
+              print(
+                  '_ExistingDataPageState.build -- #2 _startCitySearchPage() index: $index');
               _startCitySearchPage();
               break;
             case 2:
-              _startPage();
+              print(
+                  '_ExistingDataPageState.build -- #3 _startPage() index: $index');
+              _startLocationTestPage();
               break;
             case 3:
+              print(
+                  '_ExistingDataPageState.build -- #4 _startGenerationPage() index: $index');
               _startGenerationPage();
               break;
             case 4:
-              _startRouteMigrator();
+              print(
+                  '_ExistingDataPageState.build -- #5 _startAftaMigrator() index: $index');
+              _startAftaMigrator();
               break;
           }
         },

@@ -1,6 +1,7 @@
 import 'package:aftarobotlibrary/data/admindto.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
@@ -11,15 +12,81 @@ abstract class AssociationBagListener {
   onBag(AssociationBag bag);
 }
 
+/*
+var qs0 = await fs.collection('associations').getDocuments();
+    var qs1 = await fs.collection('vehicleTypes').getDocuments();
+    var qs2 = await fs.collection('countries').getDocuments();
+ */
 class ListAPI {
   static Firestore fs = Firestore.instance;
+
+  static Future<List<VehicleDTO>> getAssociationVehicles(
+      String associationPath) async {
+    List<VehicleDTO> list = List();
+    var qs = await fs
+        .document(associationPath)
+        .collection('vehicles')
+        .getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(VehicleDTO.fromJson(doc.data));
+      });
+    }
+    return list;
+  }
+
+  static Future<List<UserDTO>> getAssociationUsers(
+      String associationPath) async {
+    List<UserDTO> list = List();
+    var qs =
+        await fs.document(associationPath).collection('users').getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(UserDTO.fromJson(doc.data));
+      });
+    }
+    return list;
+  }
+
+  static Future<List<AssociationDTO>> getAssociations() async {
+    List<AssociationDTO> list = List();
+    var qs = await fs.collection('associations').getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(AssociationDTO.fromJson(doc.data));
+      });
+    }
+    return list;
+  }
+
+  static Future<List<VehicleTypeDTO>> getVehicleTypes() async {
+    List<VehicleTypeDTO> list = List();
+    var qs = await fs.collection('vehicleTypes').getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(VehicleTypeDTO.fromJson(doc.data));
+      });
+    }
+    return list;
+  }
+
+  static Future<List<CountryDTO>> getCountries() async {
+    List<CountryDTO> list = List();
+    var qs = await fs.collection('countries').getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(CountryDTO.fromJson(doc.data));
+      });
+    }
+    return list;
+  }
 
   static Future<List<RouteDTO>> getRoutes() async {
     List<RouteDTO> list = List();
     var qs = await fs.collection('routes').getDocuments();
     if (qs.documents.isNotEmpty) {
       qs.documents.forEach((doc) {
-        list.add(RouteDTO.fromJson(qs.documents.first.data));
+        list.add(RouteDTO.fromJson(doc.data));
       });
     }
     return list;
