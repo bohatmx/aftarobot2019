@@ -65,7 +65,7 @@ export const addLandmark = functions.https.onRequest(
             landmark.landmarkName
           } routeID: ${landmark.routeID}`;
           console.error(msg);
-          throw new Error(msg);
+          return response.status(201).send(landmark);
         }
         const qs = await fs
           .collection(constants.Constants.FS_LANDMARKS)
@@ -78,7 +78,7 @@ export const addLandmark = functions.https.onRequest(
             landmark.landmarkName
           } routeID: ${landmark.routeID}`;
           console.error(msg);
-          throw new Error(msg);
+          return response.status(201).send(landmark);
         }
         const ref = await fs
           .collection(constants.Constants.FS_LANDMARKS)

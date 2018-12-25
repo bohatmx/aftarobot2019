@@ -44,7 +44,7 @@ export const registerUser = functions.https.onRequest(
         const ur = await admin.auth().createUser({
           email: user.email,
           emailVerified: false,
-          phoneNumber: user.cellphone,
+          // phoneNumber: user.cellphone,
           password: user.password,
           displayName: user.name,
           disabled: false

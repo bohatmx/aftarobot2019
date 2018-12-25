@@ -25,11 +25,15 @@ exports.addVehicleType = functions.https.onRequest((request, response) => __awai
         const settings = { /* your settings... */ timestampsInSnapshots: true };
         firestore.settings(settings);
     }
-    catch (e) {
-    }
+    catch (e) { }
     console.log(`##### Incoming debug ${request.body.debug}`);
     console.log(`##### Incoming vehicleType ${JSON.stringify(request.body.vehicleType)}`);
     const vehicleType = request.body.vehicleType;
+    if (!vehicleType) {
+        const msg = "ERROR - request has no vehicleType";
+        console.error(msg);
+        return response.status(400).send(msg);
+    }
     const fs = admin.firestore();
     yield writeType();
     return null;
@@ -41,17 +45,21 @@ exports.addVehicleType = functions.https.onRequest((request, response) => __awai
                     console.error(msg);
                     throw new Error(msg);
                 }
-                const qs = yield fs.collection(constants.Constants.FS_VEHICLE_TYPES).where('make', '==', vehicleType.make)
-                    .where('model', '==', vehicleType.model)
-                    .where('countryID', '==', vehicleType.countryID)
+                const qs = yield fs
+                    .collection(constants.Constants.FS_VEHICLE_TYPES)
+                    .where("make", "==", vehicleType.make)
+                    .where("model", "==", vehicleType.model)
+                    .where("countryID", "==", vehicleType.countryID)
                     .get();
-                if (qs.docs.length === 0) {
-                    const msg = 'Vehicle Type already exists in country';
+                if (qs.docs.length > 0) {
+                    const msg = "Vehicle Type already exists in country";
                     console.error(msg);
                     throw new Error(msg);
                 }
                 vehicleType.vehicleTypeID = uuid();
-                const ref = yield fs.collection(constants.Constants.FS_VEHICLE_TYPES).add(vehicleType);
+                const ref = yield fs
+                    .collection(constants.Constants.FS_VEHICLE_TYPES)
+                    .add(vehicleType);
                 vehicleType.path = ref.path;
                 yield ref.set(vehicleType);
                 console.log(`car type written to Firestore ${ref.path}`);

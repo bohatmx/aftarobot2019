@@ -82,7 +82,7 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
                     .collection(constants.Constants.FS_ASSOCIATIONS)
                     .where("associationName", "==", association.associationName)
                     .get();
-                if (qs.docs.length === 0) {
+                if (qs.docs.length > 0) {
                     const msg = "Association already exists";
                     console.error(msg);
                     throw new Error(msg);

@@ -66,7 +66,7 @@ exports.addLandmark = functions.https.onRequest((request, response) => __awaiter
                 if (qs0.docs.length > 0) {
                     const msg = `Landmark already exists on this route: ${landmark.landmarkName} routeID: ${landmark.routeID}`;
                     console.error(msg);
-                    throw new Error(msg);
+                    return response.status(201).send(landmark);
                 }
                 const qs = yield fs
                     .collection(constants.Constants.FS_LANDMARKS)
@@ -77,7 +77,7 @@ exports.addLandmark = functions.https.onRequest((request, response) => __awaiter
                 if (qs.docs.length > 0) {
                     const msg = `Landmark already exists: ${landmark.landmarkName} routeID: ${landmark.routeID}`;
                     console.error(msg);
-                    throw new Error(msg);
+                    return response.status(201).send(landmark);
                 }
                 const ref = yield fs
                     .collection(constants.Constants.FS_LANDMARKS)

@@ -58,7 +58,7 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
                     .collection(constants.Constants.FS_VEHICLES)
                     .where("vehicleReg", "==", vehicle.vehicleReg)
                     .get();
-                if (qs.docs.length === 0) {
+                if (qs.docs.length > 0) {
                     const msg = `Vehicle already exists: ${vehicle.vehicleReg}`;
                     console.error(msg);
                     throw new Error(msg);
