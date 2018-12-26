@@ -7,10 +7,12 @@ import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
-import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:http/http.dart' as http;
 
-
+/*
+Something weird going on with intellij fucking up this file.
+What the fucking hell???
+ */
 class DataAPI {
   static const URL =
       'https://us-central1-aftarobot2019-dev1.cloudfunctions.net/';
@@ -21,7 +23,7 @@ class DataAPI {
       ADD_LANDMARK = URL + 'addLandmark',
       ADD_ROUTE = URL + 'addRoute',
       REGISTER_USER = URL + 'registerUser';
-  static List<String> countries = [
+  static List<String> countryNames = [
     'South Africa',
     'Mozambique',
     'Namibia',
@@ -43,31 +45,36 @@ class DataAPI {
     };
 
     var res = await _callCloudFunction(REGISTER_USER, map);
-    if (res.statusCode != 200) {
-      throw Exception(res.body);
-    }
-
-    try {
-      var map1 = json.decode(res.body);
-      var userResult = UserDTO.fromJson(map1);
-      return userResult;
-    } catch (e) {
-      print(e);
-      throw Exception(e);
+    switch (res.statusCode) {
+      case 200:
+        try {
+          var map1 = json.decode(res.body);
+          var userResult = UserDTO.fromJson(map1);
+          return userResult;
+        } catch (e) {
+          print(e);
+          throw e;
+        }
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
     }
   }
 
   static Future<List<CountryDTO>> addCountries() async {
     List<CountryDTO> list = List();
-    for (var name in countries) {
-      var cntry = await addCountry(CountryDTO(
+    for (var name in countryNames) {
+      var country = await addCountry(CountryDTO(
         name: name,
         status: 'Active',
         date: DateTime.now().millisecondsSinceEpoch,
       ));
-      list.add(cntry);
+      list.add(country);
     }
-
+    print('DataAPI.addCountries, ################## countries: ${list.length}');
     return list;
   }
 
@@ -77,17 +84,22 @@ class DataAPI {
     };
 
     var res = await _callCloudFunction(ADD_COUNTRY, map);
-    if (res.statusCode != 200) {
-      throw Exception(res.body);
-    }
-
-    try {
-      var map1 = json.decode(res.body);
-      var car = CountryDTO.fromJson(map1);
-      return car;
-    } catch (e) {
-      print(e);
-      throw Exception(e);
+    switch (res.statusCode) {
+      case 200:
+        try {
+          var map1 = json.decode(res.body);
+          var mCountry = CountryDTO.fromJson(map1);
+          return mCountry;
+        } catch (e) {
+          print(e);
+          throw Exception(e);
+        }
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
     }
   }
 
@@ -97,17 +109,22 @@ class DataAPI {
     };
 
     var res = await _callCloudFunction(ADD_VEHICLE_TYPE, map);
-    if (res.statusCode != 200) {
-      throw Exception(res.body);
-    }
-
-    try {
-      var map1 = json.decode(res.body);
-      var car = VehicleTypeDTO.fromJson(map1);
-      return car;
-    } catch (e) {
-      print(e);
-      throw Exception(e);
+    switch (res.statusCode) {
+      case 200:
+        try {
+          var map1 = json.decode(res.body);
+          var car = VehicleTypeDTO.fromJson(map1);
+          return car;
+        } catch (e) {
+          print(e);
+          throw Exception(e);
+        }
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
     }
   }
 
@@ -117,17 +134,22 @@ class DataAPI {
     };
 
     var res = await _callCloudFunction(ADD_VEHICLE, map);
-    if (res.statusCode != 200) {
-      throw Exception(res.body);
-    }
-
-    try {
-      var map1 = json.decode(res.body);
-      var car = VehicleDTO.fromJson(map1);
-      return car;
-    } catch (e) {
-      print(e);
-      throw Exception(e);
+    switch (res.statusCode) {
+      case 200:
+        try {
+          var map1 = json.decode(res.body);
+          var car = VehicleDTO.fromJson(map1);
+          return car;
+        } catch (e) {
+          print(e);
+          throw Exception(e);
+        }
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
     }
   }
 
@@ -137,17 +159,25 @@ class DataAPI {
     };
 
     var res = await _callCloudFunction(ADD_ROUTE, map);
+    switch (res.statusCode) {
+      case 200:
+        try {
+          var map1 = json.decode(res.body);
+          var mRoute = RouteDTO.fromJson(map1);
+          return mRoute;
+        } catch (e) {
+          print(e);
+          throw Exception(e);
+        }
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
+    }
     if (res.statusCode != 200) {
       throw Exception(res.body);
-    }
-
-    try {
-      var map1 = json.decode(res.body);
-      var mRoute = RouteDTO.fromJson(map1);
-      return mRoute;
-    } catch (e) {
-      print(e);
-      throw Exception(e);
     }
   }
 
@@ -177,17 +207,27 @@ class DataAPI {
     };
 
     var res = await _callCloudFunction(ADD_LANDMARK, map);
-    if (res.statusCode != 200) {
-      throw Exception(res.body);
+    switch (res.statusCode) {
+      case 200:
+        _processLandmarkResult(res);
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
     }
+    return _processLandmarkResult(res);
+  }
 
+  static LandmarkDTO _processLandmarkResult(res) {
     try {
       var map1 = json.decode(res.body);
       var mMark = LandmarkDTO.fromJson(map1);
       return mMark;
     } catch (e) {
       print(e);
-      throw Exception(e);
+      throw Exception('Unable to parse landmark result');
     }
   }
 
@@ -259,6 +299,7 @@ class DataAPI {
       RANK_MANAGER_DESC = "Rank Manager",
       ROUTE_BUILDER_DESC = "Route Builder";
 }
+
 class AssociationAPIBag {
   AssociationDTO association;
   UserDTO user;
@@ -271,7 +312,7 @@ class AssociationAPIBag {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'association': association.toJson(),
-    'user': user.toJson(),
-  };
+        'association': association.toJson(),
+        'user': user.toJson(),
+      };
 }

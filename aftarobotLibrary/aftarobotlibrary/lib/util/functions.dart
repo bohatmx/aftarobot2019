@@ -696,3 +696,9 @@ String getFormattedAmount(String amount, BuildContext context) {
     return amount;
   }
 }
+
+bool get isInDebugMode {
+  bool inDebugMode = false;
+  assert(inDebugMode = true);
+  return inDebugMode;
+}

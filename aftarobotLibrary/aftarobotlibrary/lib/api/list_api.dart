@@ -1,4 +1,3 @@
-import 'package:aftarobotlibrary/data/admindto.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
@@ -127,10 +126,7 @@ class ListAPI {
     for (var mdoc in qs0.documents) {
       carTypes.add(VehicleTypeDTO.fromJson(mdoc.data));
     }
-    var qs3 = await fs.collection('users').getDocuments();
-    for (var mdoc in qs3.documents) {
-      users.add(UserDTO.fromJson(mdoc.data));
-    }
+
     var qs1 = await fs.collection('associations').getDocuments();
     for (var doc in qs1.documents) {
       var ass = AssociationDTO.fromJson(doc.data);
@@ -138,29 +134,21 @@ class ListAPI {
 
       AssociationBag bag = AssociationBag();
       bag.association = ass;
-      List<AdminDTO> admins = List();
-      var qs1a =
-          await doc.reference.collection('administrators').getDocuments();
+
+      List<UserDTO> admins = List();
+      var qs1a = await doc.reference.collection('users').getDocuments();
       for (var doc2 in qs1a.documents) {
-        admins.add(AdminDTO.fromJson(doc2.data));
+        admins.add(UserDTO.fromJson(doc2.data));
       }
-      bag.admins = admins;
+      bag.users = admins;
+
       List<VehicleDTO> cars = List();
       var qs1b = await doc.reference.collection('vehicles').getDocuments();
       for (var doc2 in qs1b.documents) {
-        //prettyPrint(doc2.data, '############### VEHICLE:');
         cars.add(VehicleDTO.fromJson(doc2.data));
       }
       bag.cars = cars;
 
-      //extract assoc users
-      List<UserDTO> mUsers = List();
-      users.forEach((user) {
-        if (user.associationID == ass.associationID) {
-          mUsers.add(user);
-        }
-      });
-      bag.users = mUsers;
       bag.carTypes = _filter(ass, cars);
 
       listener.onBag(bag);

@@ -66,9 +66,11 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
                 return ur;
             }
             catch (e) {
-                console.error("Error creating new user:", e);
-                throw e;
+                const msg = "Error creating new Firebase auth user";
+                console.error(msg);
+                response.status(400).send(msg);
             }
+            return null;
         });
     }
     function writeAssociation() {
@@ -85,7 +87,7 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
                 if (qs.docs.length > 0) {
                     const msg = "Association already exists";
                     console.error(msg);
-                    throw new Error(msg);
+                    return response.status(201).send(msg);
                 }
                 const ref = yield fs
                     .collection(constants.Constants.FS_ASSOCIATIONS)
@@ -117,8 +119,8 @@ exports.addAssociation = functions.https.onRequest((request, response) => __awai
             catch (e) {
                 console.log(e);
                 response.status(400).send(e);
-                return null;
             }
+            return null;
         });
     }
     function sendMessageToTopic() {

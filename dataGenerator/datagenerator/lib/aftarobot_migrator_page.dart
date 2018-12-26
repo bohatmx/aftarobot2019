@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
@@ -11,6 +12,7 @@ import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
+import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:datagenerator/aftarobot_migration.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +23,13 @@ class AftaRobotMigratorPage extends StatefulWidget {
 }
 
 class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
-    implements RouteMigrationListener, AftaRobotMigrationListener {
+    with TickerProviderStateMixin
+    implements AftaRobotMigrationListener, SnackBarListener {
   ScrollController scrollController = ScrollController();
+  AnimationController animationController;
+  Animation animation;
+  final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
+
   String status = 'The Great AftaRobot Data Migration';
   int routeCount = 0,
       landmarkCount = 0,
@@ -46,85 +53,322 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     super.initState();
     _checkMigratedStatus();
     _setCounters();
+    _initializeMessages();
+    animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+    animation =
+        new CurvedAnimation(parent: animationController, curve: Curves.linear);
+  }
+
+  void _initializeMessages() {
+    var msg = Msg(
+      icon: Icon(
+        Icons.apps,
+        color: getRandomColor(),
+      ),
+      message: 'The action has yet to start',
+      style: Styles.blackBoldMedium,
+    );
+    var msg2 = Msg(
+      icon: Icon(
+        Icons.apps,
+        color: getRandomColor(),
+      ),
+      message: 'Pressing the Big Red Button might change things, eh?',
+      style: Styles.greyLabelSmall,
+    );
+
+    setState(() {
+      messages.add(msg);
+      messages.add(msg2);
+    });
   }
 
   void _checkMigratedStatus() async {
-    asses = await ListAPI.getAssociations();
-    carTypes = await ListAPI.getVehicleTypes();
-    countries = await ListAPI.getCountries();
-    print('_AftaRobotMigratorPageState._checkMigratedStatus: ###########  '
-        'associations: ${asses.length} countries: ${countries.length} '
-        'vehicleTypes: ${carTypes.length}');
-
-    if (countries.isEmpty && carTypes.isEmpty && asses.isEmpty) {
+    await _getCachedData();
+    if (landmarks.isEmpty) {
       firestoreIsReady = true;
     } else {
       firestoreIsReady = false;
-      _getData();
+      messages.clear();
+      messages.add(Msg(
+        icon: Icon(Icons.airplanemode_active),
+        message:
+            'This is new Firestore data. Yay! or rather, Yebo Gogo! AftaRobot is ready for action',
+        style: Styles.purpleBoldSmall,
+      ));
     }
-    setState(() {});
+    print('_AftaRobotMigratorPageState._checkMigratedStatus: ###########  '
+        'landmarks from LocalDB: ${landmarks.length}');
   }
 
-  void _getData() async {
-    landmarks = await ListAPI.getLandmarks();
-    routes = await ListAPI.getRoutes();
+  Future _getCachedData() async {
+    print(
+        '\n\n\n_AftaRobotMigratorPageState._getCachedData ........... from LocalDB');
+    var start = DateTime.now();
+    try {
+      countries = await LocalDB.getCountries();
+      asses = await LocalDB.getAssociations();
+      users = await LocalDB.getUsers();
+      vehicles = await LocalDB.getVehicles();
+      carTypes = await LocalDB.getVehicleTypes();
+      landmarks = await LocalDB.getLandmarks();
+      routes = await LocalDB.getRoutes();
+      await _setCounters(animationIndex: CountriesIndex);
+      await _setCounters(animationIndex: AssIndex);
+      await _setCounters(animationIndex: UserIndex);
+      await _setCounters(animationIndex: CarIndex);
+      await _setCounters(animationIndex: CarTypeIndex);
+      await _setCounters(animationIndex: LandmarkIndex);
+      await _setCounters(animationIndex: RouteIndex);
+      print(
+          '_AftaRobotMigratorPageState._getCachedData; \ncountries: ${countries.length}\nassocs: ${asses.length}\n'
+          'users: ${users.length} \ncars: ${vehicles.length} \ncarTypes: ${carTypes.length}\n'
+          'landmarks: ${landmarks.length} \nroutes: ${routes.length}');
+      var end = DateTime.now();
+      print(
+          '_AftaRobotMigratorPageState._getCachedData - elapsed ${end.difference(start).inMilliseconds} ms');
+      _setCounters();
+    } catch (e) {
+      print(e);
+    }
+    //refresh from Firestore
+    //_getFreshDataFromFirestore();
+  }
 
+  Future _getFreshDataFromFirestore() async {
+    print(
+        '\n\n_AftaRobotMigratorPageState._getFreshDataFromFirestore .............');
+    var start = DateTime.now();
+    try {
+      countries = await ListAPI.getCountries();
+      if (countries.isNotEmpty) {
+        await LocalDB.saveCountries(Countries(countries));
+      }
+
+      asses = await ListAPI.getAssociations();
+      if (asses.isNotEmpty) {
+        await LocalDB.saveAssociations(Associations(asses));
+      }
+
+      carTypes = await ListAPI.getVehicleTypes();
+      if (carTypes.isNotEmpty) {
+        await LocalDB.saveVehicleTypes(VehicleTypes(carTypes));
+      }
+      await _getMoreData();
+      var end = DateTime.now();
+      print(
+          '_AftaRobotMigratorPageState._getFreshDataFromFirestore ass: ${asses.length} types: ${carTypes.length} countries: ${countries.length}');
+      print(
+          '_AftaRobotMigratorPageState._getFreshDataFromFirestore - ${end.difference(start).inMilliseconds} ms');
+    } catch (e) {
+      print(e);
+      AppSnackbar.showErrorSnackbar(
+          scaffoldKey: _key,
+          message: 'We have a data problem, sir!',
+          listener: this,
+          actionLabel: 'ok');
+    }
+  }
+
+  Future _getMoreData() async {
+    print(
+        '\n\n_AftaRobotMigratorPageState.__getMoreData............................');
+    _showBusySnack('Loading Firestore data');
+    var start = DateTime.now();
+    landmarks = await ListAPI.getLandmarks();
+    if (landmarks.isNotEmpty) {
+      await LocalDB.saveLandmarks(Landmarks(landmarks));
+    }
+
+    routes = await ListAPI.getRoutes();
+    if (routes.isNotEmpty) {
+      await LocalDB.saveRoutes(Routes(routes));
+    }
+
+    users.clear();
+    vehicles.clear();
     for (var ass in asses) {
       var cars = await ListAPI.getAssociationVehicles(ass.path);
+      print(
+          '_AftaRobotMigratorPageState._getMoreData cars: ${cars.length} from ${ass.associationName} : ${ass.path} - addAll to list');
+
       vehicles.addAll(cars);
-      var musers = await ListAPI.getAssociationUsers(ass.path);
-      users.addAll(musers);
+      var mUsers = await ListAPI.getAssociationUsers(ass.path);
+      print(
+          '_AftaRobotMigratorPageState._getMoreData mUsers: ${mUsers.length} from ${ass.associationName} : ${ass.path} - addAll to list');
+      users.addAll(mUsers);
     }
-    setState(() {});
+    if (vehicles.isNotEmpty) {
+      await LocalDB.saveVehicles(Vehicles(vehicles));
+    }
+    if (users.isNotEmpty) {
+      await LocalDB.saveUsers(Users(users));
+    }
+
+    _key.currentState.removeCurrentSnackBar();
+    var end = DateTime.now();
+    print(
+        '_AftaRobotMigratorPageState._getMoreData - elapsed: ${end.difference(start).inMilliseconds} ms');
+    print(
+        '_AftaRobotMigratorPageState._getMoreData - landmarks: ${landmarks.length} '
+        'routes: ${routes.length} cars: ${vehicles.length} users: ${users.length}: finished. setCounters now. Fool!');
+    _setCounters();
+    return null;
   }
 
   List<Counter> counters = List();
 
-  void _setCounters() {
+  Future _setCounters({int animationIndex}) async {
     counters.clear();
+
     var c1 = Counter(
-      title: 'Countries',
-      total: countryCount,
-    );
+        title: CountriesCounter,
+        icon: Icon(Icons.language),
+        total: countries.length,
+        animationRequired:
+            _getAnimationSwitch(animationIndex, CountriesCounter));
     counters.add(c1);
+
     var c2 = Counter(
-      title: 'Associations',
-      total: assCount,
-    );
+        title: AssCounter,
+        icon: Icon(Icons.apps),
+        total: asses.length,
+        animationRequired: _getAnimationSwitch(animationIndex, AssCounter));
     counters.add(c2);
+
     var c3 = Counter(
-      title: 'Users',
-      total: userCount,
+      title: UserCounter,
+      icon: Icon(Icons.people),
+      total: users.length,
+      animationRequired: _getAnimationSwitch(animationIndex, UserCounter),
     );
+
     counters.add(c3);
     var c4 = Counter(
-      title: 'Cars',
-      total: carCount,
+      title: CarCounter,
+      icon: Icon(Icons.airport_shuttle),
+      total: vehicles.length,
+      animationRequired: _getAnimationSwitch(animationIndex, CarCounter),
     );
+
     counters.add(c4);
+
     var c5 = Counter(
-      title: 'Car Types',
-      total: vehicleTypeCnt,
-    );
+        title: CarTypeCounter,
+        icon: Icon(Icons.airport_shuttle),
+        total: carTypes.length,
+        animationRequired: _getAnimationSwitch(animationIndex, CarTypeCounter));
     counters.add(c5);
+
     var c6 = Counter(
-      title: 'Landmarks',
-      total: landmarkCount,
+      title: LandmarkCounter,
+      icon: Icon(Icons.location_on),
+      total: landmarks.length,
+      animationRequired: _getAnimationSwitch(animationIndex, LandmarkCounter),
     );
     counters.add(c6);
+
     var c7 = Counter(
-      title: 'Routes',
-      total: routeCount,
-    );
+        title: RouteCounter,
+        icon: Icon(Icons.my_location),
+        total: routes.length,
+        animationRequired: _getAnimationSwitch(animationIndex, RouteCounter));
     counters.add(c7);
+
     setState(() {});
+
+    return null;
+  }
+
+  bool _getAnimationSwitch(int animationIndex, String title) {
+    if (animationIndex == null) {
+      return false;
+    }
+    switch (title) {
+      case CountriesCounter:
+        if (animationIndex == 0) {
+          return true;
+        } else {
+          return null;
+        }
+        break;
+      case AssCounter:
+        if (animationIndex == 1) {
+          return true;
+        } else {
+          return null;
+        }
+        break;
+      case UserCounter:
+        if (animationIndex == 2) {
+          return true;
+        } else {
+          return null;
+        }
+        break;
+      case CarCounter:
+        if (animationIndex == 3) {
+          return true;
+        } else {
+          return null;
+        }
+        break;
+      case CarTypeCounter:
+        if (animationIndex == 4) {
+          return true;
+        } else {
+          return null;
+        }
+        break;
+      case LandmarkCounter:
+        if (animationIndex == 5) {
+          return true;
+        } else {
+          return null;
+        }
+        break;
+      case RouteCounter:
+        if (animationIndex == 6) {
+          return true;
+        } else {
+          return null;
+        }
+        break;
+      default:
+        return null;
+    }
+  }
+
+  static const CountriesCounter = 'Countries',
+      AssCounter = 'Associations',
+      UserCounter = 'Users',
+      CarCounter = 'Cars',
+      CarTypeCounter = ' Types',
+      LandmarkCounter = 'Landmarks',
+      RouteCounter = 'Routes';
+  static const CountriesIndex = 0,
+      AssIndex = 1,
+      UserIndex = 2,
+      CarIndex = 3,
+      CarTypeIndex = 4,
+      LandmarkIndex = 5,
+      RouteIndex = 6;
+  void _showBusySnack(String message) {
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: message,
+        textColor: Colors.white,
+        backgroundColor: Colors.black);
   }
 
   void _migrateAftaRobot() async {
     print(
         '\n\n\n_RouteMigratorState._migrateAftaRobot -- @@@@@@@@@@@@@@@ START YOUR ENGINES! ...');
     setState(() {
-      status = 'Migrating _migrateAftaRobot ...';
+      status = 'Migrating ... moving data bits :)';
     });
 
     _startTimer();
@@ -132,8 +376,11 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     print('_RouteMigratorState._migrateAftaRobot +++++++++++++++++ OFF WE GO!');
     try {
       print('_RouteMigratorState._migrateAftaRobot ... start the real work!!');
-      await AftaRobotMigration.migrateOldAftaRobot(
-          listener: this, routeMigrationListener: this);
+//      await AftaRobotMigration.migrateCars(listener: this);
+      await AftaRobotMigration.migrateOldAftaRobot(listener: this);
+//      var oldRoutes = await AftaRobotMigration.getOldRoutes();
+//      await AftaRobotMigration.migrateRoutes(
+//          routes: oldRoutes, mListener: this);
       print(
           '\n\n\n_RouteMigratorState._migrateAftaRobot - migration done? #################b check Firestore');
       end = DateTime.now();
@@ -141,8 +388,16 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           '_AftaRobotMigratorPageState._migrateAftaRobot - ######## COMPLETE - elapsed ${end.difference(start).inMinutes}');
     } catch (e) {
       print(e);
+      messages.add(Msg(
+        icon: Icon(
+          Icons.error,
+          color: Colors.red.shade800,
+        ),
+        message: e.toString(),
+        style: Styles.pinkBoldSmall,
+      ));
       setState(() {
-        status = e.toString();
+        status = 'Problem. Check logs below';
       });
     }
   }
@@ -234,36 +489,6 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
             ));
   }
 
-  Widget _getList() {
-    return ListView.builder(
-        itemCount: messages.length,
-        itemBuilder: (BuildContext context, int index) {
-          return ListTile(
-            leading: messages.elementAt(index).icon,
-            title: Text(
-              messages.elementAt(index).message,
-              style: Styles.blackSmall,
-            ),
-          );
-        });
-  }
-
-  Widget _getGrid() {
-    _setCounters();
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: GridView.builder(
-          itemCount: 7,
-          gridDelegate:
-              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
-          itemBuilder: (BuildContext context, int index) {
-            return CounterCard(
-                total: counters.elementAt(index).total,
-                title: counters.elementAt(index).title);
-          }),
-    );
-  }
-
   Widget _getBottom() {
     return PreferredSize(
       preferredSize: Size.fromHeight(120),
@@ -309,19 +534,116 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
 
   @override
   Widget build(BuildContext context) {
+    if (messages == null) {
+      _initializeMessages();
+    }
     return Scaffold(
+      key: _key,
       appBar: AppBar(
         title: Text(
           'AftaRobot Migrator',
           style: Styles.whiteBoldMedium,
         ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _refresh,
+          ),
+        ],
         bottom: _getBottom(),
         backgroundColor: Colors.indigo.shade300,
       ),
       body: Stack(
         children: <Widget>[
-          _getList(),
-          _getGrid(),
+          Opacity(
+            opacity: 0.2,
+            child: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/fincash.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CustomScrollView(
+              slivers: <Widget>[
+                SliverGrid(
+                  delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
+                      animationController.reset();
+                      animationController.forward();
+                      //check whether animation required
+                      if (counters.elementAt(index).animationRequired == null) {
+                        return CounterCard(
+                          total: counters.elementAt(index).total,
+                          title: counters.elementAt(index).title,
+                          icon: counters.elementAt(index).icon,
+                        );
+                      }
+                      if (counters.elementAt(index).animationRequired) {
+                        return CounterCard(
+                          total: counters.elementAt(index).total,
+                          title: counters.elementAt(index).title,
+                          icon: counters.elementAt(index).icon,
+                          animation: animationController,
+                        );
+                      } else {
+                        return CounterCard(
+                          total: counters.elementAt(index).total,
+                          title: counters.elementAt(index).title,
+                          icon: counters.elementAt(index).icon,
+                        );
+                      }
+                    },
+                    childCount: counters.length,
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      crossAxisCount: 3),
+                ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int index) {
+                    if (messages == null || messages.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Card(
+                          elevation: 6.0,
+                          color: getRandomPastelColor(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: <Widget>[
+                                Text(
+                                  'Migration has not started yet',
+                                  style: Styles.blackMedium,
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (index >= messages.length) {
+                      return null;
+                    }
+                    return ListTile(
+                      leading: messages.elementAt(index).icon,
+                      title: Text(
+                        messages.elementAt(index).message,
+                        style: messages.elementAt(index).style,
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -335,9 +657,11 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     landmarkCount = landmarks.length;
     var msg = Msg(
         icon: Icon(Icons.location_on, color: getRandomColor()),
+        style: Styles.blackSmall,
         message: 'Landmark - ${landmark.landmarkName}');
     messages.add(msg);
-    _setCounters();
+    animationIndex = LandmarkIndex;
+    _setCounters(animationIndex: LandmarkIndex);
   }
 
   @override
@@ -347,9 +671,12 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     routeCount = routes.length;
     var msg = Msg(
         icon: Icon(Icons.airport_shuttle, color: getRandomColor()),
+        style: Styles.blueBoldSmall,
         message: 'Route - ${route.name}');
+
     messages.add(msg);
-    _setCounters();
+    animationIndex = RouteIndex;
+    _setCounters(animationIndex: RouteIndex);
   }
 
   @override
@@ -380,9 +707,11 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           Icons.apps,
           color: getRandomColor(),
         ),
+        style: Styles.brownBoldSmall,
         message: 'Association - ${ass.associationName}');
     messages.add(msg);
-    _setCounters();
+    animationIndex = AssIndex;
+    _setCounters(animationIndex: AssIndex);
   }
 
   @override
@@ -396,10 +725,12 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           Icons.airport_shuttle,
           color: getRandomColor(),
         ),
+        style: Styles.blackSmall,
         message:
             'Vehicle: - ${car.vehicleReg} - ${car.vehicleType.make} ${car.vehicleType.model}');
     messages.add(msg);
-    _setCounters();
+    animationIndex = CarIndex;
+    _setCounters(animationIndex: CarIndex);
   }
 
   @override
@@ -412,9 +743,97 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           Icons.person,
           color: getRandomColor(),
         ),
+        style: Styles.blackSmall,
         message: 'Users - ${user.name} ${user.email}');
     messages.add(msg);
+    animationIndex = UserIndex;
+
+    _setCounters(animationIndex: UserIndex);
+  }
+
+  int animationIndex;
+  @override
+  onCountriesAdded(List<CountryDTO> countries) {
+    print('_AftaRobotMigratorPageState.onCountriesAdded: ${countries.length}');
+    this.countries = countries;
+    countryCount = countries.length;
+    countries.forEach((c) {
+      var msg = Msg(
+          icon: Icon(
+            Icons.group_work,
+            color: getRandomColor(),
+          ),
+          style: Styles.purpleBoldSmall,
+          message: 'Country: - ${c.name} ');
+      messages.add(msg);
+    });
+    animationIndex = CountriesIndex;
+    _setCounters(animationIndex: CountriesIndex);
+  }
+
+  @override
+  onVehicleTypeAdded(VehicleTypeDTO carType) {
+    print(
+        '_AftaRobotMigratorPageState.onVehicleTypeAdded:  - ${carType.make} ${carType.model} ');
+    carTypes.add(carType);
+    vehicleTypeCnt = carTypes.length;
+    var msg = Msg(
+        icon: Icon(
+          Icons.airport_shuttle,
+          color: getRandomColor(),
+        ),
+        style: Styles.blueBoldSmall,
+        message: 'Car Type - ${carType.make} ${carType.model}');
+    messages.add(msg);
+    animationIndex = CarTypeIndex;
+    _setCounters(animationIndex: CarTypeIndex);
+  }
+
+  @override
+  onDuplicateRecord(String message) {
+    setState(() {
+      var msg = Msg(
+          icon: Icon(
+            Icons.cancel,
+            color: Colors.deepOrange,
+          ),
+          style: Styles.pinkBoldSmall,
+          message: message);
+      messages.add(msg);
+    });
+  }
+
+  @override
+  onGenericMessage(String message) {
+    setState(() {
+      var msg = Msg(
+          icon: Icon(
+            Icons.message,
+            color: Colors.black,
+          ),
+          style: Styles.blackBoldMedium,
+          message: message);
+      messages.add(msg);
+    });
+  }
+
+  void _refresh() {
+    countries.clear();
+    asses.clear();
+    users.clear();
+    vehicles.clear();
+    carTypes.clear();
+    landmarks.clear();
+    routes.clear();
     _setCounters();
+
+    _getFreshDataFromFirestore();
+  }
+
+  @override
+  onActionPressed(int action) {
+    // TODO: implement onActionPressed
+    return null;
   }
 }
 
@@ -424,6 +843,7 @@ class CounterCard extends StatelessWidget {
   final TextStyle totalStyle, titleStyle;
   final Color cardColor;
   final Icon icon;
+  final AnimationController animation;
 
   CounterCard(
       {@required this.total,
@@ -431,25 +851,38 @@ class CounterCard extends StatelessWidget {
       this.totalStyle,
       this.titleStyle,
       this.cardColor,
+      this.animation,
       this.icon});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 100,
+      height: 140,
       width: 80,
       child: Card(
-        elevation: 1.0,
+        elevation: 4.0,
         color: cardColor == null ? getRandomPastelColor() : cardColor,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text(
-                '$total',
-                style: totalStyle == null ? Styles.blackBoldLarge : totalStyle,
-              ),
+              animation == null
+                  ? Text(
+                      '$total',
+                      style: totalStyle == null
+                          ? Styles.blackBoldLarge
+                          : totalStyle,
+                    )
+                  : ScaleTransition(
+                      scale: animation,
+                      child: Text(
+                        '$total',
+                        style: totalStyle == null
+                            ? Styles.blackBoldLarge
+                            : totalStyle,
+                      ),
+                    ),
               SizedBox(
                 height: 4,
               ),
@@ -457,6 +890,7 @@ class CounterCard extends StatelessWidget {
                 title,
                 style: titleStyle == null ? Styles.greyLabelSmall : titleStyle,
               ),
+              icon == null ? Icon(Icons.print) : icon,
             ],
           ),
         ),
@@ -654,8 +1088,10 @@ class SpatialInfoPair extends StatelessWidget {
 }
 
 class Counter {
-  String title;
-  int total;
+  final String title;
+  final int total;
+  final Icon icon;
+  final bool animationRequired;
 
-  Counter({this.title, this.total});
+  Counter({this.title, this.total, this.icon, this.animationRequired});
 }

@@ -2,23 +2,25 @@ import 'dart:async';
 
 import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/spatialinfodto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
+import 'package:aftarobotlibrary/data/vehicletypedto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:datagenerator/aftarobot_migration.dart';
 import 'package:flutter/material.dart';
 
-class RouteMigrator extends StatefulWidget {
+class RouteViewerPage extends StatefulWidget {
   @override
-  _RouteMigratorState createState() => _RouteMigratorState();
+  _RouteViewerPageState createState() => _RouteViewerPageState();
 }
 
-class _RouteMigratorState extends State<RouteMigrator>
-    implements RouteMigrationListener, AftaRobotMigrationListener {
+class _RouteViewerPageState extends State<RouteViewerPage>
+    implements AftaRobotMigrationListener {
   List<RouteDTO> routes;
   List<LandmarkDTO> landmarks;
   ScrollController scrollController = ScrollController();
@@ -74,8 +76,7 @@ class _RouteMigratorState extends State<RouteMigrator>
     });
 
     _startTimer();
-    await AftaRobotMigration.migrateOldAftaRobot(
-        listener: this, routeMigrationListener: this);
+
     RouteDTO mRoute;
     routes.forEach((r) {
       if (r.spatialInfos.isNotEmpty) {
@@ -97,8 +98,7 @@ class _RouteMigratorState extends State<RouteMigrator>
           route: mRoute,
           landmark: mRoute.spatialInfos.elementAt(0).fromLandmark);
       print('_RouteMigratorState._migrateRoutes ... start the real work!!');
-      await AftaRobotMigration.migrateRoutes(
-          routes: clonedRoutes, listener: this);
+
       print(
           '\n\n_RouteMigratorState._migrateRoutes - migration done? #################b check Firestore');
     } catch (e) {
@@ -316,6 +316,30 @@ class _RouteMigratorState extends State<RouteMigrator>
   @override
   onUserAdded(UserDTO user) {
     print('_RouteMigratorState.onUserAdded ====> ${user.name}');
+    return null;
+  }
+
+  @override
+  onCountriesAdded(List<CountryDTO> countries) {
+    // TODO: implement onCountriesAdded
+    return null;
+  }
+
+  @override
+  onVehicleTypeAdded(VehicleTypeDTO car) {
+    // TODO: implement onVehicleTypeAdded
+    return null;
+  }
+
+  @override
+  onDuplicateRecord(String message) {
+    // TODO: implement onDuplicateRecord
+    return null;
+  }
+
+  @override
+  onGenericMessage(String message) {
+    // TODO: implement onGenericMessage
     return null;
   }
 }

@@ -49,7 +49,7 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
                     return response.status(400).send(msg);
                 }
                 if (!vehicle.vehicleType) {
-                    const msg = `Missing vehicleType`;
+                    const msg = `Missing vehicle type`;
                     console.error(msg);
                     return response.status(400).send(msg);
                 }
@@ -61,7 +61,7 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
                 if (qs.docs.length > 0) {
                     const msg = `Vehicle already exists: ${vehicle.vehicleReg}`;
                     console.error(msg);
-                    throw new Error(msg);
+                    return response.status(201).send(vehicle);
                 }
                 const ref = yield fs
                     .doc(vehicle.assocPath)
@@ -78,7 +78,7 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
                     yield ref.set(vehicle);
                 }
                 else {
-                    console.log(`car has no owner path, please check: ${vehicle.vehicleReg}`);
+                    console.error(`car has no owner path, please check: ${vehicle.vehicleReg}`);
                 }
                 console.log(`car written to Firestore ${ref.path}`);
                 return response.status(200).send(vehicle);

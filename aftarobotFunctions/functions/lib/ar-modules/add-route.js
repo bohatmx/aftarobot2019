@@ -49,9 +49,9 @@ exports.addRoute = functions.https.onRequest((request, response) => __awaiter(th
                     .where("name", "==", route.name)
                     .get();
                 if (qs0.docs.length > 0) {
-                    const msg = `route already exists: ${route.name}`;
+                    const msg = `Route already exists: ${route.name}`;
                     console.error(msg);
-                    throw new Error(msg);
+                    return response.status(201).send(msg);
                 }
                 const ref = yield fs.collection(constants.Constants.FS_ROUTES).add(route);
                 route.path = ref.path;

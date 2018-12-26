@@ -46,7 +46,7 @@ export const addVehicle = functions.https.onRequest(
           return response.status(400).send(msg);
         }
         if (!vehicle.vehicleType) {
-          const msg = `Missing vehicleType`;
+          const msg = `Missing vehicle type`;
           console.error(msg);
           return response.status(400).send(msg);
         }
@@ -58,7 +58,7 @@ export const addVehicle = functions.https.onRequest(
         if (qs.docs.length > 0) {
           const msg = `Vehicle already exists: ${vehicle.vehicleReg}`;
           console.error(msg);
-          throw new Error(msg);
+          return response.status(201).send(vehicle);
         }
         const ref = await fs
           .doc(vehicle.assocPath)
@@ -74,7 +74,7 @@ export const addVehicle = functions.https.onRequest(
           vehicle.path = ref2.path;
           await ref.set(vehicle);
         } else {
-          console.log(
+          console.error(
             `car has no owner path, please check: ${vehicle.vehicleReg}`
           );
         }

@@ -1,6 +1,6 @@
 "use strict";
 // ######################################################################
-// Accept Invoice to BFN and Firestore
+// Add VehicleType to Firestore
 // ######################################################################
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -43,7 +43,7 @@ exports.addVehicleType = functions.https.onRequest((request, response) => __awai
                 if (!vehicleType.countryID) {
                     const msg = "Missing countryID";
                     console.error(msg);
-                    throw new Error(msg);
+                    return response.status(400).send(msg);
                 }
                 const qs = yield fs
                     .collection(constants.Constants.FS_VEHICLE_TYPES)
@@ -54,7 +54,7 @@ exports.addVehicleType = functions.https.onRequest((request, response) => __awai
                 if (qs.docs.length > 0) {
                     const msg = "Vehicle Type already exists in country";
                     console.error(msg);
-                    throw new Error(msg);
+                    return response.status(201).send(vehicleType);
                 }
                 vehicleType.vehicleTypeID = uuid();
                 const ref = yield fs

@@ -52,8 +52,8 @@ export const registerUser = functions.https.onRequest(
         console.log("Successfully created new user:", ur.uid);
         return ur;
       } catch (e) {
-        console.error("Error creating new Firebase auth user:", e);
-        throw e;
+        const msg = "Error creating new Firebase auth user:";
+        return response.status(400).send(msg);
       }
     }
     async function writeUser() {
@@ -69,7 +69,7 @@ export const registerUser = functions.https.onRequest(
           if (qs.docs.length === 0) {
             const msg = "Association does not exist";
             console.error(msg);
-            throw new Error(msg);
+            return response.status(400).send(msg);
           }
           const ref = await qs.docs[0].ref
             .collection(constants.Constants.FS_USERS)

@@ -1,5 +1,4 @@
 import 'package:aftarobotlibrary/api/data_api.dart';
-import 'package:aftarobotlibrary/data/admindto.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
@@ -7,7 +6,6 @@ import 'package:aftarobotlibrary/data/vehicletypedto.dart';
 
 class AssociationBag {
   AssociationDTO association;
-  List<AdminDTO> admins;
   List<VehicleDTO> cars;
   List<VehicleTypeDTO> carTypes;
   List<UserDTO> users = List(),
@@ -19,7 +17,6 @@ class AssociationBag {
 
   AssociationBag(
       {this.association,
-      this.admins,
       this.cars,
       this.carTypes,
       this.users,
@@ -29,7 +26,8 @@ class AssociationBag {
       this.patrollers});
 
   void filterUsers() {
-    _setList();
+    _initializeLists();
+
     users.forEach((user) {
       switch (user.userType) {
         case DataAPI.OWNER:
@@ -51,7 +49,7 @@ class AssociationBag {
     });
   }
 
-  void _setList() {
+  void _initializeLists() {
     owners = List();
     officeAdmins = List();
     drivers = List();

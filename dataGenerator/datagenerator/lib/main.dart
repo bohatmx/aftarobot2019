@@ -1,6 +1,6 @@
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
-import 'package:datagenerator/existing_data.dart';
+import 'package:datagenerator/dashboard.dart';
 import 'package:datagenerator/generator.dart';
 import 'package:datagenerator/new_page.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.pink,
       ),
-      home: ExistingDataPage(),
+      home: Dashboard(),
     );
   }
 }
@@ -92,7 +92,7 @@ class _GenerationPageState extends State<GenerationPage>
   void _startExistingPage() {
     Navigator.push(
       context,
-      new MaterialPageRoute(builder: (context) => ExistingDataPage()),
+      new MaterialPageRoute(builder: (context) => Dashboard()),
     );
   }
 

@@ -57,8 +57,8 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
                 return ur;
             }
             catch (e) {
-                console.error("Error creating new Firebase auth user:", e);
-                throw e;
+                const msg = "Error creating new Firebase auth user:";
+                return response.status(400).send(msg);
             }
         });
     }
@@ -76,7 +76,7 @@ exports.registerUser = functions.https.onRequest((request, response) => __awaite
                     if (qs.docs.length === 0) {
                         const msg = "Association does not exist";
                         console.error(msg);
-                        throw new Error(msg);
+                        return response.status(400).send(msg);
                     }
                     const ref = yield qs.docs[0].ref
                         .collection(constants.Constants.FS_USERS)

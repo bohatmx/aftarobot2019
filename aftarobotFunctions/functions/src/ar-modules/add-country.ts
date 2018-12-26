@@ -43,9 +43,9 @@ export const addCountry = functions.https.onRequest(
           .where("name", "==", country.name)
           .get();
         if (qs0.docs.length > 0) {
-          const msg = `country already exists: ${country.name}`;
+          const msg = `Country already exists: ${country.name}`;
           console.error(msg);
-          throw new Error(msg);
+          return response.status(201).send(country);
         }
 
         const ref = await fs

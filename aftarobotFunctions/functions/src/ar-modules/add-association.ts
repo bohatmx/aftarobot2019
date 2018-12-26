@@ -7,7 +7,7 @@ import * as admin from "firebase-admin";
 import * as constants from "../models/constants";
 const uuid = require("uuid/v1");
 
-import { AdminDTO, AssociationDTO, UserDTO } from "../models/aftarobot";
+import { AssociationDTO, UserDTO } from "../models/aftarobot";
 //curl --header "Content-Type: application/json"   --request POST   --data '{"adminID": "32a26a20-bd30-11e8-84f5-63a97aaac795","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/addAssociation
 
 export const addAssociation = functions.https.onRequest(
@@ -63,9 +63,11 @@ export const addAssociation = functions.https.onRequest(
         console.log("Successfully created new user:", ur.uid);
         return ur;
       } catch (e) {
-        console.error("Error creating new user:", e);
-        throw e;
+        const msg = "Error creating new Firebase auth user";
+        console.error(msg);
+        response.status(400).send(msg);
       }
+      return null;
     }
     async function writeAssociation() {
       try {
@@ -80,7 +82,7 @@ export const addAssociation = functions.https.onRequest(
         if (qs.docs.length > 0) {
           const msg = "Association already exists";
           console.error(msg);
-          throw new Error(msg);
+          return response.status(201).send(msg);
         }
         const ref = await fs
           .collection(constants.Constants.FS_ASSOCIATIONS)
@@ -116,8 +118,8 @@ export const addAssociation = functions.https.onRequest(
       } catch (e) {
         console.log(e);
         response.status(400).send(e);
-        return null;
       }
+      return null;
     }
     async function sendMessageToTopic() {
       const topic = "associationsAdded";

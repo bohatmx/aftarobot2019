@@ -44,9 +44,9 @@ export const addRoute = functions.https.onRequest(async (request, response) => {
         .where("name", "==", route.name)
         .get();
       if (qs0.docs.length > 0) {
-        const msg = `route already exists: ${route.name}`;
+        const msg = `Route already exists: ${route.name}`;
         console.error(msg);
-        throw new Error(msg);
+        return response.status(201).send(msg);
       }
 
       const ref = await fs.collection(constants.Constants.FS_ROUTES).add(route);

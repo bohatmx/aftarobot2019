@@ -1,5 +1,5 @@
 // ######################################################################
-// Accept Invoice to BFN and Firestore
+// Add VehicleType to Firestore
 // ######################################################################
 
 import * as functions from "firebase-functions";
@@ -40,7 +40,7 @@ export const addVehicleType = functions.https.onRequest(
         if (!vehicleType.countryID) {
           const msg = "Missing countryID";
           console.error(msg);
-          throw new Error(msg);
+          return response.status(400).send(msg);
         }
         const qs = await fs
           .collection(constants.Constants.FS_VEHICLE_TYPES)
@@ -51,7 +51,7 @@ export const addVehicleType = functions.https.onRequest(
         if (qs.docs.length > 0) {
           const msg = "Vehicle Type already exists in country";
           console.error(msg);
-          throw new Error(msg);
+          return response.status(201).send(vehicleType);
         }
 
         vehicleType.vehicleTypeID = uuid();

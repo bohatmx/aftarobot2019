@@ -7,7 +7,6 @@ import 'package:aftarobotlibrary/data/userdto.dart';
 */
 
 class LandmarkDTO {
-  String TAG;
   String landmarkID;
   String cityID;
   String associationID;
@@ -115,6 +114,7 @@ class LandmarkDTO {
     this.sortByName = data['sortByName'];
     this.sortByDistance = data['sortByDistance'];
     this.path = data['path'];
+    print(this);
   }
 
   Map<String, dynamic> toJson() {
