@@ -79,14 +79,11 @@ class RouteDTO {
         });
       }
     } catch (e) {
-//      print(
-//          'RouteDTO.fromJson --- FALLING DOWN HERE! $e. Trying Firestore format ...');
       List spats = data['spatialInfos'];
       spats.forEach((value) {
         SpatialInfoDTO spatialInfo = SpatialInfoDTO.fromJson(value);
         this.spatialInfos.add(spatialInfo);
       });
-//      print('RouteDTO.fromJson, Firestore format worked OK');
     }
 
     this.path = data['path'];

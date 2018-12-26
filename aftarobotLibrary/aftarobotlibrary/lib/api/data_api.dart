@@ -21,7 +21,9 @@ class DataAPI {
       ADD_VEHICLE = URL + 'addVehicle',
       ADD_COUNTRY = URL + 'addCountry',
       ADD_LANDMARK = URL + 'addLandmark',
+      ADD_LANDMARKS = URL + 'addLandmarks',
       ADD_ROUTE = URL + 'addRoute',
+      CHECK_LOGS = URL + 'checkLogs',
       REGISTER_USER = URL + 'registerUser';
   static List<String> countryNames = [
     'South Africa',
@@ -201,6 +203,46 @@ class DataAPI {
     }
   }
 
+  static Future<List<LandmarkDTO>> addLandmarks(
+      List<LandmarkDTO> landmarks) async {
+    List<Map> maps = List();
+    landmarks.forEach((m) {
+      maps.add(m.toJson());
+    });
+    var map = {
+      'landmarks': maps,
+    };
+
+    var res = await _callCloudFunction(ADD_LANDMARKS, map);
+    switch (res.statusCode) {
+      case 200:
+        _processLandmarksResult(res);
+        break;
+      case 201:
+        return List();
+      default:
+        throw Exception(res.body);
+        break;
+    }
+    return _processLandmarksResult(res);
+  }
+
+  static List<LandmarkDTO> _processLandmarksResult(res) {
+    List<LandmarkDTO> mList = List();
+    try {
+      List<dynamic> list = json.decode(res.body);
+      list.forEach((map1) {
+        LandmarkDTO mMark = LandmarkDTO.fromJson(map1);
+        mList.add(mMark);
+      });
+
+      return mList;
+    } catch (e) {
+      print(e);
+      throw Exception('Unable to parse landmarks result');
+    }
+  }
+
   static Future<LandmarkDTO> addLandmark(LandmarkDTO landmark) async {
     var map = {
       'landmark': landmark.toJson(),
@@ -250,6 +292,16 @@ class DataAPI {
       print(e);
       throw Exception(e);
     }
+  }
+
+  static Future removeAuthUsers() async {
+    var map = {"auth": "tigerKills", "debug": "true"};
+    var res = await _callCloudFunction(CHECK_LOGS, map);
+    if (res.statusCode != 200) {
+      throw Exception(res.body);
+    }
+
+    print('DataAPI.removeAuthUsers @@@@@@@ RESPONSE: ${res.body}');
   }
 
   static const Map<String, String> headers = {

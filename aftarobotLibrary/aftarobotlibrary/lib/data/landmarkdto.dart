@@ -34,7 +34,7 @@ class LandmarkDTO {
   bool sortByRankSequence;
   bool sortByName;
   bool sortByDistance;
-  String path;
+  String path, routePath;
 
   LandmarkDTO({
     this.landmarkID,
@@ -56,6 +56,7 @@ class LandmarkDTO {
     this.cityName,
     this.stringDate,
     this.date,
+    this.routePath,
     this.distanceFromMe,
     this.mainRank,
     this.thisIsMainRank,
@@ -114,7 +115,7 @@ class LandmarkDTO {
     this.sortByName = data['sortByName'];
     this.sortByDistance = data['sortByDistance'];
     this.path = data['path'];
-    print(this);
+    this.routePath = data['routePath'];
   }
 
   Map<String, dynamic> toJson() {
@@ -150,6 +151,7 @@ class LandmarkDTO {
       'sortByName': sortByName,
       'sortByDistance': sortByDistance,
       'path': path,
+      'routePath': routePath,
     };
     return map;
   }

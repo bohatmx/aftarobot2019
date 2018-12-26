@@ -17,6 +17,15 @@ class LocalDB {
   static Directory dir;
   static bool fileExists;
 
+  static const RouteData = 'RouteData0',
+      AssocData = 'AssocData0',
+      UserData = 'UsersData0',
+      CarData = 'CardData0',
+      CarTypeData = 'CarTypeData0',
+      LandmarkData = 'LandmarkData0',
+      CityData = 'CityData0',
+      CountryData = 'CountryData0';
+
   static Future<int> saveCity(CityDTO city) async {
     var m = await getCities();
     m.add(city);
@@ -33,7 +42,7 @@ class LocalDB {
         throw Exception('No cities found in Cities object');
       }
       Map map = cities.toJson();
-      return await _writeFile(fileName: 'cities', map: map);
+      return await _writeFile(fileName: CityData, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -43,7 +52,7 @@ class LocalDB {
   static Future<List<CityDTO>> getCities() async {
     print('LocalDB.getCities -- ################## starting ...');
     try {
-      var map = await _readFile('cities');
+      var map = await _readFile(CityData);
       if (map == null) {
         return List();
       }
@@ -72,7 +81,7 @@ class LocalDB {
         throw Exception('No countries found in Countries object');
       }
       Map map = countries.toJson();
-      return await _writeFile(fileName: 'countriesData', map: map);
+      return await _writeFile(fileName: CountryData, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -81,7 +90,7 @@ class LocalDB {
 
   static Future<List<CountryDTO>> getCountries() async {
     try {
-      var map = await _readFile('countriesData');
+      var map = await _readFile(CountryData);
       if (map == null) {
         return List();
       }
@@ -111,7 +120,7 @@ class LocalDB {
         throw Exception('No associations found in Associations object');
       }
       Map map = associations.toJson();
-      return await _writeFile(fileName: 'AssociationsData', map: map);
+      return await _writeFile(fileName: AssocData, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -120,7 +129,7 @@ class LocalDB {
 
   static Future<List<AssociationDTO>> getAssociations() async {
     try {
-      var map = await _readFile('AssociationsData');
+      var map = await _readFile(AssocData);
       if (map == null) {
         return List();
       }
@@ -148,7 +157,7 @@ class LocalDB {
         throw Exception('No users found in Users object');
       }
       Map map = users.toJson();
-      return await _writeFile(fileName: 'UsersData', map: map);
+      return await _writeFile(fileName: UserData, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -157,7 +166,7 @@ class LocalDB {
 
   static Future<List<UserDTO>> getUsers() async {
     try {
-      var map = await _readFile('UsersData');
+      var map = await _readFile(UserData);
       if (map == null) {
         return List();
       }
@@ -186,7 +195,7 @@ class LocalDB {
         throw Exception('No vehicles found in Vehicles object');
       }
       Map map = cars.toJson();
-      return await _writeFile(fileName: 'VehiclesData', map: map);
+      return await _writeFile(fileName: CarData, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -195,7 +204,7 @@ class LocalDB {
 
   static Future<List<VehicleDTO>> getVehicles() async {
     try {
-      var map = await _readFile('VehiclesData');
+      var map = await _readFile(CarData);
       if (map == null) {
         return List();
       }
@@ -224,7 +233,7 @@ class LocalDB {
         throw Exception('No VehicleTypes found in VehicleTypes object');
       }
       Map map = types.toJson();
-      return await _writeFile(fileName: 'VehicleTypesData', map: map);
+      return await _writeFile(fileName: CarTypeData, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -233,7 +242,7 @@ class LocalDB {
 
   static Future<List<VehicleTypeDTO>> getVehicleTypes() async {
     try {
-      var map = await _readFile('VehicleTypesData');
+      var map = await _readFile(CarTypeData);
       if (map == null) {
         return List();
       }
@@ -247,6 +256,7 @@ class LocalDB {
 
   static Future<int> saveLandmark(LandmarkDTO mark) async {
     var m = await getLandmarks();
+    print('LocalDB.saveLandmark existing landmarks in cache: ${m.length}');
     m.add(mark);
     var e = Landmarks(m);
     print(
@@ -262,7 +272,9 @@ class LocalDB {
         throw Exception('No Landmarks found in Landmarks object');
       }
       Map map = landmarks.toJson();
-      return await _writeFile(fileName: 'LandmarksData', map: map);
+      print(
+          'LocalDB.saveLandmarks ....... landmarks: ${landmarks.landmarks.length}');
+      return await _writeFile(fileName: LandmarkData, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -271,7 +283,7 @@ class LocalDB {
 
   static Future<List<LandmarkDTO>> getLandmarks() async {
     try {
-      var map = await _readFile('LandmarksData');
+      var map = await _readFile(LandmarkData);
       if (map == null) {
         return List();
       }
@@ -299,16 +311,44 @@ class LocalDB {
         throw Exception('No routes found in Routes object');
       }
       Map map = routes.toJson();
-      return await _writeFile(fileName: 'RoutesData', map: map);
+      return await _writeFile(fileName: RouteData, map: map);
     } catch (e) {
       print(e);
       throw e;
     }
   }
 
+  static Future<int> deleteRoutes() async {
+    return await deleteFile(RouteData);
+  }
+
+  static Future<int> deleteCountries() async {
+    return await deleteFile(CountryData);
+  }
+
+  static Future<int> deleteAssociations() async {
+    return await deleteFile(AssocData);
+  }
+
+  static Future<int> deleteUsers() async {
+    return await deleteFile(UserData);
+  }
+
+  static Future<int> deleteCars() async {
+    return await deleteFile(CarData);
+  }
+
+  static Future<int> deleteCarTypes() async {
+    return await deleteFile(CarTypeData);
+  }
+
+  static Future<int> deleteLandmarks() async {
+    return await deleteFile(LandmarkData);
+  }
+
   static Future<List<RouteDTO>> getRoutes() async {
     try {
-      var map = await _readFile('RoutesData');
+      var map = await _readFile(RouteData);
       if (map == null) {
         return List();
       }
@@ -363,6 +403,25 @@ class LocalDB {
       print(e);
     }
     return null;
+  }
+
+  static Future<int> deleteFile(String fileName) async {
+    try {
+      dir = await getApplicationDocumentsDirectory();
+      jsonFile = new File(dir.path + "/" + fileName + ".json");
+      fileExists = await jsonFile.exists();
+
+      if (fileExists) {
+        await jsonFile.delete();
+        print(
+            '\nLocalDB.deleteFile ********* json file deleted: $fileName, maybe, hopefully ??');
+        return 0;
+      }
+    } catch (e) {
+      print('LocalDB._deleteFile ERROR: $e');
+      return 9;
+    }
+    return 9;
   }
 }
 

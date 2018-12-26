@@ -1,6 +1,6 @@
 "use strict";
 // ######################################################################
-// Add Vehicle to Firestore or not
+// Add Vehicle to Firestore or not!
 // ######################################################################
 //curl --header "Content-Type: application/json"   --request POST   --data '{"auth": "tigerKills","debug":"true"}'  https://us-central1-aftarobot2019-dev1.cloudfunctions.net/checkLogs
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -17,22 +17,26 @@ const admin = require("firebase-admin");
 exports.checkLogs = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
     const fs = admin.auth();
     console.log(`##### Starting auth user delete`);
-    let secret = request.body.auth;
-    if (!secret) {
-        secret = 'tigerKills';
+    const debug = request.body.debug;
+    const secret = request.body.auth;
+    if (debug === true) {
+        yield findAuth();
     }
-    yield findAuth();
+    else {
+        return response.status(400).send("You are not authorized, Fool!");
+    }
     return null;
     function findAuth() {
         return __awaiter(this, void 0, void 0, function* () {
             if (secret) {
-                if (secret === 'tigerKills') {
-                    yield reallyCheckLogs();
-                    return response.status(200).send('Killed some users, OK');
+                if (secret === "tigerKills") {
+                    return yield reallyCheckLogs();
                 }
             }
             else {
-                return response.status(400).send('Failed miserably!');
+                return response
+                    .status(400)
+                    .send("Failed miserably! you are not allowed in here, child!");
             }
             return null;
         });
@@ -41,14 +45,16 @@ exports.checkLogs = functions.https.onRequest((request, response) => __awaiter(t
         return __awaiter(this, void 0, void 0, function* () {
             let count = 0;
             try {
-                const listResult = yield fs.listUsers(100);
+                const listResult = yield fs.listUsers(300);
                 for (const userRecord of listResult.users) {
                     console.log(`User found: ${userRecord.displayName} ${userRecord.phoneNumber}`);
                     yield fs.deleteUser(userRecord.uid);
                     count++;
                     console.log(`Auth user deleted: #${count} ${userRecord.uid} - ${userRecord.email}`);
                 }
-                return response.status(200).send();
+                return response
+                    .status(200)
+                    .send(`\n\n########### ${count} Auth users deleted.\n\n`);
             }
             catch (e) {
                 console.log(e);

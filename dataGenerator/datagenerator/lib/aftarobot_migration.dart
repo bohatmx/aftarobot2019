@@ -27,6 +27,7 @@ abstract class AftaRobotMigrationListener {
   onCountriesAdded(List<CountryDTO> countries);
   onRouteAdded(RouteDTO route);
   onLandmarkAdded(LandmarkDTO landmark);
+  onLandmarksAdded(List<LandmarkDTO> landmarks);
   onComplete();
   onGenericMessage(String message);
   onDuplicateRecord(String message);
@@ -70,8 +71,6 @@ class AftaRobotMigration {
       RouteDTO route = RouteDTO.fromJson(value);
       list.add(route);
       cnt++;
-      print(
-          'AftaRobotMigrationdex.getOldRoutes ------- route #$cnt added to list');
     }
     print(
         '\n\nAftaRobotMigrationdex.getOldRoutes, total routes: ${list.length} ****************');
@@ -101,6 +100,32 @@ class AftaRobotMigration {
         '\n\n\n\nAftaRobotMigration.migrateOldAftaRobot ################### START MIGRATION !!!!');
     migrationListener = listener;
     migrationListener.onGenericMessage('AftaRobot data migration started ...');
+    migrationListener
+        .onGenericMessage('Clean up and debris removal started :)');
+
+    var start = DateTime.now();
+
+    await deleteEverything();
+    var end1 = DateTime.now();
+    var msg0 =
+        'Debris and refuse collection complete. elapsed time: ${end1.difference(start).inSeconds}';
+    print('AftaRobotMigration.migrateOldAftaRobot: $msg0');
+    migrationListener.onGenericMessage(msg0);
+    migrationListener
+        .onGenericMessage('Removing auth users to avoid auth collisions');
+    await DataAPI.removeAuthUsers();
+    await DataAPI.removeAuthUsers();
+    migrationListener.onGenericMessage('STILL removing auth users ...');
+    await DataAPI.removeAuthUsers();
+    await DataAPI.removeAuthUsers();
+    migrationListener.onGenericMessage('Done removing auth users');
+    var end2 = DateTime.now();
+    var msg =
+        'Debris removal complete. elapsed time: ${end2.difference(start).inSeconds}';
+    print('\n\nAftaRobotMigration.migrateOldAftaRobot: $msg');
+    migrationListener.onGenericMessage(msg);
+
+    migrationListener.onGenericMessage('Adding countries ...');
     countries = await addCountries();
     listener.onCountriesAdded(countries);
 
@@ -525,21 +550,35 @@ class AftaRobotMigration {
     if (mListener != null) {
       migrationListener = mListener;
     }
+    if (asses.isEmpty) {
+      asses = await ListAPI.getAssociations();
+    }
     var start = DateTime.now();
     for (var route in routes) {
-      await _writeRoute(route);
-
-      if (route.spatialInfos.isNotEmpty) {
-        for (var si in route.spatialInfos) {
-          if (si.fromLandmark != null) {
-            //write to landmark if it does not exist
-            await _writeLandmark(si.fromLandmark);
-          }
-          if (si.fromLandmark != null) {
-            //write to landmark if it does not exist
-            await _writeLandmark(si.toLandmark);
-          }
+      bool isFound = false;
+      asses.forEach((ass) {
+        if (ass.associationID == route.associationID) {
+          isFound = true;
         }
+      });
+      if (isFound) {
+        if (route.spatialInfos != null && route.spatialInfos.isNotEmpty) {
+          route.countryName = 'South Africa';
+          var routeWithPath = await _writeRoute(route);
+          if (routeWithPath != null) {
+            var landmarks = _getRouteLandmarks(routeWithPath);
+            print(
+                '\nAftaRobotMigration.migrateRoutes @@@@@ write ${landmarks.length} landmarks'
+                'for route: ${routeWithPath.name} - assoc: ${routeWithPath.associationName} path: ${routeWithPath.path}\n\n');
+            await _writeLandmarks(landmarks);
+          }
+        } else {
+          print(
+              '\nAftaRobotMigration.migrateRoutes -- route with no spatials: ${route.name} from assoc: ${route.associationName}');
+        }
+      } else {
+        print(
+            'AftaRobotMigration.migrateRoutes - ******** Route does not belong in chosen assocs ${route.name} - ${route.associationName}');
       }
     }
     var end = DateTime.now();
@@ -551,6 +590,43 @@ class AftaRobotMigration {
       mListener.onComplete();
     }
     return 0;
+  }
+
+  static Future<List<LandmarkDTO>> _writeLandmarks(
+      List<LandmarkDTO> marks) async {
+    print(
+        '\n\nAftaRobotMigration._writeLandmarks +++++++ writing batch of landmarks: ${marks.length}');
+    var list = await DataAPI.addLandmarks(marks);
+    print(
+        '\n\nAftaRobotMigration._writeLandmarks +++++++ writing batch of landmarks to cache: ${marks.length}');
+    for (var mark in list) {
+      await LocalDB.saveLandmark(mark);
+      print(
+          'AftaRobotMigration._writeLandmarks - returned from LocalDB - was landmark ADDED ....?????');
+    }
+    migrationListener.onLandmarksAdded(list);
+    return list;
+  }
+
+  static List<LandmarkDTO> _getRouteLandmarks(RouteDTO route) {
+    print(
+        'AftaRobotMigration._getRouteLandmarks .... filter from spatials ...');
+    List<LandmarkDTO> landmarks = List();
+    Map<String, LandmarkDTO> map = Map();
+    route.spatialInfos.forEach((si) {
+      map[si.fromLandmark.landmarkID] = si.fromLandmark;
+      map[si.toLandmark.landmarkID] = si.toLandmark;
+    });
+    map.forEach((key, landmark) {
+      landmark.routePath = route.path;
+      landmark.associationName = route.associationName;
+      landmark.countryID = route.countryID;
+      landmarks.add(landmark);
+    });
+
+    print(
+        'AftaRobotMigration._getRouteLandmarks ******** filtered landmarks: ${landmarks.length}');
+    return landmarks;
   }
 
   static Future<RouteDTO> _writeRoute(RouteDTO route) async {
@@ -625,4 +701,76 @@ class AftaRobotMigration {
   }
 
   static List<LandmarkDTO> landmarks = List();
+
+  static Future deleteEverything() async {
+    print('\n\nAftaRobotMigration.deleteEverything ################## start');
+    var start = DateTime.now();
+    var d1 = await fs.collection('associations').getDocuments();
+    print(
+        'AftaRobotMigration.deleteEverything ------ deleting ${d1.documents.length} association documents ...');
+    for (var doc in d1.documents) {
+      var x = await doc.reference.collection('users').getDocuments();
+      print(
+          'AftaRobotMigration.deleteEverything ------ deleting ${x.documents.length} user documents ...');
+      for (var mdoc in x.documents) {
+        await mdoc.reference.delete();
+      }
+      var y = await doc.reference.collection('vehicles').getDocuments();
+      print(
+          'AftaRobotMigration.deleteEverything ------ deleting ${y.documents.length} car documents ...');
+      for (var mdoc in x.documents) {
+        await mdoc.reference.delete();
+      }
+      await doc.reference.delete();
+    }
+    print(
+        'AftaRobotMigration.deleteEverything ******* assocs deleted: ${d1.documents.length}');
+
+    var d4 = await fs.collection('vehicleTypes').getDocuments();
+    print(
+        'AftaRobotMigration.deleteEverything ------ deleting ${d4.documents.length} carType documents ...');
+    for (var doc in d4.documents) {
+      await doc.reference.delete();
+    }
+    print(
+        'AftaRobotMigration.deleteEverything ******* car types deleted: ${d4.documents.length}');
+    var d = await fs.collection('countries').getDocuments();
+    for (var doc in d.documents) {
+      await doc.reference.delete();
+    }
+    print(
+        'AftaRobotMigration.deleteEverything ******* countries deleted: ${d.documents.length}');
+    await deleteRoutesAndLandmarks();
+
+    var end = DateTime.now();
+    print('\nAftaRobotMigration.deleteEverything ***** COMPLETE! '
+        'elapsed ${end.difference(start).inSeconds} seconds... ####################\n');
+    return null;
+  }
+
+  static Future deleteRoutesAndLandmarks() async {
+    print(
+        '\n\nAftaRobotMigration.deleteRoutesAndLandmarks ################## start');
+    var start = DateTime.now();
+    var d3 = await fs.collection('routes').getDocuments();
+    print(
+        'AftaRobotMigration.deleteRoutesAndLandmarks ------ deleting ${d3.documents.length} route documents ...');
+    for (var doc in d3.documents) {
+      await doc.reference.delete();
+    }
+    print(
+        'AftaRobotMigration.deleteRoutesAndLandmarks ******* routes deleted: ${d3.documents.length}');
+    var d4 = await fs.collection('landmarks').getDocuments();
+    print(
+        'AftaRobotMigration.deleteRoutesAndLandmarks ------ deleting ${d4.documents.length} landmark documents ...');
+    for (var doc in d4.documents) {
+      await doc.reference.delete();
+    }
+    print(
+        'AftaRobotMigration.deleteRoutesAndLandmarks ******* landmarks deleted: ${d4.documents.length}');
+    var end = DateTime.now();
+    print('\nAftaRobotMigration.deleteRoutesAndLandmarks ***** COMPLETE! '
+        'elapsed ${end.difference(start).inSeconds} seconds... ####################\n');
+    return null;
+  }
 }

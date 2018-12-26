@@ -141,6 +141,12 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   Future _getFreshDataFromFirestore() async {
     print(
         '\n\n_AftaRobotMigratorPageState._getFreshDataFromFirestore .............');
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: 'Loading from Firestore ...',
+        textColor: Colors.white,
+        backgroundColor: Colors.blueGrey);
+
     var start = DateTime.now();
     try {
       countries = await ListAPI.getCountries();
@@ -163,6 +169,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           '_AftaRobotMigratorPageState._getFreshDataFromFirestore ass: ${asses.length} types: ${carTypes.length} countries: ${countries.length}');
       print(
           '_AftaRobotMigratorPageState._getFreshDataFromFirestore - ${end.difference(start).inMilliseconds} ms');
+      _key.currentState.removeCurrentSnackBar();
     } catch (e) {
       print(e);
       AppSnackbar.showErrorSnackbar(
@@ -378,9 +385,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
       print('_RouteMigratorState._migrateAftaRobot ... start the real work!!');
 //      await AftaRobotMigration.migrateCars(listener: this);
       await AftaRobotMigration.migrateOldAftaRobot(listener: this);
-//      var oldRoutes = await AftaRobotMigration.getOldRoutes();
-//      await AftaRobotMigration.migrateRoutes(
-//          routes: oldRoutes, mListener: this);
+//      _migrateRoutes();
       print(
           '\n\n\n_RouteMigratorState._migrateAftaRobot - migration done? #################b check Firestore');
       end = DateTime.now();
@@ -400,6 +405,32 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
         status = 'Problem. Check logs below';
       });
     }
+  }
+
+  void _migrateRoutes() async {
+    print(
+        '_AftaRobotMigratorPageState._migrateRoutes ..... starting ..............');
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: 'Removing debris and cleaning up... will take a WHILE!',
+        textColor: Colors.yellow,
+        backgroundColor: Colors.black);
+    var oldRoutes = await AftaRobotMigration.getOldRoutes();
+    await LocalDB.deleteFile(LocalDB.RouteData);
+    await LocalDB.deleteFile(LocalDB.LandmarkData);
+    await AftaRobotMigration.deleteRoutesAndLandmarks();
+    setState(() {
+      landmarks.clear();
+      routes.clear();
+      start = DateTime.now();
+    });
+    _key.currentState.removeCurrentSnackBar();
+    await AftaRobotMigration.migrateRoutes(routes: oldRoutes, mListener: this);
+    print(
+        '\n\n\n_RouteMigratorState._migrateAftaRobot - migration done? #################b check Firestore');
+    end = DateTime.now();
+    print(
+        '_AftaRobotMigratorPageState._migrateAftaRobot - ######## COMPLETE - elapsed ${end.difference(start).inMinutes}');
   }
 
   Timer timer;
@@ -546,6 +577,10 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
         ),
         actions: <Widget>[
           IconButton(
+            icon: Icon(Icons.build),
+            onPressed: _migrateRoutes,
+          ),
+          IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refresh,
           ),
@@ -665,6 +700,23 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   }
 
   @override
+  onLandmarksAdded(List<LandmarkDTO> marks) {
+    landmarks.addAll(marks);
+    landmarkCount = landmarks.length;
+
+    marks.forEach((mark) {
+      var msg = Msg(
+          icon: Icon(Icons.location_on, color: getRandomColor()),
+          style: Styles.blackSmall,
+          message: 'Landmark - ${mark.landmarkName}');
+      messages.add(msg);
+      animationIndex = LandmarkIndex;
+    });
+
+    _setCounters(animationIndex: LandmarkIndex);
+  }
+
+  @override
   onRouteAdded(RouteDTO route) {
     print('\n\n_RouteMigratorState.onRouteAdded -- *********** ${route.name}');
     routes.add(route);
@@ -694,6 +746,8 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
       isMigrationDone = true;
       firestoreIsReady = false;
     });
+
+    _getFreshDataFromFirestore();
   }
 
   @override

@@ -342,6 +342,12 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     // TODO: implement onGenericMessage
     return null;
   }
+
+  @override
+  onLandmarksAdded(List<LandmarkDTO> landmarks) {
+    // TODO: implement onLandmarksAdded
+    return null;
+  }
 }
 
 class RouteCard extends StatefulWidget {

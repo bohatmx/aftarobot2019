@@ -114,8 +114,8 @@ class _DashboardState extends State<Dashboard>
           mcars.add(c);
         }
       });
-      bag.cars = cars;
-      bag.carTypes = _filter(ass, cars);
+      bag.cars = mcars;
+      bag.carTypes = _filter(ass, mcars);
       print(
           '_DashboardState.getAssociationBags bag.cars: ${bag.cars.length} types: ${bag.carTypes.length} users: ${bag.users.length}');
       setState(() {
