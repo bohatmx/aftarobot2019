@@ -22,8 +22,10 @@ import 'package:firebase_database/firebase_database.dart';
 abstract class AftaRobotMigrationListener {
   onAssociationAdded(AssociationDTO ass);
   onVehicleAdded(VehicleDTO car);
+  onVehiclesAdded(List<VehicleDTO> cars);
   onVehicleTypeAdded(VehicleTypeDTO car);
   onUserAdded(UserDTO user);
+  onUsersAdded(List<UserDTO> users);
   onCountriesAdded(List<CountryDTO> countries);
   onRouteAdded(RouteDTO route);
   onLandmarkAdded(LandmarkDTO landmark);
@@ -108,20 +110,27 @@ class AftaRobotMigration {
     await deleteEverything();
     var end1 = DateTime.now();
     var msg0 =
-        'Debris and refuse collection complete. elapsed time: ${end1.difference(start).inSeconds}';
+        'Debris and refuse collection complete. elapsed time: ${end1.difference(start).inSeconds} seconds';
     print('AftaRobotMigration.migrateOldAftaRobot: $msg0');
     migrationListener.onGenericMessage(msg0);
-    migrationListener
-        .onGenericMessage('Removing auth users to avoid auth collisions');
-    await DataAPI.removeAuthUsers();
-    await DataAPI.removeAuthUsers();
-    migrationListener.onGenericMessage('STILL removing auth users ...');
-    await DataAPI.removeAuthUsers();
-    await DataAPI.removeAuthUsers();
-    migrationListener.onGenericMessage('Done removing auth users');
+    var msg1 = 'Removing auth users to avoid auth collisions';
+    print('AftaRobotMigration.migrateOldAftaRobot $msg1');
+    migrationListener.onGenericMessage(msg1);
+    try {
+      await DataAPI.removeAuthUsers();
+      await DataAPI.removeAuthUsers();
+      migrationListener.onGenericMessage('STILL removing auth users ...');
+      await DataAPI.removeAuthUsers();
+      await DataAPI.removeAuthUsers();
+      migrationListener.onGenericMessage('Done removing auth users');
+    } catch (e) {
+      var msg =
+          'Something went wrong with auth user deletion. Going on regardless ... $e';
+      migrationListener.onGenericMessage(msg);
+    }
     var end2 = DateTime.now();
     var msg =
-        'Debris removal complete. elapsed time: ${end2.difference(start).inSeconds}';
+        'Auth user removal complete. elapsed time: ${end2.difference(start).inSeconds} seconds';
     print('\n\nAftaRobotMigration.migrateOldAftaRobot: $msg');
     migrationListener.onGenericMessage(msg);
 
@@ -242,19 +251,75 @@ class AftaRobotMigration {
       });
 
       car.vehicleType = _getRandomVehicleType();
+      car.associationName = ass.associationName;
       assert(car.vehicleType != null);
-      await _writeVehicle(ass: ass, car: car);
     }
-    migrationListener.onGenericMessage('All vehicles migrated: ${cars.length}');
+    var msg =
+        'Migrating ${cars.length} vehicles to Firestore in PAGES of $MAX_DOCUMENTS each.!';
+    print('\n\nAftaRobotMigration.migrateCars $msg');
+    migrationListener.onGenericMessage(msg);
+    await _pageCars(cars);
+    migrationListener
+        .onGenericMessage('All vehicles migrated: ${vehicles.length}');
+
     if (listener != null) {
       migrationListener.onComplete();
     }
     return null;
   }
 
+  static Future _pageCars(List<VehicleDTO> cars) async {
+    print(
+        '\n\nAftaRobotMigration._pageCars .... breaking up ${cars.length} cars into multiple pages');
+    var rem = cars.length % MAX_DOCUMENTS;
+    var pages = cars.length ~/ MAX_DOCUMENTS;
+    if (rem > 0) {
+      pages++;
+    }
+    print(
+        'AftaRobotMigration._pageCars: calculated: rem: $rem pages: $pages - is this fucking right????');
+    List<VehiclePage> vehiclePages = List();
+    int mainIndex = 0;
+    for (var i = 0; i < pages; i++) {
+      try {
+        var vPage = VehiclePage();
+        vPage.cars = List();
+        for (var j = 0; j < MAX_DOCUMENTS; j++) {
+          vPage.cars.add(cars.elementAt(mainIndex));
+          mainIndex++;
+        }
+        vehiclePages.add(vPage);
+        print(
+            'AftaRobotMigration._pageCars page #${i + 1} has ${vPage.cars.length} cars, mainIndex: $mainIndex');
+      } catch (e) {
+        print(
+            'AftaRobotMigration._pageCars ERROR  mainIndex: $mainIndex --- $e');
+        var newIndex = (vehiclePages.length * MAX_DOCUMENTS);
+        print(
+            'AftaRobotMigration._pageCars ---------> last page starting index: $newIndex');
+        var lastPage = VehiclePage();
+        lastPage.cars = List();
+        for (var i = newIndex; i < cars.length; i++) {
+          lastPage.cars.add(cars.elementAt(i));
+        }
+        vehiclePages.add(lastPage);
+//        throw Exception('Am fucked, need the last PAGE!!!!');
+        print(
+            'AftaRobotMigration._pageCars page #${i + 1} has ${lastPage.cars.length} cars, newIndex: $newIndex');
+      }
+    }
+    print(
+        'AftaRobotMigration._pageCars --- broke up cars into number of pages: ${vehiclePages.length} , mainIndex: $mainIndex');
+    for (var mPage in vehiclePages) {
+      var results = await DataAPI.addVehicles(mPage.cars);
+      vehicles.addAll(results);
+      migrationListener.onVehiclesAdded(results);
+    }
+  }
+
+  static const MAX_DOCUMENTS = 30;
   static VehicleTypeDTO _getRandomVehicleType() {
     assert(vehicleTypes.isNotEmpty);
-    print('AftaRobotMigration._getRandomVehicleType');
     List<VehicleTypeDTO> list = List();
     VehicleTypeDTO type;
     try {
@@ -270,8 +335,6 @@ class AftaRobotMigration {
       });
       list.shuffle();
       var index = rand.nextInt(list.length - 1);
-      print(
-          'AftaRobotMigration._getRandomVehicleType index $index list: ${list.length}');
       type = list.elementAt(index);
       return type;
     } catch (e) {
@@ -311,25 +374,65 @@ class AftaRobotMigration {
     }
     print(
         'AftaRobotMigrationdex._migrateUsers: ${userList.length} users in list');
-    for (var user in userList) {
-      var mUser = await DataAPI.registerUser(user);
-      if (mUser == null) {
-        print(
-            'AftaRobotMigration._migrateUsers DUPLICATE USER ${user.toJson()}');
-        migrationListener.onDuplicateRecord('Duplicate ${user.toJson()}');
-      } else {
-        users.add(mUser);
-        migrationListener.onUserAdded(mUser);
-        await LocalDB.saveUser(mUser);
-        print(
-            'AftaRobotMigration._migrateUsers saved ${mUser.name} in local DB');
-      }
-    }
+    var msg = 'Moving users is ONE FELL SWOOP!';
+    print('\n\nAftaRobotMigration.migrateUsers $msg');
+    migrationListener.onGenericMessage(msg);
+    await _pageUsers(userList);
     migrationListener.onGenericMessage('All users migrated: ${users.length}');
     if (listener != null) {
       listener.onComplete();
     }
     return userList;
+  }
+
+  static Future _pageUsers(List<UserDTO> userList) async {
+    print(
+        '\n\nAftaRobotMigration._pageUsers .... breaking up ${userList.length} users into multiple pages');
+    var rem = userList.length % MAX_DOCUMENTS;
+    var pages = userList.length ~/ MAX_DOCUMENTS;
+    if (rem > 0) {
+      pages++;
+    }
+    print(
+        'AftaRobotMigration._pageUsers: calculated: rem: $rem pages: $pages - is this fucking right????');
+    List<UserPage> userPages = List();
+    int mainIndex = 0;
+    for (var i = 0; i < pages; i++) {
+      try {
+        var vPage = UserPage();
+        vPage.users = List();
+        for (var j = 0; j < MAX_DOCUMENTS; j++) {
+          vPage.users.add(userList.elementAt(mainIndex));
+          mainIndex++;
+        }
+        userPages.add(vPage);
+        print(
+            'AftaRobotMigration._pageUsers page #${i + 1} has ${vPage.users.length} users, mainIndex: $mainIndex');
+      } catch (e) {
+        print(
+            'AftaRobotMigration._pageUsers ERROR $e --  mainIndex: $mainIndex');
+        var newIndex = (userPages.length * MAX_DOCUMENTS);
+        print(
+            'AftaRobotMigration._pageUsers ---------> last page starting index: $newIndex');
+        var lastPage = UserPage();
+        lastPage.users = List();
+        for (var i = newIndex; i < userList.length; i++) {
+          lastPage.users.add(userList.elementAt(i));
+        }
+        userPages.add(lastPage);
+//        throw Exception('Am fucked, need the last PAGE!!!!');
+        print(
+            'AftaRobotMigration._pageUsers page #${i + 1} has ${lastPage.users.length} users, newIndex: $newIndex');
+      }
+    }
+    print(
+        'AftaRobotMigration._pageUsers --- broke up users into number of pages: ${userPages.length}, mainIndex: $mainIndex');
+    for (var mPage in userPages) {
+      var results = await DataAPI.addUsers(mPage.users);
+      userList.addAll(results);
+      migrationListener.onUsersAdded(results);
+    }
+    return null;
   }
 
   static _checkEmailPassword(UserDTO user) {
@@ -773,4 +876,18 @@ class AftaRobotMigration {
         'elapsed ${end.difference(start).inSeconds} seconds... ####################\n');
     return null;
   }
+}
+
+class UserPage {
+  List<UserDTO> users;
+  int pageNumber;
+
+  UserPage({this.users, this.pageNumber});
+}
+
+class VehiclePage {
+  List<VehicleDTO> cars;
+  int pageNumber;
+
+  VehiclePage({this.cars, this.pageNumber});
 }

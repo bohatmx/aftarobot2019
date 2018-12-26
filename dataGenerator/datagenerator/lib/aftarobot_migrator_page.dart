@@ -15,6 +15,12 @@ import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:datagenerator/aftarobot_migration.dart';
 import 'package:datagenerator/generator.dart';
+import 'package:datagenerator/lists/assoc_list_page.dart';
+import 'package:datagenerator/lists/country_list_page.dart';
+import 'package:datagenerator/lists/route_list_page.dart';
+import 'package:datagenerator/lists/user_list_page.dart';
+import 'package:datagenerator/lists/vehicle_list_page.dart';
+import 'package:datagenerator/lists/vehicletype_list_page.dart';
 import 'package:flutter/material.dart';
 
 class AftaRobotMigratorPage extends StatefulWidget {
@@ -24,7 +30,10 @@ class AftaRobotMigratorPage extends StatefulWidget {
 
 class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     with TickerProviderStateMixin
-    implements AftaRobotMigrationListener, SnackBarListener {
+    implements
+        AftaRobotMigrationListener,
+        SnackBarListener,
+        CounterCardListener {
   ScrollController scrollController = ScrollController();
   AnimationController animationController;
   Animation animation;
@@ -379,6 +388,20 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     });
 
     _startTimer();
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: 'Starting the Marathon :):)',
+        textColor: Colors.blue,
+        backgroundColor: Colors.black);
+    users.clear();
+    countries.clear();
+    asses.clear();
+    carTypes.clear();
+    landmarks.clear();
+    routes.clear();
+    vehicles.clear();
+    _setCounters();
+
     start = DateTime.now();
     print('_RouteMigratorState._migrateAftaRobot +++++++++++++++++ OFF WE GO!');
     try {
@@ -386,6 +409,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
 //      await AftaRobotMigration.migrateCars(listener: this);
       await AftaRobotMigration.migrateOldAftaRobot(listener: this);
 //      _migrateRoutes();
+      _key.currentState.removeCurrentSnackBar();
       print(
           '\n\n\n_RouteMigratorState._migrateAftaRobot - migration done? #################b check Firestore');
       end = DateTime.now();
@@ -461,6 +485,63 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
         });
       }
     });
+  }
+
+  void _showForceMigrationDialog() {
+    showDialog(
+        context: context,
+        builder: (_) => new AlertDialog(
+              title: new Text(
+                "Confirm Forced  Migration",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor),
+              ),
+              content: Container(
+                height: 200.0,
+                child: Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        'Do you want to DELETE everything and migrate ALL the data from the Firebase Realtime Database to the shiny, new Cloud Firestore?'
+                            '\n\nThis will take quite a few minutes so I suggest you go get a smoke and a coffee :):)',
+                        style: Styles.blackBoldSmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text(
+                    'NO',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: RaisedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _migrateAftaRobot();
+                    },
+                    elevation: 4.0,
+                    color: Colors.teal.shade500,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Start BigTime Migration',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ));
   }
 
   void _showDialog() {
@@ -540,11 +621,14 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
                 )
               : Container(
                   color: Colors.brown.shade100,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Looks Migrated Already',
-                      style: Styles.blackBoldLarge,
+                  child: GestureDetector(
+                    onTap: _showForceMigrationDialog,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Looks Migrated Already',
+                        style: Styles.blackBoldLarge,
+                      ),
                     ),
                   ),
                 ),
@@ -616,6 +700,8 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
                           total: counters.elementAt(index).total,
                           title: counters.elementAt(index).title,
                           icon: counters.elementAt(index).icon,
+                          cardListener: this,
+                          index: index,
                         );
                       }
                       if (counters.elementAt(index).animationRequired) {
@@ -623,6 +709,8 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
                           total: counters.elementAt(index).total,
                           title: counters.elementAt(index).title,
                           icon: counters.elementAt(index).icon,
+                          cardListener: this,
+                          index: index,
                           animation: animationController,
                         );
                       } else {
@@ -630,6 +718,8 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
                           total: counters.elementAt(index).total,
                           title: counters.elementAt(index).title,
                           icon: counters.elementAt(index).icon,
+                          index: index,
+                          cardListener: this,
                         );
                       }
                     },
@@ -788,6 +878,40 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   }
 
   @override
+  onUsersAdded(List<UserDTO> users) {
+    users.addAll(users);
+    userCount = users.length;
+    var msg = Msg(
+        icon: Icon(
+          Icons.person,
+          color: getRandomColor(),
+        ),
+        style: Styles.blackSmall,
+        message: ' ${users.length} Users added');
+    messages.add(msg);
+    animationIndex = UserIndex;
+
+    _setCounters(animationIndex: UserIndex);
+  }
+
+  @override
+  onVehiclesAdded(List<VehicleDTO> cars) {
+    vehicles.addAll(cars);
+    carCount = vehicles.length;
+    var msg = Msg(
+        icon: Icon(
+          Icons.airport_shuttle,
+          color: getRandomColor(),
+        ),
+        style: Styles.blackSmall,
+        message: '${cars.length} - cars added');
+
+    messages.add(msg);
+    animationIndex = CarIndex;
+    _setCounters(animationIndex: CarIndex);
+  }
+
+  @override
   onUserAdded(UserDTO user) {
     print('_RouteMigratorState.onUserAdded ====> ${user.name}');
     users.add(user);
@@ -863,9 +987,9 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
       var msg = Msg(
           icon: Icon(
             Icons.message,
-            color: Colors.black,
+            color: getRandomColor(),
           ),
-          style: Styles.blackBoldMedium,
+          style: Styles.blackBoldSmall,
           message: message);
       messages.add(msg);
     });
@@ -889,14 +1013,67 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     // TODO: implement onActionPressed
     return null;
   }
+
+  @override
+  onCounterCardTapped(int index) {
+    switch (index) {
+      case 0:
+        Navigator.push(
+          context,
+          new MaterialPageRoute(builder: (context) => CountryListPage()),
+        );
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          new MaterialPageRoute(builder: (context) => AssociationListPage()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          new MaterialPageRoute(builder: (context) => UserListPage()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          new MaterialPageRoute(builder: (context) => VehicleListPage()),
+        );
+        break;
+      case 4:
+        Navigator.push(
+          context,
+          new MaterialPageRoute(builder: (context) => VehicleTypeListPage()),
+        );
+        break;
+      case 5:
+        Navigator.push(
+          context,
+          new MaterialPageRoute(builder: (context) => RouteListPage()),
+        );
+        break;
+      case 6:
+        Navigator.push(
+          context,
+          new MaterialPageRoute(builder: (context) => RouteListPage()),
+        );
+        break;
+    }
+  }
+}
+
+abstract class CounterCardListener {
+  onCounterCardTapped(int index);
 }
 
 class CounterCard extends StatelessWidget {
-  final int total;
+  final int total, index;
   final String title;
   final TextStyle totalStyle, titleStyle;
   final Color cardColor;
   final Icon icon;
+  final CounterCardListener cardListener;
   final AnimationController animation;
 
   CounterCard(
@@ -904,48 +1081,58 @@ class CounterCard extends StatelessWidget {
       @required this.title,
       this.totalStyle,
       this.titleStyle,
+      this.cardListener,
       this.cardColor,
       this.animation,
+      this.index,
       this.icon});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 140,
-      width: 80,
-      child: Card(
-        elevation: 4.0,
-        color: cardColor == null ? getRandomPastelColor() : cardColor,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              animation == null
-                  ? Text(
-                      '$total',
-                      style: totalStyle == null
-                          ? Styles.blackBoldLarge
-                          : totalStyle,
-                    )
-                  : ScaleTransition(
-                      scale: animation,
-                      child: Text(
+    return GestureDetector(
+      onTap: () {
+        if (cardListener != null && index != null) {
+          cardListener.onCounterCardTapped(index);
+        }
+      },
+      child: SizedBox(
+        height: 140,
+        width: 80,
+        child: Card(
+          elevation: 4.0,
+          color: cardColor == null ? getRandomPastelColor() : cardColor,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                animation == null
+                    ? Text(
                         '$total',
                         style: totalStyle == null
                             ? Styles.blackBoldLarge
                             : totalStyle,
+                      )
+                    : ScaleTransition(
+                        scale: animation,
+                        child: Text(
+                          '$total',
+                          style: totalStyle == null
+                              ? Styles.blackBoldLarge
+                              : totalStyle,
+                        ),
                       ),
-                    ),
-              SizedBox(
-                height: 4,
-              ),
-              Text(
-                title,
-                style: titleStyle == null ? Styles.greyLabelSmall : titleStyle,
-              ),
-              icon == null ? Icon(Icons.print) : icon,
-            ],
+                SizedBox(
+                  height: 4,
+                ),
+                Text(
+                  title,
+                  style:
+                      titleStyle == null ? Styles.greyLabelSmall : titleStyle,
+                ),
+                icon == null ? Icon(Icons.print) : icon,
+              ],
+            ),
           ),
         ),
       ),

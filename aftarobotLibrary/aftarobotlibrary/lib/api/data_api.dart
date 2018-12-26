@@ -19,11 +19,13 @@ class DataAPI {
   static const ADD_ASSOCIATION_URL = URL + 'addAssociation',
       ADD_VEHICLE_TYPE = URL + 'addVehicleType',
       ADD_VEHICLE = URL + 'addVehicle',
+      ADD_VEHICLES = URL + 'addVehicles',
       ADD_COUNTRY = URL + 'addCountry',
       ADD_LANDMARK = URL + 'addLandmark',
       ADD_LANDMARKS = URL + 'addLandmarks',
       ADD_ROUTE = URL + 'addRoute',
       CHECK_LOGS = URL + 'checkLogs',
+      REGISTER_USERS = URL + 'registerUsers',
       REGISTER_USER = URL + 'registerUser';
   static List<String> countryNames = [
     'South Africa',
@@ -227,6 +229,66 @@ class DataAPI {
     return _processLandmarksResult(res);
   }
 
+  static Future<List<VehicleDTO>> addVehicles(List<VehicleDTO> vehicles) async {
+    List<Map> maps = List();
+    vehicles.forEach((m) {
+      maps.add(m.toJson());
+    });
+    var map = {
+      'vehicles': maps,
+    };
+
+    var res = await _callCloudFunction(ADD_VEHICLES, map);
+    switch (res.statusCode) {
+      case 200:
+        return _processVehiclesResult(res);
+        break;
+      case 201:
+        return List();
+      default:
+        throw Exception(res.body);
+        break;
+    }
+  }
+
+  static List<VehicleDTO> _processVehiclesResult(res) {
+    List<VehicleDTO> mList = List();
+    try {
+      List<dynamic> list = json.decode(res.body);
+      list.forEach((map1) {
+        var v = VehicleDTO.fromJson(map1);
+        mList.add(v);
+      });
+
+      return mList;
+    } catch (e) {
+      print(e);
+      throw Exception('Unable to parse vehicles result');
+    }
+  }
+
+  static Future<List<UserDTO>> addUsers(List<UserDTO> users) async {
+    List<Map> maps = List();
+    users.forEach((m) {
+      maps.add(m.toJson());
+    });
+    var map = {
+      'users': maps,
+    };
+
+    var res = await _callCloudFunction(REGISTER_USERS, map);
+    switch (res.statusCode) {
+      case 200:
+        return _processUserssResult(res);
+        break;
+      case 201:
+        return List();
+      default:
+        throw Exception(res.body);
+        break;
+    }
+  }
+
   static List<LandmarkDTO> _processLandmarksResult(res) {
     List<LandmarkDTO> mList = List();
     try {
@@ -240,6 +302,22 @@ class DataAPI {
     } catch (e) {
       print(e);
       throw Exception('Unable to parse landmarks result');
+    }
+  }
+
+  static List<UserDTO> _processUserssResult(res) {
+    List<UserDTO> mList = List();
+    try {
+      List<dynamic> list = json.decode(res.body);
+      list.forEach((map1) {
+        UserDTO mMark = UserDTO.fromJson(map1);
+        mList.add(mMark);
+      });
+
+      return mList;
+    } catch (e) {
+      print(e);
+      throw Exception('Unable to parse users result');
     }
   }
 

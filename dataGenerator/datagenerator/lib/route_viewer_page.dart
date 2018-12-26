@@ -348,6 +348,18 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     // TODO: implement onLandmarksAdded
     return null;
   }
+
+  @override
+  onUsersAdded(List<UserDTO> users) {
+    // TODO: implement onUsersAdded
+    return null;
+  }
+
+  @override
+  onVehiclesAdded(List<VehicleDTO> cars) {
+    // TODO: implement onVehiclesAdded
+    return null;
+  }
 }
 
 class RouteCard extends StatefulWidget {
