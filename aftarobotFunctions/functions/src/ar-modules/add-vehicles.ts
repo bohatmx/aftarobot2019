@@ -1,5 +1,5 @@
 // ######################################################################
-// Add Vehicle to Firestore
+// Add Vehicles to Firestore
 // ######################################################################
 
 import * as functions from "firebase-functions";
@@ -8,7 +8,7 @@ import * as constants from "../models/constants";
 import { VehicleHelper } from "./add-vehicle-helper";
 const uuid = require("uuid/v1");
 
-export const addVehicle = functions.https.onRequest(
+export const addVehicles = functions.https.onRequest(
   async (request, response) => {
     if (!request.body) {
       console.log("ERROR - request has no body");
@@ -22,22 +22,31 @@ export const addVehicle = functions.https.onRequest(
 
     console.log(`##### Incoming debug; ${request.body.debug}`);
     console.log(
-      `##### Incoming vehicle: ${JSON.stringify(request.body.vehicle)}`
+      `##### Incoming vehicles: ${JSON.stringify(request.body.vehicles)}`
     );
 
-    const vehicle = request.body.vehicle;
-    if (!vehicle.vehicleType) {
-      console.error("Vehicle has no type");
-      return response.status(400).send("Vehicle does not have a type");
+    const vehicles = request.body.vehicles;
+    if (!vehicles) {
+      response.status(400).send(`Missing vehicle batch`);
+    } else {
+      await writeVehicles();
     }
-
-    await writeVehicle();
     return null;
 
-    async function writeVehicle() {
+    async function writeVehicles() {
+      console.log(`adding ${vehicles.length} vehicles to Firestore`);
+      const results = [];
       try {
-        const resultVehicle = await VehicleHelper.writeVehicle(vehicle);
-        return response.status(200).send(resultVehicle);
+        for (const vehicle of vehicles) {
+          const resultVehicle = await VehicleHelper.writeVehicle(vehicle);
+          results.push(resultVehicle);
+        }
+        console.log(
+          `${
+            vehicles.length
+          } batched vehicles added to Firestore. complete. cool.`
+        );
+        return response.status(200).send(results);
       } catch (e) {
         console.log(e);
         return response.status(400).send(e);

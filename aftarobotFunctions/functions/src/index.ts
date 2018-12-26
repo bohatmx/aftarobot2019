@@ -11,7 +11,9 @@ import * as AddRoute from "./ar-modules/add-route";
 import * as AddCountry from "./ar-modules/add-country";
 
 import * as AddVehicle from "./ar-modules/add-vehicle";
+import * as AddVehicles from "./ar-modules/add-vehicles";
 import * as RegisterUser from "./ar-modules/register-user";
+import * as RegisterUsers from "./ar-modules/register-users";
 import * as RegisterCommuter from "./ar-modules/register-commuter";
 
 import * as UpdateAssociation from "./ar-modules/update-association";
@@ -28,8 +30,10 @@ export const addAssociation = AddAssociation.addAssociation;
 export const checkLogs = CheckLogs.checkLogs;
 export const addVehicleOwner = AddVehicleOwner.addVehicleOwner;
 export const addVehicle = AddVehicle.addVehicle;
+export const addVehicles = AddVehicles.addVehicles;
 export const addVehicleType = AddVehicleType.addVehicleType;
 export const registerUser = RegisterUser.registerUser;
+export const registerUsers = RegisterUsers.registerUsers;
 export const registerCommuter = RegisterCommuter.registerCommuter;
 export const updateAssociation = UpdateAssociation.updateAssociation;
 export const broadcastRouteUpdate = BroadcastRouteUpdate.broadcastRouteUpdate;

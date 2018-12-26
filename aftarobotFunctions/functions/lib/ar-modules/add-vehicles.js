@@ -1,6 +1,6 @@
 "use strict";
 // ######################################################################
-// Add Vehicle to Firestore
+// Add Vehicles to Firestore
 // ######################################################################
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,7 +15,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const add_vehicle_helper_1 = require("./add-vehicle-helper");
 const uuid = require("uuid/v1");
-exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
+exports.addVehicles = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
     if (!request.body) {
         console.log("ERROR - request has no body");
         return response.sendStatus(400);
@@ -27,19 +27,26 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
     }
     catch (e) { }
     console.log(`##### Incoming debug; ${request.body.debug}`);
-    console.log(`##### Incoming vehicle: ${JSON.stringify(request.body.vehicle)}`);
-    const vehicle = request.body.vehicle;
-    if (!vehicle.vehicleType) {
-        console.error("Vehicle has no type");
-        return response.status(400).send("Vehicle does not have a type");
+    console.log(`##### Incoming vehicles: ${JSON.stringify(request.body.vehicles)}`);
+    const vehicles = request.body.vehicles;
+    if (!vehicles) {
+        response.status(400).send(`Missing vehicle batch`);
     }
-    yield writeVehicle();
+    else {
+        yield writeVehicles();
+    }
     return null;
-    function writeVehicle() {
+    function writeVehicles() {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log(`adding ${vehicles.length} vehicles to Firestore`);
+            const results = [];
             try {
-                const resultVehicle = yield add_vehicle_helper_1.VehicleHelper.writeVehicle(vehicle);
-                return response.status(200).send(resultVehicle);
+                for (const vehicle of vehicles) {
+                    const resultVehicle = yield add_vehicle_helper_1.VehicleHelper.writeVehicle(vehicle);
+                    results.push(resultVehicle);
+                }
+                console.log(`${vehicles.length} batched vehicles added to Firestore. complete. cool.`);
+                return response.status(200).send(results);
             }
             catch (e) {
                 console.log(e);
@@ -48,4 +55,4 @@ exports.addVehicle = functions.https.onRequest((request, response) => __awaiter(
         });
     }
 }));
-//# sourceMappingURL=add-vehicle.js.map
+//# sourceMappingURL=add-vehicles.js.map

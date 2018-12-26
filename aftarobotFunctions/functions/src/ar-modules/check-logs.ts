@@ -12,7 +12,9 @@ export const checkLogs = functions.https.onRequest(
     console.log(`##### Starting auth user delete`);
     const debug = request.body.debug;
     const secret = request.body.auth;
-    if (debug === true) {
+    console.log(`incoming debug: ${debug}`);
+    console.log(`incoming secret: ${secret}`);
+    if (debug) {
       await findAuth();
     } else {
       return response.status(400).send("You are not authorized, Fool!");
@@ -47,6 +49,7 @@ export const checkLogs = functions.https.onRequest(
             }`
           );
         }
+        console.log(`... are we done here now? ... taking forever!!`);
         return response
           .status(200)
           .send(`\n\n########### ${count} Auth users deleted.\n\n`);

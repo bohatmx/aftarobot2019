@@ -19,7 +19,9 @@ exports.checkLogs = functions.https.onRequest((request, response) => __awaiter(t
     console.log(`##### Starting auth user delete`);
     const debug = request.body.debug;
     const secret = request.body.auth;
-    if (debug === true) {
+    console.log(`incoming debug: ${debug}`);
+    console.log(`incoming secret: ${secret}`);
+    if (debug) {
         yield findAuth();
     }
     else {
@@ -52,6 +54,7 @@ exports.checkLogs = functions.https.onRequest((request, response) => __awaiter(t
                     count++;
                     console.log(`Auth user deleted: #${count} ${userRecord.uid} - ${userRecord.email}`);
                 }
+                console.log(`... are we done here now? ... taking forever!!`);
                 return response
                     .status(200)
                     .send(`\n\n########### ${count} Auth users deleted.\n\n`);
