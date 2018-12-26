@@ -6,6 +6,7 @@ import * as AddVehicleType from "./ar-modules/add-vehicle.type";
 import * as CheckLogs from "./ar-modules/check-logs";
 
 import * as AddLandmark from "./ar-modules/add-landmark";
+import * as AddLandmarks from "./ar-modules/add-landmarks";
 import * as AddRoute from "./ar-modules/add-route";
 import * as AddCountry from "./ar-modules/add-country";
 
@@ -17,7 +18,9 @@ import * as UpdateAssociation from "./ar-modules/update-association";
 import * as BroadcastRouteUpdate from "./ar-modules/broadcast-route-update";
 
 admin.initializeApp();
+
 export const addLandmark = AddLandmark.addLandmark;
+export const addLandmarks = AddLandmarks.addLandmarks;
 export const addRoute = AddRoute.addRoute;
 export const addCountry = AddCountry.addCountry;
 

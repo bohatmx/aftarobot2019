@@ -27,7 +27,8 @@
     "request": "^2.88.0",
     "stellar-sdk": "^0.11.0",
     "uuid": "^3.3.2",
-    "validator": "^10.8.0"
+    "validator": "^10.8.0",
+    "firebase-tools": "^6.2.2"
   },
   "devDependencies": {
     "tslint": "^5.11.0",
