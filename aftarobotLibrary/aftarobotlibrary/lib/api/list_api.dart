@@ -1,5 +1,7 @@
+import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
@@ -90,6 +92,32 @@ class ListAPI {
       });
     }
     return list;
+  }
+
+  static Future<List<CityDTO>> getSouthAfricanCities(
+      {bool forceRefresh}) async {
+    List<CountryDTO> list = await LocalDB.getCountries();
+    List<CityDTO> cityList = await LocalDB.getCities();
+    CountryDTO za;
+    list.forEach((c) {
+      if (c.name.contains('South Africa')) {
+        za = c;
+      }
+    });
+
+    if (forceRefresh || cityList.isEmpty) {
+      await _parseCities(za, cityList);
+      return cityList;
+    }
+
+    return cityList;
+  }
+
+  static Future _parseCities(CountryDTO za, List<CityDTO> cityList) async {
+    var qs = await fs.document(za.path).collection('cities').getDocuments();
+    qs.documents.forEach((doc) {
+      cityList.add(CityDTO.fromJson(doc.data));
+    });
   }
 
   static Future<List<RouteDTO>> getRoutes() async {

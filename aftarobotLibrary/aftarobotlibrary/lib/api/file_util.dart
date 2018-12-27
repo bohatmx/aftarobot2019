@@ -311,7 +311,10 @@ class LocalDB {
         throw Exception('No routes found in Routes object');
       }
       Map map = routes.toJson();
-      return await _writeFile(fileName: RouteData, map: map);
+      await _writeFile(fileName: RouteData, map: map);
+      print(
+          'LocalDB.saveRoutes +++++++++ cached ${routes.routes.length} routes');
+      return 0;
     } catch (e) {
       print(e);
       throw e;

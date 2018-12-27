@@ -36,9 +36,9 @@ class _CityMapSearchState extends State<CityMapSearch>
   String error;
   double bottomHeight;
   bool mapIsReady = false;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     initPlatformState();
     if (widget.landmark != null) {
@@ -49,9 +49,11 @@ class _CityMapSearchState extends State<CityMapSearch>
   void _getRoute() async {
     print('_CityMapSearchState._getRoute ......................');
     try {
-      route = await ListAPI.getRouteByID(widget.landmark.routeID);
-      prettyPrint(route.toJson(), '################### ROUTE:');
-      _setRouteMarkers(route);
+      if ((widget.landmark.routeID != null)) {
+        route = await ListAPI.getRouteByID(widget.landmark.routeID);
+        prettyPrint(route.toJson(), '################### ROUTE:');
+        _setRouteMarkers(route);
+      }
     } catch (e) {
       print(e);
     }
@@ -66,7 +68,6 @@ class _CityMapSearchState extends State<CityMapSearch>
       location = await _location.getLocation();
       print(
           '_ContactUsState.initPlatformState permission: $_permission location: $location');
-
       error = null;
     } on PlatformException catch (e) {
       if (e.code == 'PERMISSION_DENIED') {
@@ -297,36 +298,15 @@ class _CitySearchBoxState extends State<CitySearchBox> {
       cities = await LocalDB.getCities();
       print(
           '_CitySearchBoxState._getCities  - local city cache has: ${cities.length}');
+      cities = await ListAPI.getSouthAfricanCities(forceRefresh: true);
       var end = DateTime.now();
       print(
-          '_CitySearchBoxState._getCities - city shit took ${end.difference(start).inMilliseconds} milliseconds');
+          '_CitySearchBoxState._getCities - city shit took ${end.difference(start).inMilliseconds} '
+          'milliseconds, cities: ${cities.length}');
     } catch (e) {
       widget.listener.onError(e.message);
     }
     setState(() {});
-  }
-
-  void _handleTextChange(String text) {
-    print('_CitySearchBoxState._handleTextChange: $text');
-    _findCitiesFromText(text);
-  }
-
-  void _handleTextSubmit(String text) {
-    print('_CitySearchBoxState._handleTextSubmit: $text');
-    _findCitiesFromText(text);
-  }
-
-  void _handleTextEditComplete() {
-    print('_CitySearchBoxState._handleTextEditComplete');
-  }
-
-  void _handleCitySelected() {
-    print('_CitySearchBoxState._handleCitySelected');
-    prettyPrint(city.toJson(), '############ selected CITY:');
-    setState(() {
-      filteredCities = null;
-    });
-    widget.listener.onCityPicked(city);
   }
 
   void _findCitiesFromText(String query) {

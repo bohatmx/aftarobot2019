@@ -176,7 +176,7 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  void _startRouteMigrator() {
+  void _startRouteViewerPage() {
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => RouteViewerPage()),
@@ -313,9 +313,9 @@ class _DashboardState extends State<Dashboard>
             ),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.location_on),
+            icon: Icon(Icons.my_location),
             title: Text(
-              'Location',
+              'Routes',
               style: Styles.blackSmall,
             ),
           ),
@@ -349,8 +349,8 @@ class _DashboardState extends State<Dashboard>
               break;
             case 2:
               print(
-                  '_ExistingDataPageState.build -- #3 _startPage() index: $index');
-              _startLocationTestPage();
+                  '_ExistingDataPageState.build -- #3 _startRouteViewerPage() index: $index');
+              _startRouteViewerPage();
               break;
             case 3:
               print(
