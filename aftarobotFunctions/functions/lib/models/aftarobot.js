@@ -5826,7 +5826,6 @@ exports.UserArrivedAtWorkDTO = UserArrivedAtWorkDTO;
 let UserDTO = class UserDTO {
     //### instance function to set up: UserDTO object
     instance(data) {
-        console.log('## setting up instance of: UserDTO object');
         this.userType = data.userType;
         this.userID = data.userID;
         this.uid = data.uid;

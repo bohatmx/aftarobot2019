@@ -1,3 +1,4 @@
+import 'package:aftarobotlibrary/api/data_api.dart';
 import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
@@ -11,6 +12,7 @@ abstract class CountryListener {
 
 abstract class CityListener {
   onCity(CityDTO city);
+  onCities(List<CityDTO> cities);
 }
 
 class CountryGenerator {
@@ -87,10 +89,11 @@ class CountryGenerator {
   }
 
   static List<CityDTO> countryCities = List(), newCities = List();
-  static Future<List<CityDTO>> addCities(
+
+  static Future<List<CityDTO>> copyCitiesToFirestore(
       {List<CityDTO> cities, CountryDTO country, CityListener listener}) async {
     print(
-        'CountryGenerator.addCities -- #################### start loading cities');
+        'CountryGenerator.copyCitiesToFirestore -- #################### start loading cities');
     var start = DateTime.now();
     var qs =
         await fs.document(country.path).collection('cities').getDocuments();
@@ -98,8 +101,12 @@ class CountryGenerator {
       countryCities.add(CityDTO.fromJson(doc.data));
     });
     int badCnt = 0, goodCnt = 0;
-    List<CityDTO> list = List();
+    List<CityDTO> citiesToCopy = List();
+
     for (var city in cities) {
+      city.countryID = country.countryID;
+      city.countryName = country.name;
+      city.countryPath = country.path;
       var isFound = false;
       countryCities.forEach((cc) {
         if (cc.name == city.name) {
@@ -118,25 +125,89 @@ class CountryGenerator {
       });
 
       if (!isFound && !isFound2) {
-        var mCity = await _addCity(country: country, city: city);
-        list.add(mCity);
-        listener.onCity(mCity);
+        citiesToCopy.add(city);
         goodCnt++;
       } else {
         badCnt++;
         listener.onCity(null);
         print(
-            'CountryGenerator.addCities #$badCnt --- ${city.name} ----- ignoring city. already in country list');
+            'CountryGenerator.copyCitiesToFirestore #$badCnt --- ${city.name} ----- ignoring city. already in country list');
       }
     }
     print(
-        'CountryGenerator.addCities: ############# completed, good: $goodCnt bad: $badCnt');
+        'CountryGenerator.copyCitiesToFirestore: ############# completed filtering, good: $goodCnt bad: $badCnt');
+    //
+    var results = await _pageCities(mCities: citiesToCopy, listener: listener);
     var end = DateTime.now();
     print(
-        '\n\nCountryGenerator.addCities: COMPLETED: elapsed: ${end.difference(start).inMinutes}');
-    return list;
+        '\n\nCountryGenerator.copyCitiesToFirestore: COMPLETED: elapsed: ${end.difference(start).inMinutes}');
+    return results;
   }
 
+  static Future<List<CityDTO>> _pageCities(
+      {List<CityDTO> mCities, CityListener listener}) async {
+    print(
+        '\n\nCountryGenerator.__pageCities .... breaking up ${mCities.length} cars into multiple pages');
+    var rem = mCities.length % MAX_DOCUMENTS;
+    var pages = mCities.length ~/ MAX_DOCUMENTS;
+    if (rem > 0) {
+      pages++;
+    }
+    print(
+        'CountryGenerator.__pageCities: calculated: rem: $rem pages: $pages - is this fucking right????');
+    List<CityDTO> results = List();
+    List<CityPage> cityPages = List();
+    int mainIndex = 0;
+    for (var i = 0; i < pages; i++) {
+      try {
+        var vPage = CityPage();
+        vPage.cities = List();
+        for (var j = 0; j < MAX_DOCUMENTS; j++) {
+          vPage.cities.add(mCities.elementAt(mainIndex));
+          mainIndex++;
+        }
+        cityPages.add(vPage);
+        print(
+            'CountryGenerator.__pageCities page #${i + 1} has ${vPage.cities.length} cars, mainIndex: $mainIndex');
+      } catch (e) {
+        _getLastPage(mainIndex, e, cityPages, mCities, i);
+      }
+    }
+    print(
+        '\n\n\nCountryGenerator.__pageCities --- broke up cities into number of pages: ${cityPages.length} , MAX_DOCUMENTS: $MAX_DOCUMENTS');
+    for (var mPage in cityPages) {
+//      print(mPage.cities);
+      var mCities = await DataAPI.addCities(cities: mPage.cities);
+      print(
+          'CountryGenerator._pageCities --- returned cities: mCities = ${mCities.length}');
+      for (var city in mCities) {
+        await LocalDB.saveCity(city);
+        listener.onCity(city);
+      }
+      results.addAll(mCities);
+      listener.onCities(results);
+    }
+
+    return results;
+  }
+
+  static void _getLastPage(int mainIndex, e, List<CityPage> cityPages,
+      List<CityDTO> mCities, int i) {
+    print('CountryGenerator._getLastPage ERROR  mainIndex: $mainIndex --- $e');
+    var newIndex = (cityPages.length * MAX_DOCUMENTS);
+    print(
+        'CountryGenerator._getLastPage ---------> last page starting index: $newIndex');
+    var lastPage = CityPage();
+    lastPage.cities = List();
+    for (var i = newIndex; i < mCities.length; i++) {
+      lastPage.cities.add(mCities.elementAt(i));
+    }
+    cityPages.add(lastPage);
+    print(
+        'CountryGenerator._getLastPage page #${i + 1} has ${lastPage.cities.length} cities, newIndex: $newIndex');
+  }
+
+  static const MAX_DOCUMENTS = 400;
   static Future<CityDTO> _addCity({CityDTO city, CountryDTO country}) async {
     print('addCity ----------- ${country.name} - ${city.name}');
     int cnt = 0;
@@ -193,7 +264,9 @@ class CountryGenerator {
     }
   }
 }
-/*
-{-KTyxGqJXsRctHp9ztpW: {date: 1476377517226, latitude: 0, name: Lesotho, countryID: -KTyxGqJXsRctHp9ztpW, longitude: 0}, -KTyxMJ9ezgvpLJSRB79: {date: 1476377539617, latitude: 0, name: Namibia, countryID: -KTyxMJ9ezgvpLJSRB79, longitude: 0}, -KVQQAu9iFQjn0doksM1: {date: 1477928860012, latitude: 0, name: Botswana, countryID: -KVQQAu9iFQjn0doksM1, longitude: 0}, -KUm0hZ5Wg7UwCH_G5K8: {date: 1477234316948, latitude: 0, name: Ghana, countryID: -KUm0hZ5Wg7UwCH_G5K8, longitude: 0}, -KTyxEeQfOFzmbHREtFx: {date: 1476377508274, latitude: 0, name: Swaziland, countryID: -KTyxEeQfOFzmbHREtFx, longitude: 0}, -KVQM9tt3vhVQBG5jfds: {date: 1477927807322, latitude: 0, name: Sweden, countryID: -KVQM9tt3vhVQBG5jfds, longitude: 0}, -KTyxBZ1_tV4asRFzpy1: {date: 1476377495576, latitude: 0, name: South Africa, countryID: -KTyxBZ1_tV4asRFzpy1, longitude: 0}, -KUmaazYQr0N3kXP8vv5: {date: 1477243988889, latitude: 0, name: Kenya, countryID: -KUmaazYQr0N3kXP8vv5, longitude: 0}, -KsDgPMDOHMST8wuwzrF: {date: 1503485076985, latitude: 0, na
-I/flutter ( 9634): ListAPI.filter, list of vehicle tyafricapes for Brits Taxi Group: 3
-*/
+
+class CityPage {
+  List<CityDTO> cities;
+
+  CityPage({this.cities});
+}

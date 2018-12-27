@@ -16,7 +16,6 @@ class UserHelper {
     static writeUser(user, userRecord) {
         return __awaiter(this, void 0, void 0, function* () {
             const fs = admin.firestore();
-            console.log(`UserHelper ... Start Helping ... add user`);
             const mUser = new aftarobot_1.UserDTO();
             mUser.instance(user);
             let aUserRec;
@@ -34,7 +33,6 @@ class UserHelper {
                         const ur = yield admin.auth().createUser({
                             email: user.email,
                             emailVerified: false,
-                            // phoneNumber: user.cellphone,
                             password: user.password,
                             displayName: user.name,
                             disabled: false
@@ -95,17 +93,16 @@ class UserHelper {
             }
             function finishUp(userData, ref) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    console.log(`user added to Firestore: ${ref.path}`);
                     userData.path = ref.path;
                     yield ref.set(userData);
                     console.log(`user updated with path ${ref.path}`);
-                    return yield sendMessageToTopic();
+                    yield sendMessageToTopic();
+                    return userData;
                 });
             }
             function sendMessageToTopic() {
                 return __awaiter(this, void 0, void 0, function* () {
                     const topic = "usersAdded";
-                    console.log(`...sending message to topic ${topic}`);
                     const payload = {
                         data: {
                             messageType: "USER_ADDED",

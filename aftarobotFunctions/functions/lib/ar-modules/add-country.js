@@ -13,7 +13,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const constants = require("../models/constants");
+const country_helper_1 = require("./country-helper");
 const uuid = require("uuid/v1");
 exports.addCountry = functions.https.onRequest((request, response) => __awaiter(this, void 0, void 0, function* () {
     if (!request.body) {
@@ -40,23 +40,8 @@ exports.addCountry = functions.https.onRequest((request, response) => __awaiter(
     function writeCountry() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                country.countryID = uuid();
-                const qs0 = yield fs
-                    .collection(constants.Constants.FS_COUNTRIES)
-                    .where("name", "==", country.name)
-                    .get();
-                if (qs0.docs.length > 0) {
-                    const msg = `Country already exists: ${country.name}`;
-                    console.error(msg);
-                    return response.status(201).send(country);
-                }
-                const ref = yield fs
-                    .collection(constants.Constants.FS_COUNTRIES)
-                    .add(country);
-                country.path = ref.path;
-                yield ref.set(country);
-                console.log(`country written to Firestore ${ref.path}`);
-                return response.status(200).send(country);
+                const result = yield country_helper_1.CountryHelper.writeCountry(country);
+                return response.status(200).send(result);
             }
             catch (e) {
                 console.error(e);

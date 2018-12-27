@@ -1,7 +1,7 @@
 class CityDTO {
   String cityID;
   String provinceID;
-  String countryID;
+  String countryID, countryPath;
   String name;
   String status;
   String provinceName;
@@ -17,6 +17,7 @@ class CityDTO {
     this.provinceID,
     this.countryID,
     this.name,
+    this.countryPath,
     this.status,
     this.provinceName,
     this.latitude,
@@ -32,12 +33,22 @@ class CityDTO {
     this.name = data['name'];
     this.status = data['status'];
     this.provinceName = data['provinceName'];
-    this.latitude = data['latitude'];
-    this.longitude = data['longitude'];
+
+    if (data['latitude'] is int) {
+      this.latitude = data['latitude'] * 1.0;
+    } else {
+      this.latitude = data['latitude'];
+    }
+    if (data['longitude'] is int) {
+      this.longitude = data['longitude'] * 1.0;
+    } else {
+      this.longitude = data['longitude'];
+    }
+
     this.countryName = data['countryName'];
     this.date = data['date'];
-
     this.path = data['path'];
+    this.countryPath = data['countryPath'];
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -52,5 +63,6 @@ class CityDTO {
         'countryName': countryName,
         'date': date,
         'path': path,
+        'countryPath': countryPath,
       };
 }

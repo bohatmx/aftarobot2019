@@ -7,7 +7,6 @@ import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:datagenerator/country_gen.dart';
-import 'package:datagenerator/generator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_document_picker/flutter_document_picker.dart';
@@ -73,14 +72,12 @@ class _CityMigratorState extends State<CityMigrator>
       var len = await csvFile.length();
       print('##################### file length: $len');
       isBusy = true;
-      int lineNumber = 1;
       Stream<List<int>> stream = csvFile.openRead();
       stream
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .listen((line) {
         var strings = line.split(',');
-        //[gqaga, Gqaga, Eastern Cape, -31.553917, 28.210587, 5]
         var name = strings.elementAt(1);
         var prov = strings.elementAt(2);
         var lat = strings.elementAt(3);
@@ -99,11 +96,11 @@ class _CityMigratorState extends State<CityMigrator>
           counter++;
         });
 
-        print('${lineNumber++} - $name $prov $lat $lng');
+//        print('${lineNumber++} - $name $prov $lat $lng');
       }).onDone(() {
         isBusy = false;
         print(
-            '\n\n_CityMigratorState._pickImportFile -------- ########### COMPLETED import, ready to rumble!!!');
+            '\n\n_CityMigratorState._pickImportFile -------- ########### COMPLETED import, ${cities.length} cities ready to rumble!!!');
         _migrateCities();
       });
     }
@@ -303,7 +300,7 @@ class _CityMigratorState extends State<CityMigrator>
     }
     if (isBusy) return;
     if (country == null) {
-      print('_CityMigratorState._migrateCities ---select country an d ...');
+      print('_CityMigratorState._migrateCities ---select country and ...');
       _errorSnack('Please select a country to import cities for');
       return;
     }
@@ -311,7 +308,8 @@ class _CityMigratorState extends State<CityMigrator>
       counter = 0;
       isBusy = true;
     });
-    await CountryGenerator.addCities(
+
+    await CountryGenerator.copyCitiesToFirestore(
         cities: cities, country: country, listener: this);
     print(
         '_CityMigratorState._migrateCities --- CITY MIGRATION completed! Yay!!');
@@ -325,7 +323,8 @@ class _CityMigratorState extends State<CityMigrator>
   List<CityDTO> activeCities = List();
   @override
   onCity(CityDTO city) {
-    print('_CityMigratorState.onCity ................ $city #$counter');
+    print(
+        '\n\n_CityMigratorState.onCity ......==============.......... $city #$counter');
     if (city == null) {
       setState(() {
         counter++;
@@ -340,6 +339,21 @@ class _CityMigratorState extends State<CityMigrator>
     setState(() {
       activeCities.add(city);
       counter++;
+    });
+  }
+
+  @override
+  onCities(List<CityDTO> cities) {
+    print(
+        '\n\n_CityMigratorState.onCities .................. cities arrived: ${cities.length}');
+    assert(country != null);
+    if (country.cities == null) {
+      country.cities = List();
+    }
+    country.cities.addAll(cities);
+    setState(() {
+      counter += cities.length;
+      activeCities.addAll(cities);
     });
   }
 

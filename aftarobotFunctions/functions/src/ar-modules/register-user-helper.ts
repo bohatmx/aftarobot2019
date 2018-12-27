@@ -1,21 +1,20 @@
 import * as admin from "firebase-admin";
 import * as constants from "../models/constants";
-import { UserDTO } from '../models/aftarobot';
+import { UserDTO } from "../models/aftarobot";
 const uuid = require("uuid/v1");
 
 export class UserHelper {
   static async writeUser(user, userRecord) {
     const fs = admin.firestore();
-    console.log(`UserHelper ... Start Helping ... add user`);
     const mUser: UserDTO = new UserDTO();
     mUser.instance(user);
     let aUserRec;
     if (!userRecord) {
       aUserRec = await createAuthUser();
     } else {
-      aUserRec = userRecord
+      aUserRec = userRecord;
     }
-    const resultUser = await writeUser()
+    const resultUser = await writeUser();
     return resultUser;
 
     async function createAuthUser() {
@@ -23,7 +22,6 @@ export class UserHelper {
         const ur = await admin.auth().createUser({
           email: user.email,
           emailVerified: false,
-          // phoneNumber: user.cellphone,
           password: user.password,
           displayName: user.name,
           disabled: false
@@ -76,15 +74,14 @@ export class UserHelper {
       return null;
     }
     async function finishUp(userData, ref) {
-      console.log(`user added to Firestore: ${ref.path}`);
       userData.path = ref.path;
       await ref.set(userData);
       console.log(`user updated with path ${ref.path}`);
-      return await sendMessageToTopic();
+      await sendMessageToTopic();
+      return userData;
     }
     async function sendMessageToTopic() {
       const topic = "usersAdded";
-      console.log(`...sending message to topic ${topic}`);
       const payload = {
         data: {
           messageType: "USER_ADDED",

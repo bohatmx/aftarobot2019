@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
@@ -24,6 +25,7 @@ class DataAPI {
       ADD_VEHICLES = URL + 'addVehicles',
       ADD_COUNTRY = URL + 'addCountry',
       ADD_COUNTRIES = URL + 'addCountries',
+      ADD_CITIES = URL + 'addCities',
       ADD_LANDMARK = URL + 'addLandmark',
       ADD_LANDMARKS = URL + 'addLandmarks',
       ADD_ROUTE = URL + 'addRoute',
@@ -105,6 +107,48 @@ class DataAPI {
           });
           print(
               'DataAPI.addCountries ######### returned ${mList.length} countries from function call');
+          return mList;
+        } catch (e) {
+          print(e);
+          throw Exception(e);
+        }
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
+    }
+  }
+
+  static Future<List<CityDTO>> addCities({List<CityDTO> cities}) async {
+    print(
+        '\n\nDataAPI.addCities ---------- receiving ${cities.length} cities for input to fuction');
+
+    List<Map> maps = List();
+    cities.forEach((c) {
+      maps.add(c.toJson());
+    });
+
+    var map = {
+      'cities': maps,
+    };
+    print(map);
+    if (map['cities'] == null || map['cities'].isEmpty) {
+      throw Exception('This is fucked, function input (cities) is NULL. WTF?');
+    }
+    List<CityDTO> mList = List();
+    var res = await _callCloudFunction(ADD_CITIES, map);
+    switch (res.statusCode) {
+      case 200:
+        try {
+          List<dynamic> map1 = json.decode(res.body);
+          map1.forEach((m) {
+            var mCountry = CityDTO.fromJson(m);
+            mList.add(mCountry);
+          });
+          print(
+              'DataAPI.addCities ######### returned ${mList.length} cities from function call');
           return mList;
         } catch (e) {
           print(e);

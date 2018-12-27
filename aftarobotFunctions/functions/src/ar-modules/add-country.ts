@@ -5,6 +5,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as constants from "../models/constants";
+import { CountryHelper } from './country-helper';
 const uuid = require("uuid/v1");
 
 export const addCountry = functions.https.onRequest(
@@ -37,25 +38,8 @@ export const addCountry = functions.https.onRequest(
 
     async function writeCountry() {
       try {
-        country.countryID = uuid();
-        const qs0 = await fs
-          .collection(constants.Constants.FS_COUNTRIES)
-          .where("name", "==", country.name)
-          .get();
-        if (qs0.docs.length > 0) {
-          const msg = `Country already exists: ${country.name}`;
-          console.error(msg);
-          return response.status(201).send(country);
-        }
-
-        const ref = await fs
-          .collection(constants.Constants.FS_COUNTRIES)
-          .add(country);
-        country.path = ref.path;
-        await ref.set(country);
-
-        console.log(`country written to Firestore ${ref.path}`);
-        return response.status(200).send(country);
+        const result = await CountryHelper.writeCountry(country)
+        return response.status(200).send(result);
       } catch (e) {
         console.error(e);
         return response.status(400).send(e);
