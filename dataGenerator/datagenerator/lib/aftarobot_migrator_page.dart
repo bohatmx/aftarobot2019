@@ -859,6 +859,22 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   }
 
   @override
+  onAssociationsAdded(List<AssociationDTO> associations) {
+    asses.addAll(associations);
+    assCount = asses.length;
+    var msg = Msg(
+        icon: Icon(
+          Icons.apps,
+          color: getRandomColor(),
+        ),
+        style: Styles.brownBoldSmall,
+        message: '${associations.length} Associations added');
+    messages.add(msg);
+    animationIndex = AssIndex;
+    _setCounters(animationIndex: AssIndex);
+  }
+
+  @override
   onVehicleAdded(VehicleDTO car) {
     print(
         '_RouteMigratorState.onVehicleAdded -- ${car.vehicleReg} ${car.path}');
@@ -879,7 +895,8 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
 
   @override
   onUsersAdded(List<UserDTO> users) {
-    users.addAll(users);
+    print('\n\n_AftaRobotMigratorPageState.onUsersAdded .....');
+    this.users.addAll(users);
     userCount = users.length;
     var msg = Msg(
         icon: Icon(

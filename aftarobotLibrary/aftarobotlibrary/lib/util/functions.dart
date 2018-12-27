@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 List<Color> _colors = List();
 Random _rand = Random(new DateTime.now().millisecondsSinceEpoch);
@@ -701,4 +702,10 @@ bool get isInDebugMode {
   bool inDebugMode = false;
   assert(inDebugMode = true);
   return inDebugMode;
+}
+
+String getKey() {
+  var uuid = new Uuid();
+  String key = uuid.v1();
+  return key;
 }

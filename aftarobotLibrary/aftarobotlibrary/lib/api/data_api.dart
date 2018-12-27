@@ -7,6 +7,7 @@ import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
+import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:http/http.dart' as http;
 
 /*
@@ -17,16 +18,19 @@ class DataAPI {
   static const URL =
       'https://us-central1-aftarobot2019-dev1.cloudfunctions.net/';
   static const ADD_ASSOCIATION_URL = URL + 'addAssociation',
+      ADD_ASSOCIATIONS_URL = URL + 'addAssociations',
       ADD_VEHICLE_TYPE = URL + 'addVehicleType',
       ADD_VEHICLE = URL + 'addVehicle',
       ADD_VEHICLES = URL + 'addVehicles',
       ADD_COUNTRY = URL + 'addCountry',
+      ADD_COUNTRIES = URL + 'addCountries',
       ADD_LANDMARK = URL + 'addLandmark',
       ADD_LANDMARKS = URL + 'addLandmarks',
       ADD_ROUTE = URL + 'addRoute',
       CHECK_LOGS = URL + 'checkLogs',
       REGISTER_USERS = URL + 'registerUsers',
       REGISTER_USER = URL + 'registerUser';
+
   static List<String> countryNames = [
     'South Africa',
     'Mozambique',
@@ -68,18 +72,51 @@ class DataAPI {
     }
   }
 
-  static Future<List<CountryDTO>> addCountries() async {
-    List<CountryDTO> list = List();
-    for (var name in countryNames) {
-      var country = await addCountry(CountryDTO(
-        name: name,
-        status: 'Active',
-        date: DateTime.now().millisecondsSinceEpoch,
-      ));
-      list.add(country);
+  static Future<List<CountryDTO>> addCountries(
+      {List<CountryDTO> countries}) async {
+    List<CountryDTO> countryList = List();
+    if (countries == null) {
+      countryNames.forEach((c) {
+        countryList.add(CountryDTO(
+          name: c,
+          date: DateTime.now().millisecondsSinceEpoch,
+          status: 'Active',
+          countryID: getKey(),
+        ));
+      });
     }
-    print('DataAPI.addCountries, ################## countries: ${list.length}');
-    return list;
+    countries = countryList;
+    List<Map> maps = List();
+    countries.forEach((c) {
+      maps.add(c.toJson());
+    });
+    var map = {
+      'countries': maps,
+    };
+    List<CountryDTO> mList = List();
+    var res = await _callCloudFunction(ADD_COUNTRIES, map);
+    switch (res.statusCode) {
+      case 200:
+        try {
+          List<dynamic> map1 = json.decode(res.body);
+          map1.forEach((m) {
+            var mCountry = CountryDTO.fromJson(m);
+            mList.add(mCountry);
+          });
+          print(
+              'DataAPI.addCountries ######### returned ${mList.length} countries from function call');
+          return mList;
+        } catch (e) {
+          print(e);
+          throw Exception(e);
+        }
+        break;
+      case 201:
+        return null;
+      default:
+        throw Exception(res.body);
+        break;
+    }
   }
 
   static Future<CountryDTO> addCountry(CountryDTO country) async {
@@ -309,9 +346,9 @@ class DataAPI {
     List<UserDTO> mList = List();
     try {
       List<dynamic> list = json.decode(res.body);
-      list.forEach((map1) {
-        UserDTO mMark = UserDTO.fromJson(map1);
-        mList.add(mMark);
+      list.forEach((userMap) {
+        UserDTO mUser = UserDTO.fromJson(userMap);
+        mList.add(mUser);
       });
 
       return mList;
@@ -366,6 +403,44 @@ class DataAPI {
       var adm = UserDTO.fromJson(map1['user']);
 
       return ass;
+    } catch (e) {
+      print(e);
+      throw Exception(e);
+    }
+  }
+
+  static Future<Map> addAssociations(
+      {List<AssociationDTO> associations, List<UserDTO> adminUsers}) async {
+    List<Map> assocMaps = List();
+    associations.forEach((ass) {
+      assocMaps.add(ass.toJson());
+    });
+    List<Map> userMaps = List();
+    adminUsers.forEach((user) {
+      userMaps.add(user.toJson());
+    });
+    var map = {'associations': assocMaps, 'users': userMaps};
+
+    var res = await _callCloudFunction(ADD_ASSOCIATIONS_URL, map);
+    print('DataAPI.addAssociations: RESULT:\n ${res.body}');
+    if (res.statusCode != 200) {
+      throw Exception(res.body);
+    }
+    List<AssociationDTO> mList = List();
+    List<UserDTO> sList = List();
+    try {
+      List<dynamic> result = json.decode(res.body);
+      result.forEach((map) {
+        var ass = AssociationDTO.fromJson(map['association']);
+        var adm = UserDTO.fromJson(map['user']);
+        mList.add(ass);
+        sList.add(adm);
+      });
+
+      return {
+        'associations': mList,
+        'users': sList,
+      };
     } catch (e) {
       print(e);
       throw Exception(e);

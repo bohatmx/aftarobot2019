@@ -360,6 +360,12 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     // TODO: implement onVehiclesAdded
     return null;
   }
+
+  @override
+  onAssociationsAdded(List<AssociationDTO> associations) {
+    // TODO: implement onAssociationsAdded
+    return null;
+  }
 }
 
 class RouteCard extends StatefulWidget {

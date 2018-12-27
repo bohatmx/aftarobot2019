@@ -20,7 +20,8 @@ import 'package:firebase_database/firebase_database.dart';
   The Migrator, all Powerful, all Seeing!
  */
 abstract class AftaRobotMigrationListener {
-  onAssociationAdded(AssociationDTO ass);
+  onAssociationAdded(AssociationDTO association);
+  onAssociationsAdded(List<AssociationDTO> associations);
   onVehicleAdded(VehicleDTO car);
   onVehiclesAdded(List<VehicleDTO> cars);
   onVehicleTypeAdded(VehicleTypeDTO car);
@@ -135,10 +136,11 @@ class AftaRobotMigration {
     migrationListener.onGenericMessage(msg);
 
     migrationListener.onGenericMessage('Adding countries ...');
-    countries = await addCountries();
-    listener.onCountriesAdded(countries);
+    countries = await DataAPI.addCountries();
+    migrationListener.onCountriesAdded(countries);
 
-    List<AssociationDTO> list = List();
+    List<AssociationDTO> assList = List();
+    List<UserDTO> userList = List();
     FirebaseDatabase firebaseDatabase = await _getDatabase();
 
     DataSnapshot dataSnapshot2 =
@@ -162,7 +164,20 @@ class AftaRobotMigration {
           ass.associationName.contains('Inanda Taxi Owners Association')) {
         ass.countryID = za.countryID;
         ass.countryName = za.name;
-        list.add(ass);
+        assList.add(ass);
+        var mEmail =
+            ass.associationName.replaceAll(" ", '.').toLowerCase().trim() +
+                rand.nextInt(99999).toString() +
+                '@aftarobot.io';
+        var adminUser = UserDTO(
+            email: mEmail,
+            password: 'pass123',
+            cellphone: _getRandomPhone(),
+            countryID: ass.countryID,
+            name: ass.associationName,
+            userType: DataAPI.ASSOC_ADMIN,
+            userDescription: DataAPI.ASSOC_ADMIN_DESC);
+        userList.add(adminUser);
         cnt++;
         print(
             '\nAftaRobotMigrationdex.migrateOldAftaRobot ------- association #$cnt ${ass.associationName} added to processing list');
@@ -172,20 +187,23 @@ class AftaRobotMigration {
       }
     }
     print(
-        '\n\nAftaRobotMigrationdex.migrateOldAftaRobot, total associations: ${list.length} ****************');
+        '\n\nAftaRobotMigrationdex.migrateOldAftaRobot, total associations: ${assList.length} ****************');
 
-    for (var ass in list) {
-      await _writeAss(ass);
-    }
+    var map = await DataAPI.addAssociations(
+        associations: assList, adminUsers: userList);
+    asses.addAll(map['associations']);
+    users.addAll(map['users']);
+    migrationListener.onAssociationsAdded(asses);
+
     //get vehicles
     await _generateCarTypes(za);
     await migrateCars();
     await migrateUsers();
     var routes = await _getFilteredRoutes();
     await migrateRoutes(routes: routes);
-    listener
+    migrationListener
         .onGenericMessage('Old AftaRobot data migration complete. Happy now?');
-    listener.onComplete();
+    migrationListener.onComplete();
     return null;
   }
 
@@ -385,11 +403,12 @@ class AftaRobotMigration {
     return userList;
   }
 
+  static const MAX_USERS = 10;
   static Future _pageUsers(List<UserDTO> userList) async {
     print(
         '\n\nAftaRobotMigration._pageUsers .... breaking up ${userList.length} users into multiple pages');
-    var rem = userList.length % MAX_DOCUMENTS;
-    var pages = userList.length ~/ MAX_DOCUMENTS;
+    var rem = userList.length % MAX_USERS;
+    var pages = userList.length ~/ MAX_USERS;
     if (rem > 0) {
       pages++;
     }
@@ -401,7 +420,7 @@ class AftaRobotMigration {
       try {
         var vPage = UserPage();
         vPage.users = List();
-        for (var j = 0; j < MAX_DOCUMENTS; j++) {
+        for (var j = 0; j < MAX_USERS; j++) {
           vPage.users.add(userList.elementAt(mainIndex));
           mainIndex++;
         }
@@ -411,7 +430,7 @@ class AftaRobotMigration {
       } catch (e) {
         print(
             'AftaRobotMigration._pageUsers ERROR $e --  mainIndex: $mainIndex');
-        var newIndex = (userPages.length * MAX_DOCUMENTS);
+        var newIndex = (userPages.length * MAX_USERS);
         print(
             'AftaRobotMigration._pageUsers ---------> last page starting index: $newIndex');
         var lastPage = UserPage();
@@ -426,12 +445,17 @@ class AftaRobotMigration {
       }
     }
     print(
-        'AftaRobotMigration._pageUsers --- broke up users into number of pages: ${userPages.length}, mainIndex: $mainIndex');
+        'AftaRobotMigration._pageUsers --- broke up users into number of pages:'
+        ' ${userPages.length}, mainIndex: $mainIndex ... starting to dance .....');
+
+    List<UserDTO> xUserList = List();
     for (var mPage in userPages) {
       var results = await DataAPI.addUsers(mPage.users);
-      userList.addAll(results);
+      xUserList.addAll(results);
       migrationListener.onUsersAdded(results);
     }
+    users.addAll(xUserList);
+    migrationListener.onGenericMessage('${xUserList.length} users added OK');
     return null;
   }
 
@@ -607,8 +631,7 @@ class AftaRobotMigration {
             userType: DataAPI.ASSOC_ADMIN,
             userDescription: DataAPI.ASSOC_ADMIN_DESC));
     if (myAss == null) {
-      print(
-          'AftaRobotMigration._writeVehicle -- DUPLICATE ASS ${ass.toJson()}');
+      print('AftaRobotMigration._writeAss -- DUPLICATE ASS ${ass.toJson()}');
       migrationListener
           .onDuplicateRecord('Duplicate ${ass.associationName} ${ass.path} ');
       return null;

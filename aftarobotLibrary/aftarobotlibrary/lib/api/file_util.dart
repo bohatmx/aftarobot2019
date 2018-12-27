@@ -17,14 +17,14 @@ class LocalDB {
   static Directory dir;
   static bool fileExists;
 
-  static const RouteData = 'RouteData4f',
-      AssocData = 'AssocData4f',
-      UserData = 'UsersData4f',
-      CarData = 'CarData4f',
-      CarTypeData = 'CarTypeData4f',
-      LandmarkData = 'LandmarkData4f',
-      CityData = 'CityData4f',
-      CountryData = 'CountryData4f';
+  static const RouteData = 'RouteData4h',
+      AssocData = 'AssocData4h',
+      UserData = 'UsersData4h',
+      CarData = 'CarData4h',
+      CarTypeData = 'CarTypeData4h',
+      LandmarkData = 'LandmarkData4h',
+      CityData = 'CityData4h',
+      CountryData = 'CountryData4h';
 
   static Future<int> saveCity(CityDTO city) async {
     var m = await getCities();

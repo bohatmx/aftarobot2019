@@ -61,9 +61,11 @@ class VehicleHelper {
                     vehicle.path = ref2.path;
                     yield ref.set(vehicle);
                 }
-                else {
-                    console.error(`car has no owner path, please check: ${vehicle.vehicleReg}`);
-                }
+                // } else {
+                //   console.error(
+                //     `car has no owner path, please check: ${vehicle.vehicleReg}`
+                //   );
+                // }
                 console.log(`car written to Firestore ${ref.path}`);
                 return vehicle;
             }

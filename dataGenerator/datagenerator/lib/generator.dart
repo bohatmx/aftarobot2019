@@ -10,7 +10,6 @@ import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:uuid/uuid.dart';
 
 abstract class GeneratorListener {
   onEvent(Msg msg);
@@ -610,12 +609,6 @@ int getUTCDateInt() {
   initializeDateFormatting();
   var now = new DateTime.now().toUtc().millisecondsSinceEpoch;
   return now;
-}
-
-String getKey() {
-  var uuid = new Uuid();
-  String key = uuid.v1();
-  return key;
 }
 
 Details _getRandomDetails() {
