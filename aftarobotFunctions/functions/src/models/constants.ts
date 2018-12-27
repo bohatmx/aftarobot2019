@@ -6,6 +6,7 @@ export class Constants {
   static FS_VEHICLE_TYPES = "vehicleTypes";
   static FS_ROUTES = "routes";
   static FS_COUNTRIES = "countries";
+  static FS_CITIES = "cities";
   static FS_COMMUTERS = "commuters";
   static FS_STAFF = "staff";
   static FS_ADMINISTRATORS = "administrators";

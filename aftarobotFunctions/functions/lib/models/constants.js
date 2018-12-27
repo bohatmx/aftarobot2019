@@ -9,6 +9,7 @@ Constants.FS_USERS = "users";
 Constants.FS_VEHICLE_TYPES = "vehicleTypes";
 Constants.FS_ROUTES = "routes";
 Constants.FS_COUNTRIES = "countries";
+Constants.FS_CITIES = "cities";
 Constants.FS_COMMUTERS = "commuters";
 Constants.FS_STAFF = "staff";
 Constants.FS_ADMINISTRATORS = "administrators";
