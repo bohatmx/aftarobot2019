@@ -9,7 +9,9 @@ import 'package:aftarobotlibrary/directions/direct_util.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
+import 'package:flutter/services.dart';
 import 'package:migrator2/aftarobot_migrator_page.dart';
+import 'package:migrator2/beacon_scanner.dart';
 import 'package:migrator2/city_migrate.dart';
 import 'package:migrator2/generator.dart';
 import 'package:migrator2/main.dart';
@@ -36,6 +38,24 @@ class _DashboardState extends State<Dashboard>
   List<UserDTO> users = List();
   List<AssociationDTO> asses = List();
   List<VehicleDTO> cars = List();
+  static const platform = const MethodChannel('samples.flutter.io/battery');
+  String _batteryLevel = '0';
+
+  Future<String> _getBatteryLevel() async {
+    String batteryLevel;
+    try {
+      final int result = await platform.invokeMethod('getBatteryLevel');
+      batteryLevel = 'Battery: $result % .';
+    } on PlatformException catch (e) {
+      batteryLevel = "Failed: '${e.message}'.";
+    }
+
+    setState(() {
+      _batteryLevel = batteryLevel;
+    });
+    return batteryLevel;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +72,7 @@ class _DashboardState extends State<Dashboard>
 
   void test() async {
     await DirectionsUtil.getDirections();
+    _batteryLevel = await _getBatteryLevel();
   }
 
   Future _getCachedData() async {
@@ -189,10 +210,10 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  void _startCitySearchPage() {
+  void _startBeaconScanner() {
     Navigator.push(
       context,
-      new MaterialPageRoute(builder: (context) => CityMapSearch()),
+      new MaterialPageRoute(builder: (context) => BeaconScanner()),
     );
   }
 
@@ -253,6 +274,10 @@ class _DashboardState extends State<Dashboard>
               ],
             ),
           ),
+          Text(
+            _batteryLevel == null ? 'Battery' : _batteryLevel,
+            style: Styles.blackSmall,
+          ),
         ],
       ),
     );
@@ -312,9 +337,9 @@ class _DashboardState extends State<Dashboard>
             ),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.bluetooth),
             title: Text(
-              'Search',
+              'Beacons',
               style: Styles.blackSmall,
             ),
           ),
@@ -350,8 +375,8 @@ class _DashboardState extends State<Dashboard>
               break;
             case 1:
               print(
-                  '_ExistingDataPageState.build -- #2 _startCitySearchPage() index: $index');
-              _startCitySearchPage();
+                  '_ExistingDataPageState.build -- #2 _startBeaconScanner() index: $index');
+              _startBeaconScanner();
               break;
             case 2:
               print(

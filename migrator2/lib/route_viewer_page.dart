@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
@@ -6,13 +9,20 @@ import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/spatialinfodto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
+import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:migrator2/location_collector.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 
 class RouteViewerPage extends StatefulWidget {
   @override
   _RouteViewerPageState createState() => _RouteViewerPageState();
 }
 
+/*
+  #region
+*/
 class _RouteViewerPageState extends State<RouteViewerPage>
     implements RouteCardListener {
   List<RouteDTO> routes;
@@ -21,12 +31,91 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   String status = 'AftaRobot Routes';
   int routeCount = 0, landmarkCount = 0;
   List<AssociationDTO> asses = List();
+
+  static const platformDirections = const MethodChannel('aftarobot/directions');
+  static const platformDistance = const MethodChannel('aftarobot/distance');
+  static const beaconScanStream = const EventChannel('aftarobot/beaconScan');
+
+  final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
+  Permission permission = Permission.AccessFineLocation;
+  int beaconCount = 0;
   @override
   void initState() {
     super.initState();
     _getNewRoutes();
+    _checkPermission();
   }
 
+  _requestPermission() async {
+    print('\n\n######################### requestPermission');
+    try {
+      final res = await SimplePermissions.requestPermission(permission);
+      print("\n########### permission request result is " + res.toString());
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  _checkPermission() async {
+    print('\n\n######################### checkPermission');
+    try {
+      bool res = await SimplePermissions.checkPermission(permission);
+      print("***************** permission checked is " + res.toString() + '\n');
+      if (res == false) {
+        _requestPermission();
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void _startRouteBuilding() async {
+    await _startDirectionsTest(route);
+    print(
+        '\n########### startRouteBuilding ------------------------------ ...');
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => LocationCollector()));
+  }
+
+  Future _startBeaconScan() async {
+    beaconScanStream.receiveBroadcastStream().listen((scanResult) {
+      print(
+          '################ --- receiveBroadcastStream: scanResult: $scanResult');
+      Map map = json.decode(scanResult);
+      print(map);
+    });
+
+    return null;
+  }
+
+  Future _getDirections(
+      {double originLatitude,
+      double originLongitude,
+      double destinationLatitude,
+      double destinationLongitude}) async {
+    print(
+        '\n\n_RouteViewerPageState: ################## _getDirections ******************');
+    var map = {
+      'originLatitude': originLatitude,
+      'originLongitude': originLongitude,
+      'destinationLatitude': destinationLatitude,
+      'destinationLongitude': destinationLongitude,
+    };
+    var string = json.encode(map);
+    print("sending $string to channel for directions");
+    try {
+      final String result =
+          await platformDirections.invokeMethod('getDirections', string);
+      var map = json.decode(result);
+      print(
+          '_RouteViewerPageState: ########## map from directionsChannel $map');
+    } on PlatformException catch (e) {
+      print(e);
+    }
+  }
+
+  Timer timer;
+  void _startTimer() {}
   void _setCounters() {
     setState(() {
       routeCount = routes.length;
@@ -79,6 +168,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _key,
       appBar: AppBar(
         title: Text('AftaRobot Routes'),
         backgroundColor: Colors.indigo.shade300,
@@ -182,11 +272,105 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     });
   }
 
+  RouteDTO route;
   @override
-  onRouteTapped(RouteDTO route) {
+  onRouteTapped(RouteDTO route) async {
+    this.route = route;
     print(
         '_RouteViewerPageState.onRouteTapped: &&&&&&&&&&& route: ${route.name}');
+    _showChoiceDialog();
+  }
+
+  void _showChoiceDialog() {
+    showDialog(
+        context: context,
+        builder: (_) => new AlertDialog(
+              title: new Text(
+                "Action Stations!",
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Theme.of(context).primaryColor),
+              ),
+              content: Container(
+                height: 120.0,
+                child: Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        'Please select the way you want to go',
+                        style: Styles.blackBoldMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                RaisedButton(
+                  elevation: 4.0,
+                  color: Colors.pink,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Route Build',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _startRouteBuilding();
+                  },
+                ),
+                SizedBox(
+                  width: 20,
+                ),
+                RaisedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _proceedToMap(route);
+                  },
+                  elevation: 4.0,
+                  color: Colors.teal.shade500,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Start Map',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ));
+  }
+
+  void _proceedToMap(RouteDTO route) async {
+    await _startDirectionsTest(route);
     _goToMapSearch(context: context, route: route);
+  }
+
+  Future _startDirectionsTest(RouteDTO route) async {
+    route.spatialInfos.sort((a, b) => a.fromLandmark.rankSequenceNumber);
+    var info1 = route.spatialInfos.first;
+    var info2 = route.spatialInfos.last;
+
+    AppSnackbar.showSnackbar(
+        scaffoldKey: _key,
+        message:
+            'Getting route directions: ${info1.fromLandmark.landmarkName} to ${info2.fromLandmark.landmarkName}',
+        backgroundColor: Colors.black,
+        textColor: Colors.white);
+    var start = DateTime.now();
+
+    await _getDirections(
+      originLatitude: info1.fromLandmark.latitude,
+      originLongitude: info1.fromLandmark.longitude,
+      destinationLatitude: info2.fromLandmark.latitude,
+      destinationLongitude: info2.fromLandmark.longitude,
+    );
+    var end = DateTime.now();
+    print(
+        '######### directions received, elapsed time: ${end.difference(start).inSeconds}');
+    return null;
   }
 
   void _goToMapSearch(
@@ -211,6 +395,9 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   }
 }
 
+/*
+  #region
+*/
 abstract class RouteCardListener {
   onRouteTapped(RouteDTO route);
 }
@@ -234,37 +421,56 @@ class _RouteCardState extends State<RouteCard> {
   bool isExpanded = false;
 
   @override
-  Widget build(BuildContext context) {
-    List<ExpansionPanel> panels = List();
-    int mIndex = 0;
+  void initState() {
+    super.initState();
     widget.route.spatialInfos.sort((a, b) => a.fromLandmark.rankSequenceNumber
         .compareTo(b.fromLandmark.rankSequenceNumber));
+  }
 
-    widget.route.spatialInfos.forEach((si) {
-      bool iAmExpanding = false;
-      if (index == mIndex) {
-        iAmExpanding = isExpanded;
-      }
-      var panel = ExpansionPanel(
-          isExpanded: iAmExpanding,
-          body: SpatialInfoPair(
-            spatialInfo: si,
-            route: widget.route,
-          ),
-          headerBuilder: (BuildContext context, bool isExpanded) {
-            return Padding(
-              padding: const EdgeInsets.only(left: 20.0, top: 8.0, bottom: 8),
-              child: Text(
-                si.fromLandmark.landmarkName,
-                style: Styles.blackBoldSmall,
-              ),
-            );
-          });
-
-      panels.add(panel);
-      mIndex++;
+  void _expansionCallBack(int panelIndex, bool isExpanded) {
+    print(
+        ".................. _expansionCallBack panelIndex: $panelIndex isExpanded: $isExpanded");
+    setState(() {
+      this.isExpanded = !isExpanded;
     });
+  }
 
+  Widget _buildSpatialInfoList() {
+    List<SpatialInfoPair> pairs = List();
+    widget.route.spatialInfos.forEach((si) {
+      pairs.add(SpatialInfoPair(
+        spatialInfo: si,
+        route: widget.route,
+      ));
+    });
+    List<ExpansionPanel> list = List();
+    var panel = ExpansionPanel(
+      isExpanded: isExpanded,
+      headerBuilder: (context, isExpanded) {
+        print('ExpansionPanel headerBuilder $isExpanded');
+        return Row(
+          children: <Widget>[
+            SizedBox(
+              width: 20,
+            ),
+            Text('Route Landmarks', style: Styles.greyLabelMedium)
+          ],
+        );
+      },
+      body: Column(
+        children: pairs,
+      ),
+    );
+    list.add(panel);
+    return ExpansionPanelList(
+      animationDuration: Duration(milliseconds: 500),
+      children: list,
+      expansionCallback: _expansionCallBack,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       elevation: 4.0,
       color: getRandomPastelColor(),
@@ -320,20 +526,7 @@ class _RouteCardState extends State<RouteCard> {
             SizedBox(
               height: 20,
             ),
-            widget.hideLandmarks == true
-                ? Container()
-                : ExpansionPanelList(
-                    children: panels,
-                    animationDuration: Duration(milliseconds: 500),
-                    expansionCallback: (int index, bool isExpanded) {
-                      print(
-                          'RouteCard.build - expansionCallback: index: $index isExpanded: $isExpanded - ${DateTime.now().toUtc().toIso8601String()}');
-                      setState(() {
-                        this.index = index;
-                        this.isExpanded = !isExpanded;
-                      });
-                    },
-                  ),
+            _buildSpatialInfoList(),
           ],
         ),
       ),
