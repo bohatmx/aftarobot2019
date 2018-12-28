@@ -126,4 +126,5 @@ class UserDTO {
     };
     return map;
   }
+
 }

@@ -10,6 +10,7 @@ import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
+import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:path_provider/path_provider.dart';
 
 class LocalDB {
@@ -321,6 +322,49 @@ class LocalDB {
     }
   }
 
+///////////
+  ///
+  static const LocationsData = 'LocationsData0';
+  static Future<int> saveARLocation(ARLocation location) async {
+    var m = await getARLocations();
+    m.add(location);
+    var e = ARLocations(locations: m);
+    print(
+        'LocalDB.saveARLocation - latitude ${location.latitude} longitude: ${location.longitude}');
+    return await saveARLocations(e);
+  }
+
+  static Future<int> saveARLocations(ARLocations locations) async {
+    try {
+      if (locations.locations.isEmpty) {
+        print(
+            'LocalDB.saveARLocations - NO LOCATIONS FOR OLD MEN in here #####################');
+        throw Exception('No locations found in ARLocations object');
+      }
+      Map map = locations.toJson();
+      return await _writeFile(fileName: LocationsData, map: map);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  static Future<List<ARLocation>> getARLocations() async {
+    print('LocalDB.getARLocations -- ################## starting ...');
+    try {
+      var map = await _readFile(LocationsData);
+      if (map == null) {
+        return List();
+      }
+      return ARLocations.fromJson(map).locations;
+    } catch (e) {
+      print('LocalDB.getARLocations - ERROR  - ERROR  - ERROR  - ERROR ');
+      print(e);
+      throw e;
+    }
+  }
+
+  ///
   static Future<int> deleteRoutes() async {
     return await deleteFile(RouteData);
   }
@@ -647,6 +691,34 @@ class Routes {
     }
     var map = {
       'routes': listOfMaps,
+    };
+    return map;
+  }
+}
+
+class ARLocations {
+  List<ARLocation> locations;
+  ARLocations({this.locations});
+
+  ARLocations.fromJson(Map data) {
+    List map = data['locations'];
+    this.locations = List();
+    map.forEach((m) {
+      var ass = ARLocation.fromJson(m);
+      locations.add(ass);
+    });
+  }
+
+  Map<String, dynamic> toJson() {
+    List<Map<String, dynamic>> listOfMaps = List();
+    if (locations != null) {
+      locations.forEach((loc) {
+        var cMap = loc.toJson();
+        listOfMaps.add(cMap);
+      });
+    }
+    var map = {
+      'locations': listOfMaps,
     };
     return map;
   }

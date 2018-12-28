@@ -102,7 +102,7 @@ class _CityMapSearchState extends State<CityMapSearch>
 
         _mapController.addMarker(MarkerOptions(
           position: LatLng(si.fromLandmark.latitude, si.fromLandmark.longitude),
-//      icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+          icon: BitmapDescriptor.fromAsset('assets/computers.png'),
           zIndex: 4.0,
           infoWindowText: InfoWindowText('${si.fromLandmark.landmarkName}',
               '${si.fromLandmark.routeName}'),
@@ -130,7 +130,7 @@ class _CityMapSearchState extends State<CityMapSearch>
               target: LatLng(city.latitude, city.longitude), zoom: 12.0)));
       _mapController.addMarker(MarkerOptions(
         position: LatLng(city.latitude, city.longitude),
-//      icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+        icon: BitmapDescriptor.fromAsset('assets/computers.png'),
         zIndex: 4.0,
         infoWindowText: InfoWindowText('${city.name}', '${city.provinceName}'),
       ));
@@ -143,7 +143,7 @@ class _CityMapSearchState extends State<CityMapSearch>
               zoom: 12.0)));
       _mapController.addMarker(MarkerOptions(
         position: LatLng(widget.landmark.latitude, widget.landmark.longitude),
-//      icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+        icon: BitmapDescriptor.fromAsset('assets/computers.png'),
         zIndex: 4.0,
         infoWindowText: InfoWindowText('${widget.landmark.landmarkName}',
             '${widget.landmark.routeName} - ${widget.landmark.rankSequenceNumber}'),
