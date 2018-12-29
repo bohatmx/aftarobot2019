@@ -57,6 +57,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   List<VehicleTypeDTO> carTypes = List();
   List<UserDTO> users = List();
   List<CountryDTO> countries = List();
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +70,12 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     );
     animation =
         new CurvedAnimation(parent: animationController, curve: Curves.linear);
+  }
+
+  void _test() async {
+    var list = await ListAPI.getSouthAfricanCities(forceRefresh: true);
+    print(
+        '################################## found ${list.length} cities in za');
   }
 
   void _initializeMessages() {
@@ -666,7 +673,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           ),
           IconButton(
             icon: Icon(Icons.refresh),
-            onPressed: _refresh,
+            onPressed: _test,
           ),
         ],
         bottom: _getBottom(),

@@ -26,6 +26,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="migrator2"
         tools:replace="android:label">
+        <uses-library android:name="org.apache.http.legacy"
+            android:required="false"/>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />

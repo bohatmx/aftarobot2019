@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:aftarobotlibrary/api/file_util.dart';
+import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
@@ -34,6 +36,7 @@ class _CityMigratorState extends State<CityMigrator>
   void initState() {
     super.initState();
     _getCountries();
+    _countExistingCities();
   }
 
   void _getCountries() async {
@@ -43,9 +46,9 @@ class _CityMigratorState extends State<CityMigrator>
       }
     });
     print('_CityMigratorState._getCountries --------------------------');
-    await CountryGenerator.generateCountries(this);
     countries = await CountryGenerator.getCountries();
-    print('countries found: ${countries.length}');
+    print(
+        '\n****************************** countries found: ${countries.length}');
     setState(() {});
   }
 
@@ -68,9 +71,10 @@ class _CityMigratorState extends State<CityMigrator>
     File csvFile = new File(path);
     bool fileExists = await csvFile.exists();
     if (fileExists) {
-      print('_CityMigratorState._pickImportFile - we have a file!');
+      print(
+          '_CityMigratorState._pickImportFile ------------------------ we have a cities file!');
       var len = await csvFile.length();
-      print('##################### file length: $len');
+      print('##################### cities file length: $len');
       isBusy = true;
       Stream<List<int>> stream = csvFile.openRead();
       stream
@@ -82,6 +86,7 @@ class _CityMigratorState extends State<CityMigrator>
         var prov = strings.elementAt(2);
         var lat = strings.elementAt(3);
         var lng = strings.elementAt(4);
+
         CityDTO city = CityDTO(
             cityID: getKey(),
             name: name,
@@ -91,12 +96,11 @@ class _CityMigratorState extends State<CityMigrator>
             date: DateTime.now().millisecondsSinceEpoch,
             countryID: country.countryID,
             countryName: country.name);
+
         cities.add(city);
         setState(() {
           counter++;
         });
-
-//        print('${lineNumber++} - $name $prov $lat $lng');
       }).onDone(() {
         isBusy = false;
         print(
@@ -104,6 +108,24 @@ class _CityMigratorState extends State<CityMigrator>
         _migrateCities();
       });
     }
+  }
+
+  void _countExistingCities() async {
+    print('\n\n###################### FINDING ..zaCities on Firestore ......');
+    var start = DateTime.now();
+    // var zaCities = await ListAPI.getSouthAfricanCities();
+    // await LocalDB.saveCities(Cities(zaCities));
+    var locCities = await LocalDB.getCities();
+    setState(() {
+      counter = locCities.length;
+    });
+    print(
+        '\n\n###################### locCities on disk cache: ${locCities.length}');
+    var end = DateTime.now();
+    print(
+        '########################## zaCites, elapsed time: ${end.difference(start).inSeconds} seconds');
+    print(
+        '########################## zaCites, elapsed time: ${end.difference(start).inMinutes} minutes');
   }
 
   void _showDialog() {
@@ -229,7 +251,7 @@ class _CityMigratorState extends State<CityMigrator>
                   Column(
                     children: <Widget>[
                       Text(
-                        '$counter',
+                        '${getFormattedNumber(counter, context)}',
                         style: Styles.blackBoldReallyLarge,
                       ),
                       Text(
@@ -237,6 +259,17 @@ class _CityMigratorState extends State<CityMigrator>
                         style: Styles.blackSmall,
                       ),
                     ],
+                  ),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Opacity(
+                    opacity: isBusy == true ? 1.0 : 0.0,
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
                 ],
               ),
@@ -274,6 +307,7 @@ class _CityMigratorState extends State<CityMigrator>
 
   @override
   onCountry(CountryDTO country) {
+    prettyPrint(country.toJson(), '\n#################### COUNTRY: ');
     if (countries == null) {
       countries = List();
     }
@@ -287,7 +321,7 @@ class _CityMigratorState extends State<CityMigrator>
   onCountryPicked(CountryDTO country) async {
     if (isBusy) return;
     this.country = country;
-    print('\n\n_CityMigratorState.onCountryPicked -- ${country.name}');
+    print('\n\n_CityMigratorState.onCountryPicked -- PICKED: ${country.name}');
     _showDialog();
   }
 
@@ -299,8 +333,10 @@ class _CityMigratorState extends State<CityMigrator>
       return;
     }
     if (isBusy) return;
+
     if (country == null) {
-      print('_CityMigratorState._migrateCities ---select country and ...');
+      print(
+          '_CityMigratorState._migrateCities --- country == null; select country and ...');
       _errorSnack('Please select a country to import cities for');
       return;
     }
@@ -313,6 +349,9 @@ class _CityMigratorState extends State<CityMigrator>
         cities: cities, country: country, listener: this);
     print(
         '_CityMigratorState._migrateCities --- CITY MIGRATION completed! Yay!!');
+    setState(() {
+      isBusy = false;
+    });
   }
 
   void _errorSnack(String message) {
@@ -323,8 +362,6 @@ class _CityMigratorState extends State<CityMigrator>
   List<CityDTO> activeCities = List();
   @override
   onCity(CityDTO city) {
-    print(
-        '\n\n_CityMigratorState.onCity ......==============.......... $city #$counter');
     if (city == null) {
       setState(() {
         counter++;
@@ -352,14 +389,13 @@ class _CityMigratorState extends State<CityMigrator>
     }
     country.cities.addAll(cities);
     setState(() {
-      counter += cities.length;
+      counter = country.cities.length;
       activeCities.addAll(cities);
     });
   }
 
   @override
   onActionPressed(int action) {
-    // TODO: implement onActionPressed
     return null;
   }
 }

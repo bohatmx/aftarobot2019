@@ -24,8 +24,8 @@ class _LocationCollectorState extends State<LocationCollector>
   @override
   void initState() {
     super.initState();
-
     _checkPermission();
+    _getLocationsFromCache();
   }
 
   void _eraseLocations() async {
@@ -33,6 +33,11 @@ class _LocationCollectorState extends State<LocationCollector>
       locationsCollected.clear();
     });
     // LocalDB.delete
+  }
+
+  void _getLocationsFromCache() async {
+    locationsCollected = await LocalDB.getARLocations();
+    setState(() {});
   }
 
   void _getLocation() async {
@@ -44,7 +49,9 @@ class _LocationCollectorState extends State<LocationCollector>
     try {
       arLoc.routeID = widget.route.routeID;
       await LocalDB.saveARLocation(arLoc);
-      print('+++++++++++ location saved ++++++++++++++++++++');
+      locationsCollected = await LocalDB.getARLocations();
+      print(
+          '+++++++++++ location saved ++++++++++++++++++++ cache has ${locationsCollected.length}');
 
       setState(() {
         locationsCollected.add(arLoc);
@@ -176,7 +183,7 @@ class _LocationCollectorState extends State<LocationCollector>
                     'Collected at ${getFormattedDateShortWithTime(DateTime.now().toIso8601String(), context)}',
                     style: Styles.blackBoldSmall),
                 subtitle: Text(
-                    '${locationsCollected.elementAt(index).latitude} ${locationsCollected.elementAt(index).longitude}',
+                    '${locationsCollected.elementAt(index).latitude} ${locationsCollected.elementAt(index).longitude}  #${index + 1}',
                     style: Styles.greyLabelSmall),
               ),
             );
@@ -204,7 +211,7 @@ class _LocationCollectorState extends State<LocationCollector>
               size: 40,
               color: Colors.black,
             ),
-            title: Text('Get Locations'),
+            title: Text('Get Location Here'),
           ),
         ],
         onTap: (index) {

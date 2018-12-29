@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:migrator2/dashboard.dart';
 import 'package:migrator2/generator.dart';
-import 'package:migrator2/new_page.dart';
+import 'package:migrator2/location_test_page.dart';
 
 const API_KEY = "AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8";
 

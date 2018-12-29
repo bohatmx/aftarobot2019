@@ -77,16 +77,6 @@ class _RouteViewerPageState extends State<RouteViewerPage>
         context, MaterialPageRoute(builder: (context) => LocationCollector(route: route)));
   }
 
-  Future _startBeaconScan() async {
-    beaconScanStream.receiveBroadcastStream().listen((scanResult) {
-      print(
-          '################ --- receiveBroadcastStream: scanResult: $scanResult');
-      Map map = json.decode(scanResult);
-      print(map);
-    });
-
-    return null;
-  }
 
   Future _getDirections(
       {double originLatitude,

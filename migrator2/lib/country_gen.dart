@@ -92,14 +92,16 @@ class CountryGenerator {
 
   static Future<List<CityDTO>> copyCitiesToFirestore(
       {List<CityDTO> cities, CountryDTO country, CityListener listener}) async {
-    print(
-        'CountryGenerator.copyCitiesToFirestore -- #################### start loading cities');
     var start = DateTime.now();
+    print(
+        '\n\n\nCountryGenerator.copyCitiesToFirestore -- #################### start loading cities');
     var qs =
         await fs.document(country.path).collection('cities').getDocuments();
     qs.documents.forEach((doc) {
       countryCities.add(CityDTO.fromJson(doc.data));
     });
+    print(
+        "@@@@@@@@@@@@@@ existing cities found on Firestore: ${countryCities.length}\n\n");
     int badCnt = 0, goodCnt = 0;
     List<CityDTO> citiesToCopy = List();
 
@@ -130,31 +132,36 @@ class CountryGenerator {
       } else {
         badCnt++;
         listener.onCity(null);
-        print(
-            'CountryGenerator.copyCitiesToFirestore #$badCnt --- ${city.name} ----- ignoring city. already in country list');
       }
     }
     print(
         'CountryGenerator.copyCitiesToFirestore: ############# completed filtering, good: $goodCnt bad: $badCnt');
-    //
-    var results = await _pageCities(mCities: citiesToCopy, listener: listener);
+    print(
+        '## starting _pageCities to arrange cities in batches of $MAX_CITY_DOCUMENTS to cut down calls');
+
+    var results = await _breakCitiesIntoBatches(
+        mCities: citiesToCopy, listener: listener);
+    //save cities on disk
+    print(
+        '\n\n############ saving cities on disk ${results.length}. ... Migration almost done :):)');
+    await LocalDB.saveCities(Cities(results));
     var end = DateTime.now();
     print(
         '\n\nCountryGenerator.copyCitiesToFirestore: COMPLETED: elapsed: ${end.difference(start).inMinutes}');
     return results;
   }
 
-  static Future<List<CityDTO>> _pageCities(
+  static Future<List<CityDTO>> _breakCitiesIntoBatches(
       {List<CityDTO> mCities, CityListener listener}) async {
     print(
-        '\n\nCountryGenerator.__pageCities .... breaking up ${mCities.length} cars into multiple pages');
-    var rem = mCities.length % MAX_DOCUMENTS;
-    var pages = mCities.length ~/ MAX_DOCUMENTS;
+        '\n\nCountryGenerator.___breakCitiesIntoBatches .... breaking up ${mCities.length} cities into multiple batches\n\n');
+    var rem = mCities.length % MAX_CITY_DOCUMENTS;
+    var pages = mCities.length ~/ MAX_CITY_DOCUMENTS;
     if (rem > 0) {
       pages++;
     }
     print(
-        'CountryGenerator.__pageCities: calculated: rem: $rem pages: $pages - is this fucking right????');
+        'CountryGenerator.__pageCities: calculated: remainder: $rem batches: $pages - is this fucking right????');
     List<CityDTO> results = List();
     List<CityPage> cityPages = List();
     int mainIndex = 0;
@@ -162,7 +169,7 @@ class CountryGenerator {
       try {
         var vPage = CityPage();
         vPage.cities = List();
-        for (var j = 0; j < MAX_DOCUMENTS; j++) {
+        for (var j = 0; j < MAX_CITY_DOCUMENTS; j++) {
           vPage.cities.add(mCities.elementAt(mainIndex));
           mainIndex++;
         }
@@ -174,18 +181,17 @@ class CountryGenerator {
       }
     }
     print(
-        '\n\n\nCountryGenerator.__pageCities --- broke up cities into number of pages: ${cityPages.length} , MAX_DOCUMENTS: $MAX_DOCUMENTS');
+        '\n\n\nCountryGenerator.__pageCities --- broke up cities into number of pages: ${cityPages.length} , MAX_DOCUMENTS: $MAX_CITY_DOCUMENTS');
+
+    var pageSuccessCount = 1;
     for (var mPage in cityPages) {
-//      print(mPage.cities);
-      var mCities = await DataAPI.addCities(cities: mPage.cities);
+      var resultCities = await DataAPI.addCities(cities: mPage.cities);
       print(
-          'CountryGenerator._pageCities --- returned cities: mCities = ${mCities.length}');
-      for (var city in mCities) {
-        await LocalDB.saveCity(city);
-        listener.onCity(city);
-      }
-      results.addAll(mCities);
-      listener.onCities(results);
+          'CountryGenerator._pageCities ++++++ cities added to Firestore: ${resultCities.length} - batch #$pageSuccessCount of $pages');
+      newCities.addAll(resultCities);
+      results.addAll(resultCities);
+      listener.onCities(resultCities);
+      pageSuccessCount++;
     }
 
     return results;
@@ -194,7 +200,7 @@ class CountryGenerator {
   static void _getLastPage(int mainIndex, e, List<CityPage> cityPages,
       List<CityDTO> mCities, int i) {
     print('CountryGenerator._getLastPage ERROR  mainIndex: $mainIndex --- $e');
-    var newIndex = (cityPages.length * MAX_DOCUMENTS);
+    var newIndex = (cityPages.length * MAX_CITY_DOCUMENTS);
     print(
         'CountryGenerator._getLastPage ---------> last page starting index: $newIndex');
     var lastPage = CityPage();
@@ -207,7 +213,7 @@ class CountryGenerator {
         'CountryGenerator._getLastPage page #${i + 1} has ${lastPage.cities.length} cities, newIndex: $newIndex');
   }
 
-  static const MAX_DOCUMENTS = 400;
+  static const MAX_CITY_DOCUMENTS = 100;
   static Future<CityDTO> _addCity({CityDTO city, CountryDTO country}) async {
     print('addCity ----------- ${country.name} - ${city.name}');
     int cnt = 0;
@@ -235,6 +241,7 @@ class CountryGenerator {
       print(e);
       throw e;
     }
+    return null;
   }
 
   static Future<CountryDTO> addCountry(CountryDTO country) async {

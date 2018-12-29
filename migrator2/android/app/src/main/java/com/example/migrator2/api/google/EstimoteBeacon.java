@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 /**
  * Created by aubreymalabie on 6/11/16.
+ * This holds key data for the Estimote Beacon
  */
 public class EstimoteBeacon implements Serializable {
     private String beaconName;
