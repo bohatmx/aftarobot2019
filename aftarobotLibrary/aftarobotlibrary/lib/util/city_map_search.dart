@@ -44,7 +44,7 @@ class _CityMapSearchState extends State<CityMapSearch>
     if (widget.landmark != null) {
       _getRoute();
     }
-  }
+  } 
 
   void _getRoute() async {
     print('_CityMapSearchState._getRoute ......................');

@@ -325,7 +325,8 @@ class LocalDB {
 ///////////
   ///
   static const LocationsData = 'LocationsData0';
-  static Future<int> saveARLocation(ARLocation location) async {
+  static Future<int> saveARLocation(
+      {ARLocation location, String routeID}) async {
     var m = await getARLocations();
     m.forEach((loc) {
       if (location.latitude == loc.latitude &&
@@ -340,10 +341,11 @@ class LocalDB {
         'LocalDB.saveARLocation - latitude ${location.latitude} longitude: ${location.longitude}');
     print(
         ' -- locations cache will contain ${m.length} ARLocations. at ${DateTime.now().toIso8601String()}');
-    return await saveARLocations(e);
+    return await saveARLocations(locations: e);
   }
 
-  static Future<int> saveARLocations(ARLocations locations) async {
+  static Future<int> saveARLocations(
+      {ARLocations locations, String routeID}) async {
     try {
       if (locations.locations.isEmpty) {
         print(
@@ -351,7 +353,15 @@ class LocalDB {
         throw Exception('No locations found in ARLocations object');
       }
       Map map = locations.toJson();
-      return await _writeFile(fileName: LocationsData, map: map);
+      var fileName;
+      if (routeID != null) {
+        fileName = LocationsData + '_' + routeID;
+      } else {
+        fileName = LocationsData;
+      }
+      print(
+          '### ............. writing ARLocations to local disk cache: $fileName');
+      return await _writeFile(fileName: fileName, map: map);
     } catch (e) {
       print(e);
       throw e;
@@ -371,6 +381,10 @@ class LocalDB {
       print(e);
       throw e;
     }
+  }
+
+  static Future<int> deleteARLocations() async {
+    return await deleteFile(LocationsData);
   }
 
   ///

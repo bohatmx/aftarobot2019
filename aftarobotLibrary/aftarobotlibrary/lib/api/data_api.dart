@@ -17,7 +17,7 @@ What the fucking hell???
  */
 class DataAPI {
   static const URL =
-      'https://us-central1-aftarobot2019-dev1.cloudfunctions.net/';
+      'https://us-central1-aftarobot2019-dev2.cloudfunctions.net/';
   static const ADD_ASSOCIATION_URL = URL + 'addAssociation',
       ADD_ASSOCIATIONS_URL = URL + 'addAssociations',
       ADD_VEHICLE_TYPE = URL + 'addVehicleType',
