@@ -9,6 +9,7 @@ import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/spatialinfodto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
+import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +25,7 @@ class RouteViewerPage extends StatefulWidget {
   #region
 */
 class _RouteViewerPageState extends State<RouteViewerPage>
-    implements RouteCardListener {
+    implements RouteCardListener, SnackBarListener {
   List<RouteDTO> routes;
   List<LandmarkDTO> landmarks;
   ScrollController scrollController = ScrollController();
@@ -74,9 +75,10 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     print(
         '\n########### startRouteBuilding ------------------------------ ...');
     Navigator.push(
-        context, MaterialPageRoute(builder: (context) => LocationCollector(route: route)));
+        context,
+        MaterialPageRoute(
+            builder: (context) => LocationCollector(route: route)));
   }
-
 
   Future _getDirections(
       {double originLatitude,
@@ -334,7 +336,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   }
 
   void _proceedToMap(RouteDTO route) async {
-    await _startDirectionsTest(route);
+    //await _startDirectionsTest(route);
     _goToMapSearch(context: context, route: route);
   }
 
@@ -363,8 +365,10 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     return null;
   }
 
+
   void _goToMapSearch(
       {BuildContext context, LandmarkDTO landmark, RouteDTO route}) {
+    
     if (route != null) {
       Navigator.push(
         context,
@@ -382,6 +386,11 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                 )),
       );
     }
+  }
+
+  @override
+  onActionPressed(int action) {
+    return null;
   }
 }
 
@@ -536,8 +545,7 @@ class SpatialInfoPair extends StatelessWidget {
       children: <Widget>[
         GestureDetector(
           onTap: () {
-            _goToMapSearch(
-                context: context, landmark: spatialInfo.fromLandmark);
+            _goToMap(context: context, landmark: spatialInfo.fromLandmark);
           },
           child: ListTile(
             title: Row(
@@ -579,7 +587,7 @@ class SpatialInfoPair extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () {
-            _goToMapSearch(context: context, landmark: spatialInfo.toLandmark);
+            _goToMap(context: context, landmark: spatialInfo.toLandmark);
           },
           child: ListTile(
             title: Row(
@@ -627,8 +635,7 @@ class SpatialInfoPair extends StatelessWidget {
     );
   }
 
-  void _goToMapSearch(
-      {BuildContext context, LandmarkDTO landmark, RouteDTO route}) {
+  void _goToMap({BuildContext context, LandmarkDTO landmark, RouteDTO route}) {
     if (route != null) {
       Navigator.push(
         context,

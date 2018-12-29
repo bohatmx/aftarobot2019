@@ -5,6 +5,7 @@ import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
+import 'package:migrator2/snaptoroads_page.dart';
 import 'package:simple_permissions/simple_permissions.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -32,6 +33,7 @@ class _LocationCollectorState extends State<LocationCollector>
     setState(() {
       locationsCollected.clear();
     });
+    await LocalDB.deleteARLocations();
     // LocalDB.delete
   }
 
@@ -40,23 +42,26 @@ class _LocationCollectorState extends State<LocationCollector>
     setState(() {});
   }
 
-  void _getLocation() async {
-    print('############# getLocation starting ..............');
+  void _getGPSLocation() async {
+    print(
+        '_LocationCollectorState ############# getLocation starting ..............');
     var locationManager = new Location();
     var currentLocation = await locationManager.getLocation();
     var arLoc = ARLocation.fromJson(currentLocation);
 
     try {
       arLoc.routeID = widget.route.routeID;
-      await LocalDB.saveARLocation(arLoc);
+      await LocalDB.saveARLocation(location: arLoc);
+      print('######## after saving location ...................................');
       locationsCollected = await LocalDB.getARLocations();
       print(
-          '+++++++++++ location saved ++++++++++++++++++++ cache has ${locationsCollected.length}');
+          '+++++++++++_LocationCollectorState location saved ++++++++++++++++++++ cache now has ${locationsCollected.length}\n\n');
 
       setState(() {
         locationsCollected.add(arLoc);
       });
     } catch (e) {
+      print('Problem here??????????');
       print(e);
     }
 
@@ -93,6 +98,54 @@ class _LocationCollectorState extends State<LocationCollector>
     } catch (e) {
       print(e);
     }
+  }
+
+  List<SnappedPoint> snappedPoints;
+  void getSnappedPointsFromRoads() async {
+    print(
+        "########################## getSnappedPointsFromRoads: Snap To Roads API");
+    List<ARLocation> list = List();
+    locationsCollected.forEach((si) {
+      var loc = ARLocation(
+        latitude: si.latitude,
+        longitude: si.longitude,
+      );
+      list.add(loc);
+    });
+    //TODO - testing ... REMOVE ////////////////////////////////////////////////////////
+    locationsCollected.clear();
+    widget.route.spatialInfos.forEach((si) {
+      locationsCollected.add(ARLocation(
+        latitude: si.fromLandmark.latitude,
+        longitude: si.fromLandmark.longitude,
+      ));
+    });
+    //////////////////////////////////////////////////////////////////////////////////////
+    try {
+      snappedPoints = await SnapToRoads.getSnappedPoints(list);
+      list.clear();
+      snappedPoints.forEach((sp) {
+        list.add(sp.location);
+      });
+      print(
+          '\n\n\n##################### sending ${list.length} to SnapToRoadsPage ########################\n\n\n');
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (BuildContext context) => SnapToRoadsPage(
+                    route: widget.route,
+                    arLocations: list,
+                  )));
+    } catch (e) {
+      print(e);
+      AppSnackbar.showErrorSnackbar(
+        scaffoldKey: _key,
+        message: '******** Problem calling Google Roads API $e',
+        actionLabel: "Close",
+        listener: this,
+      );
+    }
+    return null;
   }
 
   ScrollController scrollController = ScrollController();
@@ -220,9 +273,10 @@ class _LocationCollectorState extends State<LocationCollector>
               _eraseLocations();
               break;
             case 1:
+              getSnappedPointsFromRoads();
               break;
             case 2:
-              _getLocation();
+              _getGPSLocation();
               break;
           }
         },

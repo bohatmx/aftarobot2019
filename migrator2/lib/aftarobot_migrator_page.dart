@@ -160,8 +160,8 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
     AppSnackbar.showSnackbarWithProgressIndicator(
         scaffoldKey: _key,
         message: 'Loading from Firestore ...',
-        textColor: Colors.white,
-        backgroundColor: Colors.blueGrey);
+        textColor: Colors.yellow,
+        backgroundColor: Colors.black);
 
     var start = DateTime.now();
     try {
@@ -199,7 +199,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   Future _getMoreData() async {
     print(
         '\n\n_AftaRobotMigratorPageState.__getMoreData............................');
-    _showBusySnack('Loading Firestore data');
+    _showBusySnack('Loading more Firestore data');
     var start = DateTime.now();
     landmarks = await ListAPI.getLandmarks();
     if (landmarks.isNotEmpty) {
@@ -224,6 +224,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           '_AftaRobotMigratorPageState._getMoreData mUsers: ${mUsers.length} from ${ass.associationName} : ${ass.path} - addAll to list');
       users.addAll(mUsers);
     }
+
     if (vehicles.isNotEmpty) {
       await LocalDB.saveVehicles(Vehicles(vehicles));
     }
@@ -673,7 +674,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
           ),
           IconButton(
             icon: Icon(Icons.refresh),
-            onPressed: _test,
+            onPressed: _getFreshDataFromFirestore,
           ),
         ],
         bottom: _getBottom(),
