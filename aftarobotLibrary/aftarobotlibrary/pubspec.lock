@@ -378,7 +378,7 @@ packages:
     description:
       path: "packages/url_launcher"
       ref: HEAD
-      resolved-ref: "0d077f543d2fd5b11956186d00b56a0942d1129e"
+      resolved-ref: "860ebfe984d4b1c6cd83f6c03b84278ca8db7d62"
       url: "git://github.com/flutter/plugins"
     source: git
     version: "4.0.3"

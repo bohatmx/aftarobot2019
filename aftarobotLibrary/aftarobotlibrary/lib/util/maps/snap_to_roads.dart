@@ -31,7 +31,7 @@ class SnapToRoads {
       client.close();
     });
     print(
-        '\n\nDataAPI._callCloudFunction .... #### BFN via Cloud Functions: statusCode: ${resp.statusCode} for $mUrl');
+        '\n\ngetSnappedPoints._c: statusCode: ${resp.statusCode} for $SNAP_TO_ROADS_URL');
 //
     print('\n\n\n\n\n');
     print(resp.body);
@@ -39,8 +39,9 @@ class SnapToRoads {
     print('\n\n\n\n\n');
     print(list);
     var end = DateTime.now();
-    print(
-        '\n\nSnapToRoads ####################### COMPLETE: elapsed time: ${end.difference(start).inSeconds}');
+    print('\n\nSnapToRoads ####################### ' +
+        'COMPLETE: elapsed time: ${end.difference(start).inSeconds}');
+
     return null;
   }
 }
@@ -75,33 +76,32 @@ class SnappedPoint {
     return map;
   }
 }
-/*
-print(currentLocation["latitude"]);
-  print(currentLocation["longitude"]);
-  print(currentLocation["accuracy"]);
-  print(currentLocation["altitude"]);
-  print(currentLocation["speed"]);
-  print(currentLocation["speed_accuracy"]); // Will always be 0 on iOS
-*/
 
 class ARLocation {
   double latitude, longitude;
-  int altitude, accuracy, speed, speedAccuracy;
+  double altitude, accuracy, speed, speedAccuracy;
+  String routeID;
+  String date;
   ARLocation(
       {this.latitude,
       this.longitude,
       this.accuracy,
       this.altitude,
       this.speed,
+      this.routeID,
+      this.date,
       this.speedAccuracy});
 
   ARLocation.fromJson(Map data) {
+    print(data);
     this.latitude = data['latitude'];
     this.longitude = data['longitude'];
     this.accuracy = data['accuracy'];
     this.altitude = data['altitude'];
     this.speed = data['speed'];
     this.speedAccuracy = data['speedAccuracy'];
+    this.routeID = data['routeID'];
+    this.date = data['date'];
   }
   Map<String, dynamic> toJson() {
     Map<String, dynamic> map = {
@@ -111,6 +111,8 @@ class ARLocation {
       'altitude': altitude,
       'speed': speed,
       'speedAccuracy': speedAccuracy,
+      'routeID': routeID,
+      'date': date,
     };
     return map;
   }

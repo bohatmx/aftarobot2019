@@ -96,28 +96,34 @@ class ListAPI {
 
   static Future<List<CityDTO>> getSouthAfricanCities(
       {bool forceRefresh}) async {
-    List<CountryDTO> list = await LocalDB.getCountries();
-    List<CityDTO> cityList = await LocalDB.getCities();
+    List<CountryDTO> list = await getCountries();
+    List<CityDTO> cityList; // = await LocalDB.getCities();
     CountryDTO za;
     list.forEach((c) {
       if (c.name.contains('South Africa')) {
         za = c;
       }
     });
-
-    if (forceRefresh || cityList.isEmpty) {
-      await _parseCities(za, cityList);
-      return cityList;
-    }
+    assert(za != null);
+    print('############# searching for cities in ${za.name}');
+    cityList = await _parseCities(za.path);
 
     return cityList;
   }
 
-  static Future _parseCities(CountryDTO za, List<CityDTO> cityList) async {
-    var qs = await fs.document(za.path).collection('cities').getDocuments();
-    qs.documents.forEach((doc) {
-      cityList.add(CityDTO.fromJson(doc.data));
-    });
+  static Future<List<CityDTO>> _parseCities(String path) async {
+    print('*************** searching for cities at: $path');
+    List<CityDTO> cityList = List();
+    try {
+      var qs = await fs.document(path).collection('cities').getDocuments();
+      qs.documents.forEach((doc) {
+        cityList.add(CityDTO.fromJson(doc.data));
+      });
+      return cityList;
+    } catch (e) {
+      print(e);
+    }
+    return cityList;
   }
 
   static Future<List<RouteDTO>> getRoutes() async {

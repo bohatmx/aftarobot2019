@@ -18,14 +18,14 @@ class LocalDB {
   static Directory dir;
   static bool fileExists;
 
-  static const RouteData = 'RouteData4h',
-      AssocData = 'AssocData4h',
-      UserData = 'UsersData4h',
-      CarData = 'CarData4h',
-      CarTypeData = 'CarTypeData4h',
-      LandmarkData = 'LandmarkData4h',
-      CityData = 'CityData4h',
-      CountryData = 'CountryData4h';
+  static const RouteData = 'RouteData4k',
+      AssocData = 'AssocData4k',
+      UserData = 'UsersData4k',
+      CarData = 'CarData4k',
+      CarTypeData = 'CarTypeData4k',
+      LandmarkData = 'LandmarkData4k',
+      CityData = 'CityData4k',
+      CountryData = 'CountryData4k';
 
   static Future<int> saveCity(CityDTO city) async {
     var m = await getCities();
@@ -327,10 +327,19 @@ class LocalDB {
   static const LocationsData = 'LocationsData0';
   static Future<int> saveARLocation(ARLocation location) async {
     var m = await getARLocations();
+    m.forEach((loc) {
+      if (location.latitude == loc.latitude &&
+          location.longitude == loc.longitude) {
+        print('duplicate ARLocation possible - please check');
+        return 9;
+      }
+    });
     m.add(location);
     var e = ARLocations(locations: m);
     print(
         'LocalDB.saveARLocation - latitude ${location.latitude} longitude: ${location.longitude}');
+    print(
+        ' -- locations cache will contain ${m.length} ARLocations. at ${DateTime.now().toIso8601String()}');
     return await saveARLocations(e);
   }
 

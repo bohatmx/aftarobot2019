@@ -298,7 +298,6 @@ class _CitySearchBoxState extends State<CitySearchBox> {
       cities = await LocalDB.getCities();
       print(
           '_CitySearchBoxState._getCities  - local city cache has: ${cities.length}');
-      cities = await ListAPI.getSouthAfricanCities(forceRefresh: true);
       var end = DateTime.now();
       print(
           '_CitySearchBoxState._getCities - city shit took ${end.difference(start).inMilliseconds} '
