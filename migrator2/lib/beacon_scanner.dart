@@ -25,6 +25,10 @@ class _BeaconScannerState extends State<BeaconScanner> {
 
   void _startBeaconScan() async {
     print('################ startBeaconScan .....................');
+    setState(() {
+      estimoteBeacons.clear();
+      beaconCount = 0;
+    });
     if (subscription == null) {
       beaconCount = 0;
       subscription =

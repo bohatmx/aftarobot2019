@@ -6,6 +6,7 @@ import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:simple_permissions/simple_permissions.dart';
+import 'package:flutter/scheduler.dart';
 
 class LocationCollector extends StatefulWidget {
   final RouteDTO route;
@@ -27,26 +28,41 @@ class _LocationCollectorState extends State<LocationCollector>
     _checkPermission();
   }
 
+  void _eraseLocations() async {
+    setState(() {
+      locationsCollected.clear();
+    });
+    // LocalDB.delete
+  }
+
   void _getLocation() async {
+    print('############# getLocation starting ..............');
     var locationManager = new Location();
     var currentLocation = await locationManager.getLocation();
     var arLoc = ARLocation.fromJson(currentLocation);
 
-    arLoc.routeID = widget.route.routeID;
-    await LocalDB.saveARLocation(arLoc);
-    setState(() {
-      locationsCollected.add(arLoc);
-    });
-    AppSnackbar.showSnackbarWithAction(
-      scaffoldKey: _key,
-      action: 1,
-      message: 'Location has been collected',
-      actionLabel: 'Cool',
-      textColor: Colors.white,
-      backgroundColor: Colors.teal.shade700,
-      icon: Icons.location_on,
-      listener: this,
-    );
+    try {
+      arLoc.routeID = widget.route.routeID;
+      await LocalDB.saveARLocation(arLoc);
+      print('+++++++++++ location saved ++++++++++++++++++++');
+
+      setState(() {
+        locationsCollected.add(arLoc);
+      });
+    } catch (e) {
+      print(e);
+    }
+
+    // AppSnackbar.showSnackbarWithAction(
+    //   scaffoldKey: _key,
+    //   action: 1,
+    //   message: 'Location has been collected',
+    //   actionLabel: 'Cool',
+    //   textColor: Colors.white,
+    //   backgroundColor: Colors.teal.shade700,
+    //   icon: Icons.location_on,
+    //   listener: this,
+    // );
   }
 
   _requestPermission() async {
@@ -72,54 +88,143 @@ class _LocationCollectorState extends State<LocationCollector>
     }
   }
 
+  ScrollController scrollController = ScrollController();
   @override
   Widget build(BuildContext context) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOut,
+      );
+    });
     return Scaffold(
+      key: _key,
       appBar: AppBar(
         title: Text('LocationCollector'),
         backgroundColor: Colors.pink.shade300,
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(100),
-          child: Column(
-            children: <Widget>[
-              RaisedButton(
-                color: Colors.blue,
-                elevation: 6,
-                onPressed: _getLocation,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Text('Start Collection', style: Styles.whiteMedium),
+          preferredSize: Size.fromHeight(120),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    SizedBox(
+                      width: 20,
+                    ),
+                    Flexible(
+                      child: Container(
+                        child: Text(
+                          widget.route.name,
+                          style: Styles.whiteMedium,
+                          overflow: TextOverflow.clip,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 20,
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-            ],
+                SizedBox(
+                  height: 8,
+                ),
+                Row(
+                  children: <Widget>[
+                    SizedBox(
+                      width: 20,
+                    ),
+                    Flexible(
+                      child: Container(
+                        child: Text(
+                          widget.route.associationName,
+                          style: Styles.blackBoldSmall,
+                          overflow: TextOverflow.clip,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 20,
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 0,
+                ),
+              ],
+            ),
           ),
         ),
       ),
       body: Container(
-        padding: EdgeInsets.all(32.0),
+        padding: EdgeInsets.all(16.0),
         child: ListView.builder(
+          controller: scrollController,
           itemCount: locationsCollected.length,
           itemBuilder: (context, index) {
-            return ListTile(
-              leading: Icon(Icons.my_location),
-              title: Text('Collected at ${DateTime.now().toIso8601String()}',
-                  style: Styles.blackBoldSmall),
-              subtitle: Text(
-                  '${locationsCollected.elementAt(index).latitude} ${locationsCollected.elementAt(index).longitude}',
-                  style: Styles.greyLabelSmall),
+            return Card(
+              elevation: 2.0,
+              color: getRandomPastelColor(),
+              child: ListTile(
+                leading: Icon(
+                  Icons.location_on,
+                  color: getRandomColor(),
+                ),
+                title: Text(
+                    'Collected at ${getFormattedDateShortWithTime(DateTime.now().toIso8601String(), context)}',
+                    style: Styles.blackBoldSmall),
+                subtitle: Text(
+                    '${locationsCollected.elementAt(index).latitude} ${locationsCollected.elementAt(index).longitude}',
+                    style: Styles.greyLabelSmall),
+              ),
             );
           },
         ),
+      ),
+      backgroundColor: Colors.brown.shade100,
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.cancel,
+              size: 40,
+              color: Colors.pink,
+            ),
+            title: Text('Erase Locations'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.my_location, size: 40, color: Colors.blue),
+            title: Text('Build Route'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.location_on,
+              size: 40,
+              color: Colors.black,
+            ),
+            title: Text('Get Locations'),
+          ),
+        ],
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              _eraseLocations();
+              break;
+            case 1:
+              break;
+            case 2:
+              _getLocation();
+              break;
+          }
+        },
       ),
     );
   }
 
   @override
   onActionPressed(int action) {
-    // TODO: implement onActionPressed
     return null;
   }
 }

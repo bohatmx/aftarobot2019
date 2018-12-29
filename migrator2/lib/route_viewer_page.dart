@@ -74,7 +74,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     print(
         '\n########### startRouteBuilding ------------------------------ ...');
     Navigator.push(
-        context, MaterialPageRoute(builder: (context) => LocationCollector()));
+        context, MaterialPageRoute(builder: (context) => LocationCollector(route: route)));
   }
 
   Future _startBeaconScan() async {
