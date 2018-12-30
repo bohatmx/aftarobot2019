@@ -4,6 +4,8 @@ import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import 'package:location/location.dart';
 import 'package:migrator2/snaptoroads_page.dart';
 import 'package:simple_permissions/simple_permissions.dart';
@@ -11,8 +13,7 @@ import 'package:flutter/scheduler.dart';
 
 class LocationCollector extends StatefulWidget {
   final RouteDTO route;
-
-  const LocationCollector({Key key, this.route}) : super(key: key);
+  LocationCollector({this.route});
   @override
   _LocationCollectorState createState() => _LocationCollectorState();
 }
@@ -22,59 +23,69 @@ class _LocationCollectorState extends State<LocationCollector>
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
   Permission permission = Permission.AccessFineLocation;
   List<ARLocation> locationsCollected = List();
+
+  bg.Config config = bg.Config(
+      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+      distanceFilter: 10.0,
+      stopOnTerminate: false,
+      startOnBoot: true,
+      debug: true,
+      logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+      schedule: [
+        '1-7 9:00-17:00', // Sun-Sat: 9:00am to 5:00pm (every day)
+      ],
+      reset: true);
   @override
   void initState() {
     super.initState();
     _checkPermission();
     _getLocationsFromCache();
-  }
-
-  void _eraseLocations() async {
-    setState(() {
-      locationsCollected.clear();
+    bg.BackgroundGeolocation.onActivityChange(_onActivityChanged);
+    bg.BackgroundGeolocation.onMotionChange(_onMotionChanged);
+    bg.BackgroundGeolocation.onConnectivityChange(_onConnectivityChange);
+    bg.BackgroundGeolocation.ready(bg.Config(
+            desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+            distanceFilter: 10.0,
+            stopOnTerminate: false,
+            startOnBoot: true,
+            debug: true,
+            logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+            reset: true))
+        .then((bg.State state) {
+      print('++++++++++++ BackgroundGeolocation configured ....');
+      print(state);
     });
-    await LocalDB.deleteARLocations();
-    // LocalDB.delete
   }
 
-  void _getLocationsFromCache() async {
-    locationsCollected = await LocalDB.getARLocations();
-    setState(() {});
-  }
-
-  void _getGPSLocation() async {
-    print(
-        '_LocationCollectorState ############# getLocation starting ..............');
-    var locationManager = new Location();
-    var currentLocation = await locationManager.getLocation();
-    var arLoc = ARLocation.fromJson(currentLocation);
-
-    try {
-      arLoc.routeID = widget.route.routeID;
-      await LocalDB.saveARLocation(location: arLoc);
-      print('######## after saving location ...................................');
-      locationsCollected = await LocalDB.getARLocations();
+  _onMotionChanged(bg.Location location) {
+    print('&&&&&&&&&&&&& onMotionChanged: location ${location.toMap()}');
+    if (location.isMoving) {
+      _showSnack(message: 'We are moving ...', color: Colors.green);
       print(
-          '+++++++++++_LocationCollectorState location saved ++++++++++++++++++++ cache now has ${locationsCollected.length}\n\n');
-
-      setState(() {
-        locationsCollected.add(arLoc);
-      });
-    } catch (e) {
-      print('Problem here??????????');
-      print(e);
+          '************************ WE ARE MOVING ......... LOOK FOR BEACON NOW!!');
+    } else {
+      print("------------------------  JUST CHILLIN .......");
     }
+  }
 
-    // AppSnackbar.showSnackbarWithAction(
-    //   scaffoldKey: _key,
-    //   action: 1,
-    //   message: 'Location has been collected',
-    //   actionLabel: 'Cool',
-    //   textColor: Colors.white,
-    //   backgroundColor: Colors.teal.shade700,
-    //   icon: Icons.location_on,
-    //   listener: this,
-    // );
+  _onConnectivityChange(bg.ConnectivityChangeEvent event) {
+    print(
+        '+++++++++++++++ _onConnectivityChange connected: ${event.connected}');
+    _showSnack(
+        message: 'Connectivity: ${event.connected}', color: Colors.green);
+  }
+
+  _onActivityChanged(bg.ActivityChangeEvent event) {
+    print('############# _onActivityChanged: ${event.toMap()}');
+    _showSnack(message: event.toString());
+  }
+
+  _showSnack({String message, Color color}) {
+    AppSnackbar.showSnackbar(
+        backgroundColor: Colors.black,
+        scaffoldKey: _key,
+        textColor: color == null ? Colors.white : color,
+        message: message);
   }
 
   _requestPermission() async {
@@ -98,6 +109,58 @@ class _LocationCollectorState extends State<LocationCollector>
     } catch (e) {
       print(e);
     }
+  }
+
+  void _eraseLocations() async {
+    setState(() {
+      prevLocation = null;
+      locationsCollected.clear();
+    });
+    await LocalDB.deleteARLocations();
+    // LocalDB.delete
+  }
+
+  void _getLocationsFromCache() async {
+    locationsCollected = await LocalDB.getARLocations();
+    setState(() {});
+  }
+
+  ARLocation prevLocation;
+  void _getGPSLocation() async {
+    print(
+        '_LocationCollectorState ############# getLocation starting ..............');
+    var locationManager = new Location();
+    var currentLocation = await locationManager.getLocation();
+    var arLoc = ARLocation.fromJson(currentLocation);
+    if (prevLocation != null) {
+      if (arLoc.latitude == prevLocation.latitude &&
+          arLoc.longitude == prevLocation.longitude) {
+        print('########## DUPLICATE location .... ignored ');
+      } else {
+        _saveARLocation(arLoc);
+      }
+    } else {
+      _saveARLocation(arLoc);
+    }
+  }
+
+  void _saveARLocation(ARLocation arLoc) async {
+    try {
+      arLoc.routeID = widget.route.routeID;
+      prevLocation = arLoc;
+      await LocalDB.saveARLocation(location: arLoc);
+      locationsCollected = await LocalDB.getARLocations();
+      print(
+          '+++++++++++_LocationCollectorState location saved ++++++++++++++++++++ cache now has ${locationsCollected.length}\n\n');
+
+      setState(() {
+        locationsCollected.add(arLoc);
+      });
+    } catch (e) {
+      print('Problem here??????????');
+      print(e);
+    }
+    return null;
   }
 
   List<SnappedPoint> snappedPoints;
@@ -148,6 +211,8 @@ class _LocationCollectorState extends State<LocationCollector>
     return null;
   }
 
+  @override
+  void onActionPressed(int action) {}
   ScrollController scrollController = ScrollController();
   @override
   Widget build(BuildContext context) {
@@ -282,10 +347,5 @@ class _LocationCollectorState extends State<LocationCollector>
         },
       ),
     );
-  }
-
-  @override
-  onActionPressed(int action) {
-    return null;
   }
 }

@@ -365,10 +365,8 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     return null;
   }
 
-
   void _goToMapSearch(
       {BuildContext context, LandmarkDTO landmark, RouteDTO route}) {
-    
     if (route != null) {
       Navigator.push(
         context,
@@ -446,7 +444,6 @@ class _RouteCardState extends State<RouteCard> {
     var panel = ExpansionPanel(
       isExpanded: isExpanded,
       headerBuilder: (context, isExpanded) {
-        print('ExpansionPanel headerBuilder $isExpanded');
         return Row(
           children: <Widget>[
             SizedBox(

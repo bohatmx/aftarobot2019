@@ -20,6 +20,7 @@ class _LocationTestPageState extends State<LocationTestPage> {
 
   @override
   void initState() {
+    super.initState();
     _isMoving = false;
     _enabled = false;
     _content = '';
@@ -108,9 +109,9 @@ class _LocationTestPageState extends State<LocationTestPage> {
   //
 
   void _onLocation(bg.Location location) {
-    print('[location] - $location');
-
     String odometerKM = (location.odometer / 1000.0).toStringAsFixed(1);
+    print(
+        '_LocationTestPageState _onLocation ########################################[location] - $location odmeter: $odometerKM');
 
     setState(() {
       _content = encoder.convert(location.toMap());
@@ -119,18 +120,21 @@ class _LocationTestPageState extends State<LocationTestPage> {
   }
 
   void _onMotionChange(bg.Location location) {
-    print('[motionchange] - $location');
+    print(
+        '_LocationTestPageState _onMotionChange ++++++++++++++++++++++++++ [motionchange] - $location');
   }
 
   void _onActivityChange(bg.ActivityChangeEvent event) {
-    print('[activitychange] - $event');
+    print(
+        '_LocationTestPageState _onActivityChange @@@@@@@@@@@@@@@@@@@@@@@@@@@ [activitychange] - $event');
     setState(() {
       _motionActivity = event.activity;
     });
   }
 
   void _onProviderChange(bg.ProviderChangeEvent event) {
-    print('$event');
+    print(
+        '_LocationTestPageState _onProviderChange ---------------------------- $event');
 
     setState(() {
       _content = encoder.convert(event.toMap());
@@ -138,7 +142,8 @@ class _LocationTestPageState extends State<LocationTestPage> {
   }
 
   void _onConnectivityChange(bg.ConnectivityChangeEvent event) {
-    print('$event');
+    print(
+        '_LocationTestPageState _onConnectivityChange ************************** $event');
   }
 
   @override

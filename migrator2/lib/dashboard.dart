@@ -303,6 +303,10 @@ class _DashboardState extends State<Dashboard>
             icon: Icon(Icons.refresh),
             onPressed: _start,
           ),
+          IconButton(
+            icon: Icon(Icons.my_location),
+            onPressed: _startLocationTestPage,
+          ),
         ],
       ),
       backgroundColor: Colors.purple.shade100,

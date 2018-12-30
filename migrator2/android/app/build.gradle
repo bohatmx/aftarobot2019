@@ -77,5 +77,9 @@ dependencies {
     //QR Codes SDK
     implementation 'com.journeyapps:zxing-android-embedded:3.6.0'
     implementation 'com.google.zxing:core:3.3.2'
+    implementation 'com.estimote:proximity-sdk:1.0.3'
+    implementation 'com.estimote:mustard:0.2.1'
+
+
 }
 apply plugin: 'com.google.gms.google-services'
