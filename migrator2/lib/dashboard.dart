@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
@@ -13,7 +16,8 @@ import 'package:migrator2/aftarobot_migrator_page.dart';
 import 'package:migrator2/beacon_scanner.dart';
 import 'package:migrator2/city_migrate.dart';
 import 'package:migrator2/generator.dart';
-import 'package:migrator2/location_test_page.dart';
+import 'package:migrator2/geofence_test_page.dart';
+import 'package:migrator2/location_collector.dart';
 import 'package:migrator2/main.dart';
 import 'package:migrator2/route_viewer_page.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +43,26 @@ class _DashboardState extends State<Dashboard>
   List<VehicleDTO> cars = List();
   static const platform = const MethodChannel('samples.flutter.io/battery');
   String _batteryLevel = '0';
+  static const beaconProximityStream =
+      const EventChannel('aftarobot/beaconProximity');
+  StreamSubscription subscription;
+
+  Future _startBeaconProximity() async {
+    print(
+        '\n\n################ ⚠️  --- beaconProximityStream: proximity :: start subscription');
+    subscription =
+        beaconProximityStream.receiveBroadcastStream().listen((data) {
+      print(
+          '\n################ 📍 --- beaconProximityStream: proximity Result: $data');
+      Map map = json.decode(data);
+      print(map);
+      AppSnackbar.showSnackbar(
+          scaffoldKey: _key,
+          message: '✅  ✅ Beacon within range: ${map['vehicleReg']}',
+          backgroundColor: Colors.teal.shade700,
+          textColor: Colors.white);
+    });
+  }
 
   Future<String> _getBatteryLevel() async {
     String batteryLevel;
@@ -66,7 +90,7 @@ class _DashboardState extends State<Dashboard>
         new CurvedAnimation(parent: animationController, curve: Curves.linear);
 
     _getCachedData();
-    test();
+    _startBeaconProximity();
   }
 
   void test() async {
@@ -188,10 +212,10 @@ class _DashboardState extends State<Dashboard>
     });
   }
 
-  void _startLocationTestPage() {
+  void _startGeofenceTestPage() {
     Navigator.push(
       context,
-      new MaterialPageRoute(builder: (context) => LocationTestPage()),
+      new MaterialPageRoute(builder: (context) => GeofenceTestPage()),
     );
   }
 
@@ -199,6 +223,13 @@ class _DashboardState extends State<Dashboard>
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => GenerationPage()),
+    );
+  }
+
+  void _startLocationCollectorTestPage() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => LocationCollector()),
     );
   }
 
@@ -305,7 +336,11 @@ class _DashboardState extends State<Dashboard>
           ),
           IconButton(
             icon: Icon(Icons.my_location),
-            onPressed: _startLocationTestPage,
+            onPressed: _startGeofenceTestPage,
+          ),
+          IconButton(
+            icon: Icon(Icons.location_on),
+            onPressed: _startLocationCollectorTestPage,
           ),
         ],
       ),

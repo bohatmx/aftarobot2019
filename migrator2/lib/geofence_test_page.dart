@@ -66,7 +66,7 @@ class _GeofenceTestPageState extends State<GeofenceTestPage> {
   int enters = 0, dwells = 0, exits = 0;
   void _onGeofenceEvent(bg.GeofenceEvent event) {
     print(
-        '#################### -- should write arrival/departure record ::: _onGeofenceEvent: $event');
+        '#################### -- should write arrival/departure record ::: _onGeofenceEvent: ${event.toString()}');
     events.add(event);
     switch (event.action) {
       case 'ENTER':
@@ -85,11 +85,15 @@ class _GeofenceTestPageState extends State<GeofenceTestPage> {
         landmark = m;
       }
     });
+    if (event.identifier == 'mi casa') {
+      landmark = landmarks.elementAt(0);
+    }
+    // ✅  mi casa
     assert(landmark != null);
     setState(() {
       events.add(event);
     });
-    print('############# geofence events so far: ${events.length}');
+    print('#############  ℹ️ geofence events so far: ${events.length}');
     _addEventToFirestore(event);
     AppSnackbar.showSnackbar(
       scaffoldKey: _key,
@@ -111,43 +115,90 @@ class _GeofenceTestPageState extends State<GeofenceTestPage> {
     };
     var ref = await fs.collection('geofenceEvents').add(map);
     print(
-        '+++++++++++++ geofence event added to Firestore: ${ref.path} \n$map');
+        '\n\n+++++++++++++  ✅  ✅  ✅ geofence event added to Firestore:  🔵  ${ref.path} \n$map');
   }
 
+/*
+Exception has occurred.
+_TypeError (type 'MappedListIterable<Geofence, Map<String, dynamic>>' is not a subtype of type 'List<Map<String, dynamic>>')
+*/
   void _createPecanwoodGeofences() {
     fences = List();
     route.spatialInfos.sort((a, b) => (a.fromLandmark.rankSequenceNumber
         .compareTo(b.fromLandmark.rankSequenceNumber)));
     route.spatialInfos.forEach((si) {
-      fences.add(bg.Geofence(
-        identifier: si.fromLandmark.landmarkID,
-        latitude: si.fromLandmark.latitude,
-        longitude: si.fromLandmark.latitude,
-        radius: 100,
-      ));
+      var fence = bg.Geofence(
+          identifier: si.fromLandmark.landmarkID,
+          latitude: si.fromLandmark.latitude,
+          longitude: si.fromLandmark.latitude,
+          radius: 100,
+          loiteringDelay: 10,
+          notifyOnEntry: true,
+          notifyOnDwell: true,
+          notifyOnExit: true);
       landmarks.add(si.fromLandmark);
+      try {
+        bg.BackgroundGeolocation.addGeofence(fence);
+        fences.add(fence);
+        print('############# geofence added: ${si.fromLandmark.landmarkName}');
+      } catch (e) {
+        print(e);
+      }
     });
+    bg.BackgroundGeolocation.addGeofence(_getHomeGeoFence());
+    bg.BackgroundGeolocation.startGeofences();
+    fences.add(_getHomeGeoFence());
+    landmarks.insert(0, _getHomeLandmark());
     setState(() {});
-    bg.BackgroundGeolocation.addGeofences(fences);
+    // bg.BackgroundGeolocation.addGeofences(fences);
     print(
         '######### ++++++++++ ${fences.length} Geofences created for ${route.name}');
+  }
+
+  bg.Geofence _getHomeGeoFence() {
+    var fence = bg.Geofence(
+        identifier: 'mi casa',
+        latitude: -25.7605351,
+        longitude: 27.8526003,
+        radius: 100,
+        loiteringDelay: 10,
+        notifyOnEntry: true,
+        notifyOnDwell: true,
+        notifyOnExit: true);
+    return fence;
+  }
+
+  LandmarkDTO _getHomeLandmark() {
+    var m = LandmarkDTO(
+      landmarkName: 'Mi Casa Mio',
+      latitude: -25.7605351,
+      longitude: 27.8526003,
+    );
+    return m;
   }
 
   void _createGeofences() {
     widget.route.spatialInfos.sort((a, b) => (a.fromLandmark.rankSequenceNumber
         .compareTo(b.fromLandmark.rankSequenceNumber)));
     widget.route.spatialInfos.forEach((si) {
-      fences.add(bg.Geofence(
+      var fence = bg.Geofence(
         identifier: si.fromLandmark.landmarkID,
         latitude: si.fromLandmark.latitude,
         longitude: si.fromLandmark.latitude,
         radius: 100,
-      ));
+      );
       landmarks.add(si.fromLandmark);
+      try {
+        bg.BackgroundGeolocation.addGeofence(fence);
+        fences.add(fence);
+        print('############# geofence added: ${si.fromLandmark.landmarkName}');
+      } catch (e) {
+        print(e);
+      }
     });
     setState(() {});
-    bg.BackgroundGeolocation.addGeofences(fences);
-    print('######### ++++++++++ Geofences created for ${route.name}');
+    print(
+        '######### ++++++++++ ${fences.length} Geofences created for ${route.name}');
   }
 
   ScrollController scrollController = ScrollController();
@@ -164,68 +215,107 @@ class _GeofenceTestPageState extends State<GeofenceTestPage> {
         key: _key,
         appBar: AppBar(
           title: Text('Geofence Testing'),
+          backgroundColor: Colors.indigo.shade300,
           bottom: PreferredSize(
-            preferredSize: Size.fromHeight(60),
-            child: Column(
-              children: <Widget>[
-                Text(
-                  route == null ? '' : route.name,
-                  style: Styles.whiteBoldSmall,
-                ),
-                Row(
-                  children: <Widget>[
-                    Text('Geofence Events', style: Styles.whiteBoldSmall),
-                    Column(
-                      children: <Widget>[
-                        Text(
-                          '$enters',
-                          style: Styles.blackBoldLarge,
-                        ),
-                        Text('Entered', style: Styles.whiteSmall)
-                      ],
-                    ),
-                    Column(
-                      children: <Widget>[
-                        Text(
-                          '$dwells',
-                          style: Styles.blackBoldLarge,
-                        ),
-                        Text('Dwelled', style: Styles.whiteSmall)
-                      ],
-                    ),
-                    Column(
-                      children: <Widget>[
-                        Text(
-                          '$exits',
-                          style: Styles.blackBoldLarge,
-                        ),
-                        Text('Exited', style: Styles.whiteSmall)
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+            preferredSize: Size.fromHeight(140),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: <Widget>[
+                  Text(
+                    route == null ? '' : route.name,
+                    style: Styles.whiteBoldMedium,
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      SizedBox(
+                        width: 30,
+                      ),
+                      Counter(
+                        label: 'Entered',
+                        total: enters,
+                        totalStyle: Styles.purpleBoldReallyLarge,
+                      ),
+                      SizedBox(
+                        width: 30,
+                      ),
+                      Counter(
+                        label: 'Dwelled',
+                        total: dwells,
+                        totalStyle: Styles.blackBoldReallyLarge,
+                      ),
+                      SizedBox(
+                        width: 30,
+                      ),
+                      Counter(
+                        label: 'Exits',
+                        total: exits,
+                      ),
+                      SizedBox(
+                        width: 30,
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+        backgroundColor: Colors.brown.shade100,
         body: ListView.builder(
           controller: scrollController,
           itemCount: landmarks.length,
           itemBuilder: (context, index) {
-            return Card(
-              elevation: 2.0,
-              color: getRandomPastelColor(),
-              child: ListTile(
-                leading: Icon(
-                  Icons.my_location,
-                  color: getRandomColor(),
+            return Padding(
+              padding: const EdgeInsets.only(left: 20.0, right: 20, top: 4),
+              child: Card(
+                elevation: 2.0,
+                color: getRandomPastelColor(),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.my_location,
+                      color: getRandomColor(),
+                    ),
+                    title: Text(landmarks.elementAt(index).landmarkName,
+                        style: Styles.blackBoldMedium),
+                    subtitle: Text(
+                        '${landmarks.elementAt(index).latitude}  ${landmarks.elementAt(index).longitude}'),
+                  ),
                 ),
-                title: Text(landmarks.elementAt(index).landmarkName),
-                subtitle: Text(
-                    '${landmarks.elementAt(index).latitude}  ${landmarks.elementAt(index).longitude}'),
               ),
             );
           },
         ));
+  }
+}
+
+class Counter extends StatelessWidget {
+  final int total;
+  final String label;
+  final TextStyle totalStyle, labelStyle;
+
+  const Counter(
+      {Key key, this.total, this.label, this.totalStyle, this.labelStyle})
+      : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Text(
+          '$total',
+          style: totalStyle == null ? Styles.whiteBoldReallyLarge : totalStyle,
+        ),
+        Text(label, style: labelStyle == null ? Styles.whiteSmall : labelStyle),
+      ],
+    );
   }
 }

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
@@ -23,7 +26,8 @@ class _LocationCollectorState extends State<LocationCollector>
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
   Permission permission = Permission.AccessFineLocation;
   List<ARLocation> locationsCollected = List();
-
+  RouteDTO route;
+  bool isCancelTimer = false;
   bg.Config config = bg.Config(
       desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
       distanceFilter: 10.0,
@@ -43,6 +47,7 @@ class _LocationCollectorState extends State<LocationCollector>
     bg.BackgroundGeolocation.onActivityChange(_onActivityChanged);
     bg.BackgroundGeolocation.onMotionChange(_onMotionChanged);
     bg.BackgroundGeolocation.onConnectivityChange(_onConnectivityChange);
+    bg.BackgroundGeolocation.onLocation(_onLocation);
     bg.BackgroundGeolocation.ready(bg.Config(
             desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
             distanceFilter: 10.0,
@@ -55,10 +60,78 @@ class _LocationCollectorState extends State<LocationCollector>
       print('++++++++++++ BackgroundGeolocation configured ....');
       print(state);
     });
+    if (widget.route != null) {
+      route = widget.route;
+    } else {
+      _getPecanwoodRoute();
+    }
+  }
+
+  void _getPecanwoodRoute() async {
+    Firestore fs = Firestore.instance;
+    var qs = await fs
+        .collection('routes')
+        .where('routeID', isEqualTo: '-KVnZVSIg8UMl_gFtswm')
+        .getDocuments();
+    if (qs.documents.isNotEmpty) {
+      route = RouteDTO.fromJson(qs.documents.first.data);
+      setState(() {});
+    } else {
+      print('------ ERROR: ⚠️ Inside Pecanwood not found');
+    }
+  }
+
+  Timer timer;
+  int timerDuration = 10;
+  _startTimer() {
+    _getGPSLocation();
+
+    if (timer == null) {
+      timer = Timer.periodic(Duration(seconds: 10), (mt) {
+        print(
+            "%%%%%%%% ⚠️  timer triggered for 10 seconds :: - get GPS location and save");
+        _getGPSLocation();
+        setState(() {
+          isCancelTimer = true;
+        });
+      });
+      _showSnack(color: Colors.teal, message: 'Location collection started');
+    } else {
+      _showSnack(color: Colors.pink, message: 'Collections already happening');
+    }
+  }
+
+  _stopTimer() {
+    if (timer == null) {
+      print('---------- timer is null. ⚠️  ---- quit.');
+      return;
+    } else {
+      print("### ⚠️  ⚠️  ⚠️   - cancelling timer");
+      timer.cancel();
+      timer = null;
+
+      _showSnack(
+          message:
+              'Location collection stopped ${getFormattedDateHourMinuteSecond()}',
+          color: Colors.pink.shade400);
+      setState(() {
+        isCancelTimer = false;
+      });
+    }
+  }
+
+  _onLocation(bg.Location location) {
+    print(
+        '\n\n@@@@@@@@@@@ ✅  ✅  -- onLocation:  isMoving? ${location.isMoving}');
+    print('${location.toMap()}');
+    _showSnack(
+      message:
+          'Moving? ${location.isMoving} 📍 Odometer: ${location.odometer} km',
+    );
   }
 
   _onMotionChanged(bg.Location location) {
-    print('&&&&&&&&&&&&& onMotionChanged: location ${location.toMap()}');
+    print('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
     if (location.isMoving) {
       _showSnack(message: 'We are moving ...', color: Colors.green);
       print(
@@ -76,7 +149,7 @@ class _LocationCollectorState extends State<LocationCollector>
   }
 
   _onActivityChanged(bg.ActivityChangeEvent event) {
-    print('############# _onActivityChanged: ${event.toMap()}');
+    print('#############  ℹ️ _onActivityChanged: ${event.toMap()}');
     _showSnack(message: event.toString());
   }
 
@@ -116,8 +189,13 @@ class _LocationCollectorState extends State<LocationCollector>
       prevLocation = null;
       locationsCollected.clear();
     });
-    await LocalDB.deleteARLocations();
-    // LocalDB.delete
+    try {
+      await LocalDB.deleteARLocations();
+      await fs.collection('rawRoutePoints').document(route.routeID).delete();
+      print('----- ⚠️  deleted Firestore route points');
+    } catch (e) {
+      print(e);
+    }
   }
 
   void _getLocationsFromCache() async {
@@ -135,7 +213,7 @@ class _LocationCollectorState extends State<LocationCollector>
     if (prevLocation != null) {
       if (arLoc.latitude == prevLocation.latitude &&
           arLoc.longitude == prevLocation.longitude) {
-        print('########## DUPLICATE location .... ignored ');
+        print('########## 📍  DUPLICATE location .... ignored ');
       } else {
         _saveARLocation(arLoc);
       }
@@ -146,21 +224,32 @@ class _LocationCollectorState extends State<LocationCollector>
 
   void _saveARLocation(ARLocation arLoc) async {
     try {
-      arLoc.routeID = widget.route.routeID;
+      arLoc.routeID = route.routeID;
       prevLocation = arLoc;
       await LocalDB.saveARLocation(location: arLoc);
       locationsCollected = await LocalDB.getARLocations();
       print(
-          '+++++++++++_LocationCollectorState location saved ++++++++++++++++++++ cache now has ${locationsCollected.length}\n\n');
+          '+++++++++++_LocationCollectorState  ℹ️ location saved ++++++++++++++++++++ cache now has ${locationsCollected.length}\n\n');
 
-      setState(() {
-        locationsCollected.add(arLoc);
-      });
+      locationsCollected.add(arLoc);
+      await _writeARLocationToFirestore(arLoc);
     } catch (e) {
       print('Problem here??????????');
       print(e);
     }
     return null;
+  }
+
+  Firestore fs = Firestore.instance;
+  Future _writeARLocationToFirestore(ARLocation loc) async {
+    var ref = await fs
+        .collection('rawRoutePoints')
+        .document(route.routeID)
+        .collection('points')
+        .add(loc.toJson());
+
+    print(
+        '#### ℹ️ ℹ️  collected AR location written to Firestore: ${ref.path}');
   }
 
   List<SnappedPoint> snappedPoints;
@@ -175,15 +264,7 @@ class _LocationCollectorState extends State<LocationCollector>
       );
       list.add(loc);
     });
-    //TODO - testing ... REMOVE ////////////////////////////////////////////////////////
-    locationsCollected.clear();
-    widget.route.spatialInfos.forEach((si) {
-      locationsCollected.add(ARLocation(
-        latitude: si.fromLandmark.latitude,
-        longitude: si.fromLandmark.longitude,
-      ));
-    });
-    //////////////////////////////////////////////////////////////////////////////////////
+
     try {
       snappedPoints = await SnapToRoads.getSnappedPoints(list);
       list.clear();
@@ -196,7 +277,7 @@ class _LocationCollectorState extends State<LocationCollector>
           context,
           MaterialPageRoute(
               builder: (BuildContext context) => SnapToRoadsPage(
-                    route: widget.route,
+                    route: route,
                     arLocations: list,
                   )));
     } catch (e) {
@@ -228,10 +309,19 @@ class _LocationCollectorState extends State<LocationCollector>
       appBar: AppBar(
         title: Text('LocationCollector'),
         backgroundColor: Colors.pink.shade300,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              Icons.cancel,
+              color: Colors.black,
+            ),
+            onPressed: _stopTimer(),
+          ),
+        ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(120),
+          preferredSize: Size.fromHeight(140),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16),
             child: Column(
               children: <Widget>[
                 Row(
@@ -242,7 +332,7 @@ class _LocationCollectorState extends State<LocationCollector>
                     Flexible(
                       child: Container(
                         child: Text(
-                          widget.route.name,
+                          route == null ? '' : route.name,
                           style: Styles.whiteMedium,
                           overflow: TextOverflow.clip,
                         ),
@@ -264,7 +354,7 @@ class _LocationCollectorState extends State<LocationCollector>
                     Flexible(
                       child: Container(
                         child: Text(
-                          widget.route.associationName,
+                          route == null ? '' : route.associationName,
                           style: Styles.blackBoldSmall,
                           overflow: TextOverflow.clip,
                         ),
@@ -276,7 +366,28 @@ class _LocationCollectorState extends State<LocationCollector>
                   ],
                 ),
                 SizedBox(
-                  height: 0,
+                  height: 10,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    Column(
+                      children: <Widget>[
+                        Text('${locationsCollected.length}',
+                            style: Styles.blackBoldReallyLarge),
+                        Text(
+                          'Collected',
+                          style: Styles.whiteBoldSmall,
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      width: 30,
+                    )
+                  ],
+                ),
+                SizedBox(
+                  height: 20,
                 ),
               ],
             ),
@@ -341,7 +452,7 @@ class _LocationCollectorState extends State<LocationCollector>
               getSnappedPointsFromRoads();
               break;
             case 2:
-              _getGPSLocation();
+              _startTimer();
               break;
           }
         },

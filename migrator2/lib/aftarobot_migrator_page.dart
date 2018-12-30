@@ -22,6 +22,7 @@ import 'package:migrator2/lists/user_list_page.dart';
 import 'package:migrator2/lists/vehicle_list_page.dart';
 import 'package:migrator2/lists/vehicletype_list_page.dart';
 import 'package:flutter/material.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 
 class AftaRobotMigratorPage extends StatefulWidget {
   @override
@@ -57,7 +58,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
   List<VehicleTypeDTO> carTypes = List();
   List<UserDTO> users = List();
   List<CountryDTO> countries = List();
-
+  Permission permission = Permission.AccessFineLocation;
   @override
   void initState() {
     super.initState();
@@ -68,14 +69,32 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
       vsync: this,
       duration: Duration(milliseconds: 1000),
     );
+    _checkPermission();
     animation =
         new CurvedAnimation(parent: animationController, curve: Curves.linear);
   }
 
-  void _test() async {
-    var list = await ListAPI.getSouthAfricanCities(forceRefresh: true);
-    print(
-        '################################## found ${list.length} cities in za');
+  _requestPermission() async {
+    print('\n\n######################### requestPermission');
+    try {
+      final res = await SimplePermissions.requestPermission(permission);
+      print("\n########### permission request result is " + res.toString());
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  _checkPermission() async {
+    print('\n\n######################### checkPermission');
+    try {
+      bool res = await SimplePermissions.checkPermission(permission);
+      print("***************** permission checked is " + res.toString() + '\n');
+      if (res == false) {
+        _requestPermission();
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   void _initializeMessages() {

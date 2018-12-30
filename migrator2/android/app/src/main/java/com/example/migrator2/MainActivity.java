@@ -21,6 +21,14 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.estimote.mustard.rx_goodness.rx_requirements_wizard.Requirement;
+import com.estimote.mustard.rx_goodness.rx_requirements_wizard.RequirementsWizardFactory;
+import com.estimote.proximity_sdk.api.EstimoteCloudCredentials;
+import com.estimote.proximity_sdk.api.ProximityObserver;
+import com.estimote.proximity_sdk.api.ProximityObserverBuilder;
+import com.estimote.proximity_sdk.api.ProximityZone;
+import com.estimote.proximity_sdk.api.ProximityZoneBuilder;
+import com.estimote.proximity_sdk.api.ProximityZoneContext;
 import com.example.migrator2.api.LocationPair;
 import com.example.migrator2.api.MapsAPI;
 import com.example.migrator2.api.directions.DirectionsResponse;
@@ -41,6 +49,9 @@ import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
+import kotlin.jvm.functions.Function1;
 
 import static java.util.Locale.getDefault;
 
@@ -51,19 +62,53 @@ public class MainActivity extends FlutterActivity {
     private static final String DIRECTIONS_CHANNEL = "aftarobot/directions";
     private static final String DISTANCE_CHANNEL = "aftarobot/distance";
     private static final String BEACON_SCAN_CHANNEL = "aftarobot/beaconScan";
+    private static final String BEACON_PROXIMITY_CHANNEL = "aftarobot/beaconProximity";
 
     MethodCall methodCall;
     MethodChannel.Result methodResult;
-    EventChannel.EventSink scanEvents;
+    EventChannel.EventSink scanEvents, proximityEvents;
+    private ProximityObserver proximityObserver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(this.getClass().getCanonicalName(), "###### MainActivity onCreate() .................");
         GeneratedPluginRegistrant.registerWith(this);
+        EstimoteCloudCredentials cloudCredentials =
+                new EstimoteCloudCredentials("migrator-h4s", "54f62ce67e7773ecedbcea816271c50e");
+        this.proximityObserver =
+                new ProximityObserverBuilder(getApplicationContext(), cloudCredentials)
+                        .onError(new Function1<Throwable, Unit>() {
+                            @Override
+                            public Unit invoke(Throwable throwable) {
+                                Log.e("app", "proximity observer error: " + throwable);
+                                return null;
+                            }
+                        })
+                        .withBalancedPowerMode()
+                        .build();
 
+
+        new EventChannel(getFlutterView(), BEACON_PROXIMITY_CHANNEL).setStreamHandler(
+                new EventChannel.StreamHandler() {
+
+                    @Override
+                    public void onListen(Object arguments, EventChannel.EventSink events) {
+                        Log.d(TAG, "\n\n### +++++++++++++++ starting Beacon Proximity stream ...");
+                        proximityEvents = events;
+                        buildProximity();
+                    }
+
+                    @Override
+                    public void onCancel(Object arguments) {
+                        Log.d(TAG, "----------------------------- cancelling EstimoteBeacon Proximity ...");
+
+                    }
+                }
+        );
         new EventChannel(getFlutterView(), BEACON_SCAN_CHANNEL).setStreamHandler(
                 new EventChannel.StreamHandler() {
-                    private BroadcastReceiver chargingStateChangeReceiver;
+
                     @Override
                     public void onListen(Object arguments, EventChannel.EventSink events) {
                         Log.d(TAG, "\n\n### +++++++++++++++ starting EstimoteBeacon Scan stream ...");
@@ -91,7 +136,7 @@ public class MainActivity extends FlutterActivity {
                 new MethodChannel.MethodCallHandler() {
                     @Override
                     public void onMethodCall(MethodCall call, MethodChannel.Result result) {
-                        Log.d(TAG,"++++++++ starting processDirectionsRequest ........" );
+                        Log.d(TAG, "++++++++ starting processDirectionsRequest ........");
                         methodCall = call;
                         methodResult = result;
                         processDirectionsRequest();
@@ -119,6 +164,68 @@ public class MainActivity extends FlutterActivity {
                 });
     }
 
+    private void buildProximity() {
+       final ProximityZone zone = new ProximityZoneBuilder()
+                .forTag("vehicles")
+                .inCustomRange(3.0)
+//                .inNearRange()
+                .onEnter(new Function1<ProximityZoneContext, Unit>() {
+                    @Override
+                    public Unit invoke(ProximityZoneContext context) {
+                        Log.e(TAG, "\n################# ENTERING beacon range ...");
+                        BeaconFound found = getBeacon(context);
+                        found.isEnter = true;
+                        Log.d(TAG, "++++++++ ENTER: Beacon found: " + GSON.toJson(found));
+                        proximityEvents.success(GSON.toJson(found));
+                        return null;
+                    }
+                })
+                .onExit(new Function1<ProximityZoneContext, Unit>() {
+                    @Override
+                    public Unit invoke(ProximityZoneContext context) {
+                        Log.e(TAG, "\n################# EXITTING beacon range ...");
+                        BeaconFound found = getBeacon(context);
+                        found.isEnter = true;
+                        Log.d(TAG, "######### EXIT: Beacon found: " + GSON.toJson(found));
+                        proximityEvents.success(GSON.toJson(found));
+                        return null;
+                    }
+                })
+
+                .build();
+        RequirementsWizardFactory
+                .createEstimoteRequirementsWizard()
+                .fulfillRequirements(this,
+                        // onRequirementsFulfilled
+                        new Function0<Unit>() {
+                            @Override public Unit invoke() {
+                                Log.d("app", "++++++++++ requirements fulfilled");
+                                proximityObserver.startObserving(zone);
+                                return null;
+                            }
+                        },
+                        // onRequirementsMissing
+                        new Function1<List<? extends Requirement>, Unit>() {
+                            @Override public Unit invoke(List<? extends Requirement> requirements) {
+                                Log.e("app", "----------- requirements missing: " + requirements);
+                                return null;
+                            }
+                        },
+                        // onError
+                        new Function1<Throwable, Unit>() {
+                            @Override public Unit invoke(Throwable throwable) {
+                                Log.e("app", "********** requirements error: " + throwable);
+                                return null;
+                            }
+                        });
+    }
+    BeaconFound getBeacon(ProximityZoneContext context) {
+        String vehicleID = context.getAttachments().get("vehicleID");
+        String vehicleReg = context.getAttachments().get("vehicleReg");
+        String make = context.getAttachments().get("make");
+        String model = context.getAttachments().get("model");
+        return new BeaconFound(vehicleReg, vehicleID, make, model, false);
+    }
     private void processDistanceRequest() {
         Log.d(TAG, "############################ processDistanceRequest -----------------");
         if (methodCall.method.equals("getDistance")) {
@@ -211,12 +318,14 @@ public class MainActivity extends FlutterActivity {
         m.putExtra("landmark", "some location data");
         startActivity(m);
     }
+
     int count;
     private ScanCallback scanCallback;
 
     private void processBeaconRequest() {
         scanBeacons();
     }
+
     private void scanBeacons() {
 
         Log.w(TAG, "\n\n+++ scanBeacons: $$$$$$$$$$$$$$$$$$$$$ -------------------------- Keep the old fingers crossed!");
@@ -316,5 +425,17 @@ public class MainActivity extends FlutterActivity {
 
     }
 
+    private class BeaconFound {
+        String vehicleReg, vehicleID, make, model;
+        boolean isEnter;
+
+        public BeaconFound(String vehicleReg, String vehicleID, String make, String model, boolean isEnter) {
+            this.vehicleReg = vehicleReg;
+            this.vehicleID = vehicleID;
+            this.make = make;
+            this.model = model;
+            this.isEnter = isEnter;
+        }
+    }
 
 }
