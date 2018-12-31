@@ -3,12 +3,15 @@ import 'dart:convert';
 import 'package:aftarobotlibrary/data/associationdto.dart';
 import 'package:aftarobotlibrary/data/citydto.dart';
 import 'package:aftarobotlibrary/data/countrydto.dart';
+import 'package:aftarobotlibrary/data/geofence_event.dart';
 import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
+import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
 /*
@@ -48,7 +51,7 @@ class DataAPI {
     'Zambia',
     'Lesotho'
   ];
-
+  static Firestore fs = Firestore.instance;
   static Future<UserDTO> registerUser(UserDTO user) async {
     var map = {
       'user': user.toJson(),
@@ -72,6 +75,29 @@ class DataAPI {
         throw Exception(res.body);
         break;
     }
+  }
+
+  static Future addARLocation(ARLocation location) async {
+    var ref = await fs
+        .collection('rawRoutePoints')
+        .document(location.routeID)
+        .collection('points')
+        .add(location.toJson());
+    print('#### ✅  ✅  ARLocation event written to Firestore : ${ref.path}');
+    prettyPrint(location.toJson(), '##### addARLocation:');
+    return ref;
+  }
+
+  static Future addGeofenceEvent(ARGeofenceEvent event) async {
+    var ref = await fs
+        .collection('geofenceEvents')
+        .document(event.landmarkID)
+        .collection('events')
+        .add(event.toJson());
+    print(
+        '#### ✅  ✅  ARGeofenceEvent event written to Firestore : ${ref.path}');
+    prettyPrint(event.toJson(), '##### ARGeofenceEvent:');
+    return ref;
   }
 
   static Future<List<CountryDTO>> addCountries(

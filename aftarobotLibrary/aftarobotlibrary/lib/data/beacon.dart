@@ -25,8 +25,10 @@ class BeaconDTO {
     this.advertiseID,
     this.stringDate,
     this.latitude,
-    this.longitude, this.description,
-    this.path, this.isActive,
+    this.longitude,
+    this.description,
+    this.path,
+    this.isActive,
     this.date,
   });
 
@@ -74,18 +76,19 @@ class BeaconDTO {
       mark = landmark.toJson();
     }
     Map<String, dynamic> map = {
-        'beaconID': beaconID,
-        'date': date,
-        'path': path,
-        'description': description,
-        'isActive': isActive,
-        'stringDate': stringDate,
-        'routeID': routeID,
-        'latitude': latitude,
-        'longitude': longitude,
-        'vehicle': car,
-        'association': ass,
-        'landmark': mark,
-      };
-      return map;
+      'beaconID': beaconID,
+      'date': date,
+      'path': path,
+      'description': description,
+      'isActive': isActive,
+      'stringDate': stringDate,
+      'routeID': routeID,
+      'latitude': latitude,
+      'longitude': longitude,
+      'vehicle': car,
+      'association': ass,
+      'landmark': mark,
+    };
+    return map;
+  }
 }

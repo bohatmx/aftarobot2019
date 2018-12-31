@@ -101,13 +101,14 @@ class ARLocation {
   double latitude, longitude;
   double altitude, accuracy, speed, speedAccuracy;
   String routeID, placeId;
-  String date;
+  String date, uid;
   ARLocation(
       {this.latitude,
       this.longitude,
       this.accuracy,
       this.altitude,
       this.speed,
+      this.uid,
       this.placeId,
       this.routeID,
       this.date,
@@ -124,8 +125,8 @@ class ARLocation {
     this.routeID = data['routeID'];
     this.date = data['date'];
     this.placeId = data['placeId'];
+    this.uid = data['uid'];
   }
-  //I/flutter (18749): type '_InternalLinkedHashMap<String, dynamic>' is not a subtype of type 'List<dynamic>'
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> map = {
@@ -138,6 +139,7 @@ class ARLocation {
       'routeID': routeID,
       'date': date,
       'placeId': placeId,
+      'uid': uid,
     };
     return map;
   }

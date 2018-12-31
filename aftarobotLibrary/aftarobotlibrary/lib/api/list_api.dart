@@ -150,7 +150,7 @@ class ListAPI {
   }
 
   static Future<List<AssociationBag>> getAssociationBags(
-      AssociationBagListener listener) async {
+      {AssociationBagListener listener}) async {
     List<VehicleTypeDTO> carTypes = List();
     List<UserDTO> users = List();
     List<AssociationDTO> asses = List();
@@ -184,8 +184,9 @@ class ListAPI {
       bag.cars = cars;
 
       bag.carTypes = _filter(ass, cars);
-
-      listener.onBag(bag);
+      if (listener != null) {
+        listener.onBag(bag);
+      }
       bags.add(bag);
     }
 
