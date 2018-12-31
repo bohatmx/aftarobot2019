@@ -11,6 +11,7 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
     as bg;
 import 'package:location/location.dart';
 import 'package:migrator2/bloc/route_builder_bloc.dart';
+import 'package:migrator2/location_collection_map.dart';
 import 'package:migrator2/snaptoroads_page.dart';
 import 'package:simple_permissions/simple_permissions.dart';
 import 'package:flutter/scheduler.dart';
@@ -73,6 +74,15 @@ class _LocationCollectorState extends State<LocationCollector>
   void dispose() {
     print('### dispose  🔵  🔵  🔵  🔵  🔵  - do nutjin, just checkin!');
     super.dispose();
+  }
+
+  void _startCollectionMap() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LocationCollectionMap(
+                  route: route,
+                )));
   }
 
   void _getPecanwoodRoute() async {
@@ -196,45 +206,8 @@ class _LocationCollectorState extends State<LocationCollector>
   }
 
   ARLocation prevLocation;
-  void _getGPSLocation() async {
-    print(
-        '_LocationCollectorState ############# getLocation starting ..............');
-    var locationManager = new Location();
-    var currentLocation = await locationManager.getLocation();
-    var arLoc = ARLocation.fromJson(currentLocation);
-    if (prevLocation != null) {
-      if (arLoc.latitude == prevLocation.latitude &&
-          arLoc.longitude == prevLocation.longitude) {
-        print('########## 📍  DUPLICATE location .... ignored ');
-      } else {
-        _saveARLocation(arLoc);
-      }
-    } else {
-      _saveARLocation(arLoc);
-    }
-  }
 
 // ✅  🎾 🔵  📍   ℹ️
-  void _saveARLocation(ARLocation arLoc) async {
-    try {
-      arLoc.routeID = route.routeID;
-      prevLocation = arLoc;
-      setState(() {
-        locationsCollected.add(arLoc);
-      });
-
-      bloc.addRoutePoint(arLoc);
-    } catch (e) {
-      print('Problem here??????????');
-      print(e);
-      AppSnackbar.showErrorSnackbar(
-          actionLabel: 'Check',
-          listener: this,
-          message: e.toString(),
-          scaffoldKey: _key);
-    }
-    return null;
-  }
 
   List<SnappedPoint> snappedPoints;
   void getSnappedPointsFromRoads() async {
@@ -314,7 +287,7 @@ class _LocationCollectorState extends State<LocationCollector>
           return Scaffold(
             key: _key,
             appBar: AppBar(
-              title: Text('LocationCollector'),
+              title: Text('Route Point Collector'),
               backgroundColor: Colors.pink.shade300,
               actions: <Widget>[
                 IconButton(
@@ -323,6 +296,13 @@ class _LocationCollectorState extends State<LocationCollector>
                     color: Colors.black,
                   ),
                   onPressed: _stopTimer,
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.map,
+                    color: Colors.white,
+                  ),
+                  onPressed: _startCollectionMap,
                 ),
               ],
               bottom: PreferredSize(

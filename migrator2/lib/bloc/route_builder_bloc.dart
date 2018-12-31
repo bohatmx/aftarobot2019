@@ -12,6 +12,7 @@ import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
+import 'package:meta/meta.dart';
 
 class RouteBuilderModel {
   List<RouteDTO> _routes = List();
@@ -134,7 +135,7 @@ class RouteBuilderBloc {
 
   addGeofenceEvent(ARGeofenceEvent event) async {
     print('#### ℹ️ ℹ️  processing route point. adding utc date');
-    event.timestamp = DateTime.now().millisecondsSinceEpoch;
+    //event.timestamp = DateTime.now().toUtc().toIso8601String();
     try {
       var ref = await fs
           .collection('geofenceEvents')
@@ -153,25 +154,43 @@ class RouteBuilderBloc {
 
   Timer timer;
   int timerDuration = 10;
-  startRoutePointCollectionTimer({int collectionSeconds}) {
-    getGPSLocation();
+  startRoutePointCollectionTimer(
+      {@required RouteDTO route, @required int collectionSeconds}) {
+    getGPSLocation(route);
 
     if (timer == null) {
       timer = Timer.periodic(Duration(seconds: collectionSeconds), (mt) {
         print(
             "%%%%%%%% ⚠️  timer triggered for 10 seconds :: - get GPS location and save");
-        getGPSLocation();
+        getGPSLocation(route);
       });
     } else {}
   }
 
   ARLocation prevLocation;
-  Future getGPSLocation() async {
+  Future getGPSLocation(RouteDTO route) async {
     print(
         '_LocationCollectorState ############# getLocation starting ..............');
-    var currentLocation = await bg.BackgroundGeolocation.getCurrentPosition();
-
-    var arLoc = ARLocation.fromJson(currentLocation.toMap());
+    var c = await bg.BackgroundGeolocation.getCurrentPosition();
+    var arLoc = ARLocation(
+      routeID: route == null ? null : route.routeID,
+      latitude: c.coords.latitude,
+      longitude: c.coords.longitude,
+      accuracy: c.coords.accuracy,
+      activity:
+          Activity(confidence: c.activity.confidence, type: c.activity.type),
+      battery:
+          Battery(level: c.battery.level, isCharging: c.battery.isCharging),
+      altitude: c.coords.altitude,
+      date: DateTime.now().toUtc().toIso8601String(),
+      heading: c.coords.heading,
+      isMoving: c.isMoving,
+      odometer: c.odometer,
+      speed: c.coords.speed,
+      uid: c.uuid,
+    );
+    prettyPrint(arLoc.toJson(), 'ARLocation format ....  ⚠️   ⚠️   ⚠️   ⚠️  ');
+    assert(arLoc.latitude != null);
     if (prevLocation != null) {
       if (arLoc.latitude == prevLocation.latitude &&
           arLoc.longitude == prevLocation.longitude) {
@@ -182,7 +201,7 @@ class RouteBuilderBloc {
     } else {
       addRoutePoint(arLoc);
     }
-    return currentLocation;
+    return c;
   }
 
   stopRoutePointCollectionTimer() {
