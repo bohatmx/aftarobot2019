@@ -1,3 +1,4 @@
+import 'package:aftarobotlibrary/data/geofence_event.dart';
 import 'package:aftarobotlibrary/data/landmarkdto.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:flutter/scheduler.dart';
+import 'package:migrator2/bloc/route_builder_bloc.dart';
 
 class GeofenceTestPage extends StatefulWidget {
   final RouteDTO route;
@@ -16,12 +18,12 @@ class GeofenceTestPage extends StatefulWidget {
   _GeofenceTestPageState createState() => _GeofenceTestPageState();
 }
 
-class _GeofenceTestPageState extends State<GeofenceTestPage> {
+class _GeofenceTestPageState extends State<GeofenceTestPage> implements SnackBarListener{
   RouteDTO route;
   List<bg.Geofence> fences = List();
   List<LandmarkDTO> landmarks = List();
   GlobalKey<ScaffoldState> _key = GlobalKey();
-
+  RouteBuilderBloc bloc = routeBuilderBloc;
   @override
   void initState() {
     super.initState();
@@ -47,6 +49,7 @@ class _GeofenceTestPageState extends State<GeofenceTestPage> {
     }
   }
 
+//TODO - remove after dev
   void _getPecanwoodRoute() async {
     Firestore fs = Firestore.instance;
     var qs = await fs
@@ -85,6 +88,7 @@ class _GeofenceTestPageState extends State<GeofenceTestPage> {
         landmark = m;
       }
     });
+    
     if (event.identifier == 'mi casa') {
       landmark = landmarks.elementAt(0);
     }
@@ -113,15 +117,19 @@ class _GeofenceTestPageState extends State<GeofenceTestPage> {
       'odometer': event.location.odometer,
       'timestamp': event.location.timestamp,
     };
-    var ref = await fs.collection('geofenceEvents').add(map);
-    print(
-        '\n\n+++++++++++++  ✅  ✅  ✅ geofence event added to Firestore:  🔵  ${ref.path} \n$map');
-  }
+    var e = ARGeofenceEvent.fromJson(map);
+    try {
+      bloc.addGeofenceEvent(e);
+    } catch (e) {
+      AppSnackbar.showErrorSnackbar(
+        scaffoldKey: _key,
+        message: e.toString(),
+        actionLabel: '',
+        listener: this
+      );
+    }
+      }
 
-/*
-Exception has occurred.
-_TypeError (type 'MappedListIterable<Geofence, Map<String, dynamic>>' is not a subtype of type 'List<Map<String, dynamic>>')
-*/
   void _createPecanwoodGeofences() {
     fences = List();
     route.spatialInfos.sort((a, b) => (a.fromLandmark.rankSequenceNumber
@@ -295,6 +303,12 @@ _TypeError (type 'MappedListIterable<Geofence, Map<String, dynamic>>' is not a s
             );
           },
         ));
+  }
+
+  @override
+  onActionPressed(int action) {
+    // TODO: implement onActionPressed
+    return null;
   }
 }
 

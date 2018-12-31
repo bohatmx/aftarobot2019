@@ -140,7 +140,7 @@ class _DashboardState extends State<Dashboard>
     if (asses.isNotEmpty && users.isNotEmpty && cars.isNotEmpty) {
       activeBags = await getAssociationBags();
     } else {
-      activeBags = await ListAPI.getAssociationBags(this);
+      activeBags = await ListAPI.getAssociationBags(listener: this);
     }
     setState(() {});
   }
