@@ -1,8 +1,8 @@
 class ARGeofenceEvent {
   String landmarkID, activityType, action, userID, vehicleID, stringTimestamp;
-  int timestamp;
+  String timestamp;
   int confidence;
-  int odometer;
+  double odometer;
   bool isMoving;
 
   ARGeofenceEvent(

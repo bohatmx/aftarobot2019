@@ -370,17 +370,19 @@ class LocalDB {
 
   static Future<List<ARLocation>> getARLocations() async {
     print('LocalDB.getARLocations -- ################## starting ...');
+    //FIX - turned off local cache for route points
     try {
-      var map = await _readFile(LocationsData);
-      if (map == null) {
-        return List();
-      }
-      return ARLocations.fromJson(map).locations;
+      // var map = await _readFile(LocationsData);
+      // if (map == null) {
+      //   return List();
+      // }
+      // return ARLocations.fromJson(map).locations;
     } catch (e) {
       print('LocalDB.getARLocations - ERROR  - ERROR  - ERROR  - ERROR ');
       print(e);
-      throw e;
+      return List();
     }
+    return List();
   }
 
   static Future<int> deleteARLocations() async {

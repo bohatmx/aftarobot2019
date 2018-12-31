@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
@@ -99,9 +99,12 @@ class SnappedPoint {
 
 class ARLocation {
   double latitude, longitude;
-  double altitude, accuracy, speed, speedAccuracy;
+  double altitude, accuracy, speed, speedAccuracy, odometer, heading;
   String routeID, placeId;
   String date, uid;
+  bool isMoving;
+  Activity activity;
+  Battery battery;
   ARLocation(
       {this.latitude,
       this.longitude,
@@ -111,35 +114,100 @@ class ARLocation {
       this.uid,
       this.placeId,
       this.routeID,
+      this.isMoving,
+      this.odometer,
       this.date,
-      this.speedAccuracy});
+      this.heading,
+      this.speedAccuracy,
+      this.activity,
+      this.battery});
 
   ARLocation.fromJson(Map data) {
-    print(data);
-    this.latitude = data['latitude'];
-    this.longitude = data['longitude'];
-    this.accuracy = data['accuracy'];
-    this.altitude = data['altitude'];
-    this.speed = data['speed'];
-    this.speedAccuracy = data['speedAccuracy'];
+    Map coords = data['coords'];
+    Map act = data['activity'];
+    Map batt = data['battery'];
+    if (act != null) {
+      this.activity = Activity.fromJson(act);
+    } else {
+      print(
+          '##### activity is null🔵  🔵  🔵  🔵  🔵  🔵  🔵  🔵  🔵  🔵  🔵  🔵  🔵  ');
+    }
+    if (batt != null) {
+      this.battery = Battery.fromJson(batt);
+    }
+    this.latitude = coords['latitude'];
+    this.longitude = coords['longitude'];
+    this.accuracy = coords['accuracy'];
+    this.altitude = coords['altitude'];
+    this.speed = coords['speed'];
+    this.heading = coords['heading'];
+    this.isMoving = data['is_moving'];
     this.routeID = data['routeID'];
-    this.date = data['date'];
+    this.date = data['timestamp'];
     this.placeId = data['placeId'];
-    this.uid = data['uid'];
+    this.uid = data['uuid'];
+    this.odometer = data['odometer'];
   }
 
   Map<String, dynamic> toJson() {
+    Map mBattery, mAct;
+    if (battery != null) {
+      mBattery = battery.toJson();
+    }
+    if (activity != null) {
+      mAct = activity.toJson();
+    }
     Map<String, dynamic> map = {
       'latitude': latitude,
       'longitude': longitude,
       'accuracy': accuracy,
       'altitude': altitude,
       'speed': speed,
+      'isMoving': isMoving,
+      'heading': heading,
       'speedAccuracy': speedAccuracy,
       'routeID': routeID,
       'date': date,
       'placeId': placeId,
       'uid': uid,
+      'odometer': odometer,
+      'battery': mBattery,
+      'activity': mAct
+    };
+    return map;
+  }
+}
+
+class Battery {
+  double level;
+  bool isCharging;
+  Battery({this.level, this.isCharging});
+  Battery.fromJson(Map map) {
+    level = map['level'];
+    isCharging = map['isCharging'];
+  }
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> map = {
+      'level': level,
+      'isCharging': isCharging,
+    };
+    return map;
+  }
+}
+
+class Activity {
+  int confidence;
+  String type;
+  Activity({this.confidence, this.type});
+
+  Activity.fromJson(Map map) {
+    confidence = map['confidence'];
+    type = map['type'];
+  }
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> map = {
+      'confidence': confidence,
+      'type': type,
     };
     return map;
   }

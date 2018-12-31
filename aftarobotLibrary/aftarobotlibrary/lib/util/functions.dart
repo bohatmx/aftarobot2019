@@ -425,6 +425,15 @@ class Styles {
 prettyPrint(Map map, String name) {
   print('\n\n$name \t{\n');
   map.forEach((key, val) {
+    // print('\t$key : { ,\n');
+    // if (val is Map) {
+    //   val.forEach((mKey, mValue) {
+    //     print('\t\t$mKey : $mValue ,\n');
+    //   });
+    //   print('\t}');
+    // } else {
+    //   print('\t$key : $val ,\n');
+    // }
     print('\t$key : $val ,\n');
   });
   print('\n}\n\n');
