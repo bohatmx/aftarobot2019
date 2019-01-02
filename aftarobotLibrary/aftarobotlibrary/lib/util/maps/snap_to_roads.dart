@@ -124,6 +124,21 @@ class ARLocation {
 
   ARLocation.fromJson(Map data) {
     Map coords = data['coords'];
+    if (coords == null) { //**** data from Firestore */
+      this.latitude = data['latitude'];
+      this.longitude = data['longitude'];
+      this.accuracy = data['accuracy'];
+      this.altitude = data['altitude'];
+      this.speed = data['speed'];
+      this.heading = data['heading'];
+    } else {                         //**** data from BackgroundLocation response */
+      this.latitude = coords['latitude'];
+      this.longitude = coords['longitude'];
+      this.accuracy = coords['accuracy'];
+      this.altitude = coords['altitude'];
+      this.speed = coords['speed'];
+      this.heading = coords['heading'];
+    }
     Map act = data['activity'];
     Map batt = data['battery'];
     if (act != null) {
@@ -135,12 +150,7 @@ class ARLocation {
     if (batt != null) {
       this.battery = Battery.fromJson(batt);
     }
-    this.latitude = coords['latitude'];
-    this.longitude = coords['longitude'];
-    this.accuracy = coords['accuracy'];
-    this.altitude = coords['altitude'];
-    this.speed = coords['speed'];
-    this.heading = coords['heading'];
+
     this.isMoving = data['is_moving'];
     this.routeID = data['routeID'];
     this.date = data['timestamp'];

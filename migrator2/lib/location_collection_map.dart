@@ -1,9 +1,11 @@
 import 'package:aftarobotlibrary/data/routedto.dart';
+import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:migrator2/bloc/route_builder_bloc.dart';
+import 'package:migrator2/geofence_test_page.dart';
 import 'package:migrator2/location_collector.dart';
 
 // ✅  🎾 🔵  📍   ℹ️
@@ -20,7 +22,16 @@ class _LocationCollectionMapState extends State<LocationCollectionMap>
   final GlobalKey<ScaffoldState> _key = GlobalKey();
   List<ARLocation> locationsCollected = List();
   GoogleMapController _mapController;
-  int collectionSeconds = 10;
+  int collectionSeconds = 30;
+  @override
+  void initState() {
+      super.initState();
+      _getExistingRoutePoints();
+    }
+  void _getExistingRoutePoints() async{
+    assert(widget.route != null);
+    await bloc.getRoutePoints(routeID: widget.route.routeID);
+  }
   @override
   onModeSelected(int seconds) {
     setState(() {
@@ -110,6 +121,50 @@ class _LocationCollectionMapState extends State<LocationCollectionMap>
           key: _key,
           appBar: AppBar(
             title: Text('Route Point Collector'),
+            backgroundColor: Colors.brown.shade300,
+            bottom: PreferredSize(
+              preferredSize: Size.fromHeight(120),
+              child: Column(
+                children: <Widget>[
+                  Text(
+                    widget.route == null ? 'No Route?' : widget.route.name,
+                    style: Styles.whiteBoldSmall,
+                  ),
+                  Text(
+                    widget.route == null
+                        ? 'No Association?'
+                        : widget.route.associationName,
+                    style: Styles.blackBoldSmall,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      Counter(
+                        label: 'Collected',
+                        total: bloc.model.arLocations.length,
+                        totalStyle: Styles.blackBoldReallyLarge,
+                        labelStyle: Styles.whiteBoldSmall,
+                      ),
+                      SizedBox(
+                        width: 40,
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  icon: Icon(Icons.cancel),
+                  onPressed: stopCollection,
+                ),
+              ),
+            ],
           ),
           body: Stack(
             children: <Widget>[
@@ -128,8 +183,11 @@ class _LocationCollectionMapState extends State<LocationCollectionMap>
               Positioned(
                 top: 10,
                 left: 10,
-                child: Modes(
-                  listener: this,
+                child: Hero(
+                  child: Modes(
+                    listener: this,
+                  ),
+                  tag: 'modes',
                 ),
               ),
             ],

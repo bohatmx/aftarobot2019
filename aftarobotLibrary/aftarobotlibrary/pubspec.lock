@@ -29,20 +29,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.2"
-  charts_common:
-    dependency: transitive
-    description:
-      name: charts_common
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.5.0"
-  charts_flutter:
-    dependency: "direct main"
-    description:
-      name: charts_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.5.0"
   cloud_firestore:
     dependency: "direct main"
     description:
@@ -50,13 +36,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.8.2+3"
-  cloud_functions:
-    dependency: "direct main"
-    description:
-      name: cloud_functions
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.5"
   collection:
     dependency: transitive
     description:
@@ -64,13 +43,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.14.11"
-  colorize:
-    dependency: "direct main"
-    description:
-      name: colorize
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.0"
   convert:
     dependency: transitive
     description:
@@ -78,15 +50,8 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.1"
-  crypt:
-    dependency: "direct main"
-    description:
-      name: crypt
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.7"
   crypto:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: crypto
       url: "https://pub.dartlang.org"
@@ -235,13 +200,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.15.7"
-  intro_views_flutter:
-    dependency: "direct main"
-    description:
-      name: intro_views_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.4.0"
   location:
     dependency: "direct main"
     description:
@@ -249,13 +207,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.4.1"
-  logging:
-    dependency: transitive
-    description:
-      name: logging
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.11.3+2"
   matcher:
     dependency: transitive
     description:
@@ -305,13 +256,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.3"
-  simple_permissions:
-    dependency: "direct main"
-    description:
-      name: simple_permissions
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.9"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -345,13 +289,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.4"
-  swipedetector:
-    dependency: "direct main"
-    description:
-      name: swipedetector
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.2.0"
   term_glyph:
     dependency: transitive
     description:
@@ -396,13 +333,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.8"
-  web_socket_channel:
-    dependency: "direct main"
-    description:
-      name: web_socket_channel
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.9"
 sdks:
   dart: ">=2.0.0 <3.0.0"
   flutter: ">=0.11.9 <2.0.0"

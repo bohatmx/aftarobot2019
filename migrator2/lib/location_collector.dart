@@ -65,6 +65,7 @@ class _LocationCollectorState extends State<LocationCollector>
     });
     if (widget.route != null) {
       route = widget.route;
+      bloc.getRoutePoints(routeID: route.routeID);
     } else {
       _getPecanwoodRoute();
     }
@@ -93,6 +94,7 @@ class _LocationCollectorState extends State<LocationCollector>
         .getDocuments();
     if (qs.documents.isNotEmpty) {
       route = RouteDTO.fromJson(qs.documents.first.data);
+      bloc.getRoutePoints(routeID: route.routeID);
       setState(() {});
     } else {
       print('------ ERROR: ⚠️ Inside Pecanwood not found');
@@ -101,7 +103,8 @@ class _LocationCollectorState extends State<LocationCollector>
 
   _startTimer() {
     try {
-      bloc.startRoutePointCollectionTimer(collectionSeconds: collectionSeconds);
+      bloc.startRoutePointCollectionTimer(
+          route: route, collectionSeconds: collectionSeconds);
       _showSnack(color: Colors.teal, message: 'Location collection started');
     } catch (e) {
       print(e);
@@ -187,6 +190,64 @@ class _LocationCollectorState extends State<LocationCollector>
     }
   }
 
+  void _showConfirmDialog() {
+    showDialog(
+        context: context,
+        builder: (_) => new AlertDialog(
+              title: new Text(
+                "Confirm Delete Request",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor),
+              ),
+              content: Container(
+                height: 120.0,
+                child: Column(
+                  children: <Widget>[
+                    Text(
+                      route == null ? '' : route.name,
+                      style: Styles.blackBoldSmall,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text(
+                          'Do you want to delete ${locationsCollected.length} collected route points?'),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text(
+                    'NO',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: RaisedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _eraseLocations();
+                    },
+                    elevation: 4.0,
+                    color: Colors.pink.shade700,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Start Delete',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ));
+  }
+
   void _eraseLocations() async {
     setState(() {
       prevLocation = null;
@@ -250,7 +311,7 @@ class _LocationCollectorState extends State<LocationCollector>
   }
 
   RouteBuilderModel model;
-  int collectionSeconds = 10;
+  int collectionSeconds = 30;
   @override
   void onActionPressed(int action) {}
   ScrollController scrollController = ScrollController();
@@ -358,8 +419,11 @@ class _LocationCollectorState extends State<LocationCollector>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
-                          Modes(
-                            listener: this,
+                          Hero(
+                            child: Modes(
+                              listener: this,
+                            ),
+                            tag: 'modes',
                           ),
                           SizedBox(
                             width: 80,
@@ -449,7 +513,7 @@ class _LocationCollectorState extends State<LocationCollector>
               onTap: (index) {
                 switch (index) {
                   case 0:
-                    _eraseLocations();
+                    _showConfirmDialog();
                     break;
                   case 1:
                     getSnappedPointsFromRoads();
@@ -493,7 +557,7 @@ class _ModesState extends State<Modes> {
     print('##### on Walking tapped ########');
     setState(() {
       _mode = 0;
-      widget.listener.onModeSelected(30);
+      widget.listener.onModeSelected(90);
     });
   }
 
@@ -501,7 +565,7 @@ class _ModesState extends State<Modes> {
     print('%%%%%%% on Driving tapped');
     setState(() {
       _mode = 1;
-      widget.listener.onModeSelected(10);
+      widget.listener.onModeSelected(30);
     });
   }
 

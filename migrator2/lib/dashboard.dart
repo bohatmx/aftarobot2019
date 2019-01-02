@@ -14,6 +14,8 @@ import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/services.dart';
 import 'package:migrator2/aftarobot_migrator_page.dart';
 import 'package:migrator2/beacon_scanner.dart';
+import 'package:migrator2/bloc/auth.dart';
+import 'package:migrator2/bloc/beacon_api.dart';
 import 'package:migrator2/city_migrate.dart';
 import 'package:migrator2/generator.dart';
 import 'package:migrator2/geofence_test_page.dart';
@@ -43,25 +45,48 @@ class _DashboardState extends State<Dashboard>
   List<VehicleDTO> cars = List();
   static const platform = const MethodChannel('samples.flutter.io/battery');
   String _batteryLevel = '0';
-  static const beaconProximityStream =
-      const EventChannel('aftarobot/beaconProximity');
-  StreamSubscription subscription;
+  static const estimoteStream = const EventChannel('aftarobot/beaconProximity');
+  static const altBeaconStream =
+      const EventChannel('aftarobot/beaconProximityAltBeacon');
+  StreamSubscription subscription, altBeaconSubs;
 
-  Future _startBeaconProximity() async {
+  Future _startEstimoteBeaconProximity() async {
     print(
-        '\n\n################ ⚠️  --- beaconProximityStream: proximity :: start subscription');
-    subscription =
-        beaconProximityStream.receiveBroadcastStream().listen((data) {
+        '\n\n################ ⚠️  --- _startEstimoteBeaconProximity: proximity :: start subscription');
+    subscription = estimoteStream.receiveBroadcastStream().listen((data) {
       print(
-          '\n################ 📍 --- beaconProximityStream: proximity Result: $data');
+          '\n################ 📍 --- estimoteStream: proximity Result: $data');
       Map map = json.decode(data);
-      print(map);
+      //print(map);
+
       AppSnackbar.showSnackbar(
           scaffoldKey: _key,
-          message: '✅  ✅ Beacon within range: ${map['vehicleReg']}',
+          message: '✅  ✅ Estimote Beacon within range: $map',
           backgroundColor: Colors.teal.shade700,
           textColor: Colors.white);
     });
+  }
+
+  Future _startAltBeaconProximity() async {
+    print(
+        '\n\n################ ⚠️  --- _startAltBeaconProximity: proximity :: start subscription');
+    try {
+      altBeaconSubs = altBeaconStream.receiveBroadcastStream().listen((data) {
+        print(
+            '\n### 📍 📍 _startAltBeaconProximity: receiveBroadcastStream ✅  ✅  $data');
+        Map map = json.decode(data);
+        print(map);
+        AppSnackbar.showSnackbar(
+            scaffoldKey: _key,
+            message: '✅  ✅ Beacon via altBeacon: $map',
+            backgroundColor: Colors.teal.shade700,
+            textColor: Colors.white);
+      });
+    } on PlatformException catch (e) {
+      print(e);
+    }
+
+    setState(() {});
   }
 
   Future<String> _getBatteryLevel() async {
@@ -90,7 +115,8 @@ class _DashboardState extends State<Dashboard>
         new CurvedAnimation(parent: animationController, curve: Curves.linear);
 
     _getCachedData();
-    _startBeaconProximity();
+    //_startEstimoteBeaconProximity();
+    //_startAltBeaconProximity();
   }
 
   void test() async {
@@ -99,6 +125,8 @@ class _DashboardState extends State<Dashboard>
   }
 
   Future _getCachedData() async {
+    GoogleBeaconApi api = GoogleBeaconApi();
+
     var start = DateTime.now();
     try {
       var countries = await LocalDB.getCountries();
@@ -137,6 +165,8 @@ class _DashboardState extends State<Dashboard>
 
   void _start() async {
     print('_DashboardState._start .................... get Bags!');
+
+    _startEstimoteBeaconProximity();
     if (asses.isNotEmpty && users.isNotEmpty && cars.isNotEmpty) {
       activeBags = await getAssociationBags();
     } else {
@@ -204,7 +234,8 @@ class _DashboardState extends State<Dashboard>
   }
 
   void _refresh() {
-    _start();
+    //_start();
+    _startEstimoteBeaconProximity();
     setState(() {
       activeBags.clear();
       errorText = null;

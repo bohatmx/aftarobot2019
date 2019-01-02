@@ -6,17 +6,28 @@ import 'package:datagenerator/new_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-void main() => runApp(MyApp());
+///This API Key will be used for both the interactive maps as well as the static maps.
+///Make sure that you have enabled the following APIs in the Google API Console (https://console.developers.google.com/apis)
+/// - Static Maps API
+/// - Android Maps API
+/// - iOS Maps API
+const API_KEY = "AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8";
+
+void main() {
+  runApp(new MyApp());
+}
+
+//void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Migrator',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.pink,
+        primarySwatch: Colors.indigo,
       ),
       home: Dashboard(),
     );

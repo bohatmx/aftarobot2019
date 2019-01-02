@@ -9,7 +9,13 @@ import 'package:migrator2/location_test_page.dart';
 
 const API_KEY = "AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8";
 
-void main() => runApp(MyApp());
+void main() {
+  try {
+    runApp(MyApp());
+  } catch (e) {
+    print(e);
+  }
+}
 
 //void main() => runApp(MyApp());
 

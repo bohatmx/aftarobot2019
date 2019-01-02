@@ -1,5 +1,7 @@
 package com.example.migrator2;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -17,6 +19,7 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelUuid;
+import android.support.v4.app.NotificationCompat;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
@@ -29,18 +32,13 @@ import com.estimote.proximity_sdk.api.ProximityObserverBuilder;
 import com.estimote.proximity_sdk.api.ProximityZone;
 import com.estimote.proximity_sdk.api.ProximityZoneBuilder;
 import com.estimote.proximity_sdk.api.ProximityZoneContext;
-import com.example.migrator2.api.LocationPair;
-import com.example.migrator2.api.MapsAPI;
-import com.example.migrator2.api.directions.DirectionsResponse;
-import com.example.migrator2.api.distancematrix.DistanceMatrixResponse;
-import com.example.migrator2.api.google.AdvertisedId;
-import com.example.migrator2.api.google.EstimoteBeacon;
-import com.example.migrator2.integration.RouteMapActivity;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,8 +57,6 @@ public class MainActivity extends FlutterActivity {
     static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final String BATTERY_CHANNEL = "samples.flutter.io/battery";
-    private static final String DIRECTIONS_CHANNEL = "aftarobot/directions";
-    private static final String DISTANCE_CHANNEL = "aftarobot/distance";
     private static final String BEACON_SCAN_CHANNEL = "aftarobot/beaconScan";
     private static final String BEACON_PROXIMITY_CHANNEL = "aftarobot/beaconProximity";
 
@@ -68,25 +64,24 @@ public class MainActivity extends FlutterActivity {
     MethodChannel.Result methodResult;
     EventChannel.EventSink scanEvents, proximityEvents;
     private ProximityObserver proximityObserver;
-
+    NotificationCompat.Builder mBuilder;
+    EstimoteCloudCredentials cloudCredentials =
+            new EstimoteCloudCredentials("migrator-h4s", "54f62ce67e7773ecedbcea816271c50e");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(this.getClass().getCanonicalName(), "###### MainActivity onCreate() .................");
         GeneratedPluginRegistrant.registerWith(this);
-        EstimoteCloudCredentials cloudCredentials =
-                new EstimoteCloudCredentials("migrator-h4s", "54f62ce67e7773ecedbcea816271c50e");
-        this.proximityObserver =
-                new ProximityObserverBuilder(getApplicationContext(), cloudCredentials)
-                        .onError(new Function1<Throwable, Unit>() {
-                            @Override
-                            public Unit invoke(Throwable throwable) {
-                                Log.e("app", "proximity observer error: " + throwable);
-                                return null;
-                            }
-                        })
-                        .withBalancedPowerMode()
-                        .build();
+
+        mBuilder = new NotificationCompat.Builder(this, BEACON_PROXIMITY_CHANNEL)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Content Title")
+                .setContentText("Content Text")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        mBuilder.build();
+        createNotificationChannel();
+
+
 
 
         new EventChannel(getFlutterView(), BEACON_PROXIMITY_CHANNEL).setStreamHandler(
@@ -94,9 +89,38 @@ public class MainActivity extends FlutterActivity {
 
                     @Override
                     public void onListen(Object arguments, EventChannel.EventSink events) {
-                        Log.d(TAG, "\n\n### +++++++++++++++ starting Beacon Proximity stream ...");
+                        Log.d(TAG, "\n\n### ++++++++++++++++++++++++++++ starting Beacon Proximity stream ..."
+                                + new Date().toString());
                         proximityEvents = events;
-                        buildProximity();
+                        if (proximityEvents != null)
+                        proximityEvents.success(GSON.toJson(new BeaconMessage("Starting Beacon Monitoring ...",new Date().toString())));
+                        if (proximityObserver == null) {
+                            Log.d(TAG,"\n\n\n@@@@@@@@@@@@@@@@@@@@@@@@ --- set up proximityObserver");
+                            proximityObserver =
+                                    new ProximityObserverBuilder(getApplicationContext(), cloudCredentials)
+                                            .onError(new Function1<Throwable, Unit>() {
+                                                @Override
+                                                public Unit invoke(Throwable throwable) {
+                                                    Log.e(TAG, "---------------> proximity observer error: " + throwable);
+                                                    return null;
+                                                }
+                                            })
+                                            .withBalancedPowerMode()
+                                            .onError(new Function1<Throwable, Unit>() {
+                                                @Override
+                                                public Unit invoke(Throwable throwable) {
+                                                    System.out.println("Observer is FUCKED!!!!");
+                                                    Log.d(TAG, "---------------------------------------------- invoke: Observer is FUCKED");
+                                                    proximityEvents.success(GSON.toJson(new BeaconMessage("Observer is FUCKED ...",new Date().toString())));
+                                                    return null;
+                                                }
+                                            })
+                                            .build();
+                            buildProximity();
+
+                        } else {
+                            buildProximity();
+                        }
                     }
 
                     @Override
@@ -111,37 +135,20 @@ public class MainActivity extends FlutterActivity {
 
                     @Override
                     public void onListen(Object arguments, EventChannel.EventSink events) {
-                        Log.d(TAG, "\n\n### +++++++++++++++ starting EstimoteBeacon Scan stream ...");
+                        Log.d(TAG, "\n\n### +++++++++++++++++++++++++++ starting EstimoteBeacon Scan stream ..."
+                                + new Date().toString());
                         scanEvents = events;
                         processBeaconRequest();
                     }
 
                     @Override
                     public void onCancel(Object arguments) {
-                        Log.d(TAG, "----------------------------- cancelling EstimoteBeacon scan ...");
+                        Log.d(TAG, "----------------------------- cancelling EstimoteBeacon scan ..." + new Date().toString());
                         scanner.stopScan(scanCallback);
                     }
                 }
         );
-        new MethodChannel(getFlutterView(), DISTANCE_CHANNEL).setMethodCallHandler(
-                new MethodChannel.MethodCallHandler() {
-                    @Override
-                    public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
-                        methodCall = call;
-                        methodResult = result;
-                        processDistanceRequest();
-                    }
-                });
-        new MethodChannel(getFlutterView(), DIRECTIONS_CHANNEL).setMethodCallHandler(
-                new MethodChannel.MethodCallHandler() {
-                    @Override
-                    public void onMethodCall(MethodCall call, MethodChannel.Result result) {
-                        Log.d(TAG, "++++++++ starting processDirectionsRequest ........");
-                        methodCall = call;
-                        methodResult = result;
-                        processDirectionsRequest();
-                    }
-                });
+
         new MethodChannel(getFlutterView(), BATTERY_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
@@ -163,19 +170,37 @@ public class MainActivity extends FlutterActivity {
                     }
                 });
     }
-
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "AftaRobot";
+            String description = "Channel Description";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(BEACON_PROXIMITY_CHANNEL, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
     private void buildProximity() {
-       final ProximityZone zone = new ProximityZoneBuilder()
+        Log.d(TAG, "\n################# buildProximity method starting ... #################################");
+        proximityEvents.success(GSON.toJson(new BeaconMessage("buildProximity method starting ...",new Date().toString())));
+        final ProximityZone zone = new ProximityZoneBuilder()
                 .forTag("vehicles")
                 .inCustomRange(3.0)
 //                .inNearRange()
                 .onEnter(new Function1<ProximityZoneContext, Unit>() {
                     @Override
                     public Unit invoke(ProximityZoneContext context) {
-                        Log.e(TAG, "\n################# ENTERING beacon range ...");
+                        Log.e(TAG, "\n###################### .............................. " +
+                                "ENTERING beacon range ..." + new Date().toString());
                         BeaconFound found = getBeacon(context);
                         found.isEnter = true;
-                        Log.d(TAG, "++++++++ ENTER: Beacon found: " + GSON.toJson(found));
+                        Log.d(TAG, "++++++++ ++++++++++++++++++++++++++++++++++++++++++++++ " +
+                                "ENTER: Beacon found: " + GSON.toJson(found));
                         proximityEvents.success(GSON.toJson(found));
                         return null;
                     }
@@ -183,115 +208,62 @@ public class MainActivity extends FlutterActivity {
                 .onExit(new Function1<ProximityZoneContext, Unit>() {
                     @Override
                     public Unit invoke(ProximityZoneContext context) {
-                        Log.e(TAG, "\n################# EXITTING beacon range ...");
+                        Log.e(TAG, "\n########################### ------------------------------------ " +
+                                "EXITTING beacon range ...");
                         BeaconFound found = getBeacon(context);
                         found.isEnter = true;
-                        Log.d(TAG, "######### EXIT: Beacon found: " + GSON.toJson(found));
+                        Log.d(TAG, "############################# EXIT: Beacon found: " + GSON.toJson(found));
                         proximityEvents.success(GSON.toJson(found));
                         return null;
                     }
                 })
 
                 .build();
+        Log.d(TAG,"@@@@@@@@@@@@@@@ creating RequirementsWizardFactory ......................");
+        proximityEvents.success(GSON.toJson(new BeaconMessage("creating RequirementsWizardFactory ..",new Date().toString())));
         RequirementsWizardFactory
                 .createEstimoteRequirementsWizard()
                 .fulfillRequirements(this,
                         // onRequirementsFulfilled
                         new Function0<Unit>() {
                             @Override public Unit invoke() {
-                                Log.d("app", "++++++++++ requirements fulfilled");
-                                proximityObserver.startObserving(zone);
+                                Log.d("PAY_OFF", "+++++++++++++++++++++++++++++++++++++++" +
+                                        " requirements fulfilled. start observing .....");
+                                proximityEvents.success(GSON.toJson(new BeaconMessage("proximity requirements fulfilled. start observing ..",new Date().toString())));
+                                Log.d(TAG,"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% set up ProximityObserver.Handler. use later for stopping");
+                                observationHandler =
+                                        proximityObserver
+                                                .startObserving(zone);
+                                Log.d(TAG, "\n\n++++++++++++++++++++++++++++++ observing has started. Fingers crossed XXX");
+                                proximityEvents.success(GSON.toJson(new BeaconMessage("observing has started. Fingers crossed XXs",new Date().toString())));
+
                                 return null;
                             }
                         },
                         // onRequirementsMissing
                         new Function1<List<? extends Requirement>, Unit>() {
                             @Override public Unit invoke(List<? extends Requirement> requirements) {
-                                Log.e("app", "----------- requirements missing: " + requirements);
+                                Log.e("FUCK_THIS", "----------- requirements missing: " + requirements);
                                 return null;
                             }
                         },
                         // onError
                         new Function1<Throwable, Unit>() {
                             @Override public Unit invoke(Throwable throwable) {
-                                Log.e("app", "********** requirements error: " + throwable);
+                                Log.e("REQ_FUCKUP", "********** requirements error: " + throwable);
                                 return null;
                             }
                         });
+
     }
+    ProximityObserver.Handler observationHandler;
     BeaconFound getBeacon(ProximityZoneContext context) {
+        Log.d(TAG,"++++++++++++++++++++++++++++++ creating BeaconFound object +++++++++++++++++");
         String vehicleID = context.getAttachments().get("vehicleID");
         String vehicleReg = context.getAttachments().get("vehicleReg");
         String make = context.getAttachments().get("make");
         String model = context.getAttachments().get("model");
         return new BeaconFound(vehicleReg, vehicleID, make, model, false);
-    }
-    private void processDistanceRequest() {
-        Log.d(TAG, "############################ processDistanceRequest -----------------");
-        if (methodCall.method.equals("getDistance")) {
-            LocationPair locationPair;
-            Object args = methodCall.arguments;
-            if (args instanceof String) {
-                String json = (String) args;
-                locationPair = GSON.fromJson(json, LocationPair.class);
-            } else {
-                methodResult.error("Invalid locationPair data received", "Error", "FuckedUp");
-                return;
-            }
-            if (locationPair != null) {
-                MapsAPI.getDistanceMatrix(locationPair.getOrigin(), locationPair.getDestination(), new MapsAPI.DistanceMatrixListener() {
-                    @Override
-                    public void onResponse(DistanceMatrixResponse response) {
-                        String json = GSON.toJson(response);
-                        Log.d(TAG, GSON.toJson(response));
-                        methodResult.success(json);
-                    }
-
-                    @Override
-                    public void onError(String message) {
-                        Log.e(TAG, message);
-                        methodResult.error(message, null, null);
-                    }
-                });
-            }
-        } else {
-            methodResult.notImplemented();
-        }
-    }
-
-    private void processDirectionsRequest() {
-        Log.d(TAG, "############################ processDirectionsRequest -----------------");
-        if (methodCall.method.equals("getDirections")) {
-            LocationPair locationPair;
-            Object args = methodCall.arguments;
-            if (args instanceof String) {
-                String json = (String) args;
-                Log.d(TAG, "RECECIVED on Android side: " + json);
-                locationPair = GSON.fromJson(json, LocationPair.class);
-            } else {
-                methodResult.error("Invalid locationPair data received", "Error", "FuckedUp");
-                return;
-            }
-            if (locationPair != null) {
-                MapsAPI.getDirections(locationPair.getOrigin(), locationPair.getDestination(), new MapsAPI.DirectionsListener() {
-
-                    @Override
-                    public void onResponse(DirectionsResponse response) {
-                        String json = GSON.toJson(response);
-                        Log.d(TAG, GSON.toJson(response));
-                        methodResult.success(json);
-                    }
-
-                    @Override
-                    public void onError(String message) {
-                        Log.e(TAG, message);
-                        methodResult.error(message, null, null);
-                    }
-                });
-            }
-        } else {
-            methodResult.notImplemented();
-        }
     }
 
     private int getBatteryLevel() {
@@ -312,13 +284,6 @@ public class MainActivity extends FlutterActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private void startRouteMap() {
-        Log.w(this.getClass().getCanonicalName(), "..... startRouteMap ....... HOLD YOUR FUCKING BREATH!!");
-        Intent m = new Intent(this, RouteMapActivity.class);
-        m.putExtra("landmark", "some location data");
-        startActivity(m);
-    }
-
     int count;
     private ScanCallback scanCallback;
 
@@ -329,6 +294,7 @@ public class MainActivity extends FlutterActivity {
     private void scanBeacons() {
 
         Log.w(TAG, "\n\n+++ scanBeacons: $$$$$$$$$$$$$$$$$$$$$ -------------------------- Keep the old fingers crossed!");
+
         count = 0;
         scanCallback = new ScanCallback() {
             @Override
@@ -438,4 +404,46 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
+    private class EstimoteBeacon {
+        String beaconName, advertisedId;
+
+        public String getBeaconName() {
+            return beaconName;
+        }
+
+        public void setBeaconName(String beaconName) {
+            this.beaconName = beaconName;
+        }
+
+        public String getAdvertisedId() {
+            return advertisedId;
+        }
+
+        public void setAdvertisedId(String advertisedId) {
+            this.advertisedId = advertisedId;
+        }
+    }
+
+    private class BeaconMessage {
+        String message, timestamp;
+
+        public BeaconMessage(String message, String timestamp) {
+            this.message = message;
+            this.timestamp = timestamp;
+        }
+    }
+    private class Error {
+        String message, reason;
+
+        public Error(String message, String reason) {
+            this.message = message;
+            this.reason = reason;
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG,"-------------------------- onDestroy: ........... observationHandler.stop();");
+        observationHandler.stop();
+        super.onDestroy();
+    }
 }

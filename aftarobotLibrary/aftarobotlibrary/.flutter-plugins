@@ -1,5 +1,4 @@
 cloud_firestore=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/cloud_firestore-0.8.2+3/
-cloud_functions=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/cloud_functions-0.0.5/
 device_info=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/device_info-0.2.1/
 firebase_auth=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_auth-0.6.6/
 firebase_core=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_core-0.2.5+1/
@@ -15,5 +14,4 @@ google_sign_in=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/g
 location=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/location-1.4.1/
 path_provider=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/path_provider-0.4.1/
 shared_preferences=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/shared_preferences-0.4.3/
-simple_permissions=/Users/mac/Documents/flutter/.pub-cache/hosted/pub.dartlang.org/simple_permissions-0.1.9/
 url_launcher=/Users/mac/Documents/flutter/.pub-cache/git/plugins-860ebfe984d4b1c6cd83f6c03b84278ca8db7d62/packages/url_launcher/

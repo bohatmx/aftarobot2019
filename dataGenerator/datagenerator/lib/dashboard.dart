@@ -5,6 +5,7 @@ import 'package:aftarobotlibrary/data/associationdto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
+import 'package:aftarobotlibrary/directions/direct_util.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
@@ -46,6 +47,11 @@ class _DashboardState extends State<Dashboard>
         new CurvedAnimation(parent: animationController, curve: Curves.linear);
 
     _getCachedData();
+    test();
+  }
+
+  void test() async {
+    await DirectionsUtil.getDirections();
   }
 
   Future _getCachedData() async {

@@ -54,6 +54,7 @@ class RouteBuilderBloc {
   _start() async {
     await _appModel.initialize();
     await getAssociationBags();
+
     print('\n\n############ adding model to stream sink ...');
   }
 
@@ -71,6 +72,20 @@ class RouteBuilderBloc {
     _appModel.associationBags.addAll(bags);
     _appModelController.sink.add(_appModel);
     print('++++ ✅  association bags retrieved ${bags.length}');
+  }
+
+  getRoutePoints({String routeID}) async {
+    print('### ℹ️  getRoutePoints getting route points ..........');
+    var qs = await fs
+        .collection('rawRoutePoints')
+        .document(routeID)
+        .collection('points')
+        .getDocuments();
+    qs.documents.forEach((doc) {
+      var point = ARLocation.fromJson(doc.data);
+      _appModel.arLocations.add(point);
+    });
+    _appModelController.sink.add(_appModel);
   }
 
   addRoutePoint(ARLocation location) async {
@@ -194,13 +209,14 @@ class RouteBuilderBloc {
     if (prevLocation != null) {
       if (arLoc.latitude == prevLocation.latitude &&
           arLoc.longitude == prevLocation.longitude) {
-        print('########## 📍  DUPLICATE location .... ignored ');
+        print('########## 📍  📍 DUPLICATE location .... ignored ');
       } else {
         addRoutePoint(arLoc);
       }
     } else {
       addRoutePoint(arLoc);
     }
+    prevLocation = arLoc;
     return c;
   }
 
