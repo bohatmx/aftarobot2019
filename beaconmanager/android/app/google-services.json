@@ -1,0 +1,231 @@
+{
+  "project_info": {
+    "project_number": "1027929957130",
+    "firebase_url": "https://aftarobot2019-dev1.firebaseio.com",
+    "project_id": "aftarobot2019-dev1",
+    "storage_bucket": "aftarobot2019-dev1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027929957130:android:fa288695a8965a0a",
+        "android_client_info": {
+          "package_name": "com.aftarobot.beaconmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1027929957130-sut0ulm47cgalrchou8k5d7pbgd7qvjg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aftarobot.beaconmanager",
+            "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
+          }
+        },
+        {
+          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027929957130:android:e4c2e1a4bcf2f0b2",
+        "android_client_info": {
+          "package_name": "com.aftarobot.carapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1027929957130-al3s8oss93ftt01btcrp43r9ek5l400g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aftarobot.carapp",
+            "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
+          }
+        },
+        {
+          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027929957130:android:da9108253102eff7",
+        "android_client_info": {
+          "package_name": "com.aftarobot.migrator2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1027929957130-uisdmr5ktqmc04eg8i43iq6sdba8tmpu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aftarobot.migrator2",
+            "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
+          }
+        },
+        {
+          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027929957130:android:df1bc510fd043f67",
+        "android_client_info": {
+          "package_name": "com.aftarobot.routebuilder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1027929957130-qp7ck83652u5996rd11mnnt0fiii98k5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aftarobot.routebuilder",
+            "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
+          }
+        },
+        {
+          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027929957130:android:56a6daf45e1fbcf2",
+        "android_client_info": {
+          "package_name": "com.aftarobot.vehicle"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1027929957130-cpc17g0u002782jkinktuclfqqdai6d0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aftarobot.vehicle",
+            "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
+          }
+        },
+        {
+          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,12 @@
+Launching lib/main.dart on Pixel 2 in debug mode...
+Initializing gradle...                                           1,8s
+Resolving dependencies...                                        2,4s
+Gradle task 'assembleDebug'...                                  
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+33,9s
+Built build/app/outputs/apk/debug/app-debug.apk.
+Installing build/app/outputs/apk/app.apk...                      4,2s
