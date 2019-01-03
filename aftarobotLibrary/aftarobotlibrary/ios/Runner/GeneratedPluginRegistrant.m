@@ -13,7 +13,6 @@
 #import <firebase_storage/FirebaseStoragePlugin.h>
 #import <flutter_background_geolocation/FLTBackgroundGeolocationPlugin.h>
 #import <flutter_document_picker/FlutterDocumentPickerPlugin.h>
-#import <flutter_webview_plugin/FlutterWebviewPlugin.h>
 #import <google_maps_flutter/GoogleMapsPlugin.h>
 #import <google_sign_in/GoogleSignInPlugin.h>
 #import <location/LocationPlugin.h>
@@ -34,7 +33,6 @@
   [FLTFirebaseStoragePlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseStoragePlugin"]];
   [FLTBackgroundGeolocationPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTBackgroundGeolocationPlugin"]];
   [FlutterDocumentPickerPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterDocumentPickerPlugin"]];
-  [FlutterWebviewPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterWebviewPlugin"]];
   [FLTGoogleMapsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTGoogleMapsPlugin"]];
   [FLTGoogleSignInPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTGoogleSignInPlugin"]];
   [LocationPlugin registerWithRegistrar:[registry registrarForPlugin:@"LocationPlugin"]];

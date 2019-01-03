@@ -2,8 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.aftarobot.beaconmanager">
 
-    <!--
-         The INTERNET permission is required for development. Specifically,
+    <!-- The INTERNET permission is required for development. Specifically,
          flutter needs it to communicate with the running application
          to allow setting breakpoints, to provide hot reload, etc.
     -->
@@ -13,19 +12,24 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
-    <!--
-     io.flutter.app.FlutterApplication is an android.app.Application that
+
+    <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
          In most cases you can leave this as-is, but you if you want to provide
          additional functionality it is fine to subclass or reimplement
-         FlutterApplication and put your custom class here.
-    -->
+         FlutterApplication and put your custom class here. -->
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:icon="@mipmap/ic_launcher"
-        android:label="BeaconMgr"
-        tools:replace="android:label">
+        android:label="Beacons"
+        tools:replace="android:label"
+        tools:node="merge"
+        android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.nearby.messages.API_KEY"
+            android:value="AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

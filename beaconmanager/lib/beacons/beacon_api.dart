@@ -1,8 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 
-import 'package:beaconmanager/beacons/google_data/beacon.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crashtest/beacons/google_data/beacon.dart';
+import 'package:crashtest/data/associationdto.dart';
+import 'package:crashtest/data/vehicledto.dart';
+import 'package:crashtest/ui/beacon_scanner.dart';
+import 'package:crashtest/util/functions.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import "package:googleapis_auth/auth_io.dart";
+import "package:http/http.dart" as http;
 
 final GoogleBeaconBloc googleBeaconBloc = GoogleBeaconBloc();
 
@@ -12,144 +20,326 @@ class GoogleBeaconBloc {
     'https://www.googleapis.com/auth/userlocation.beacon.registry'
   ];
 
-  AuthClient authClient;
+  GoogleBeaconBloc() {
+    initializeData();
+    initializeAuthClient();
+  }
+  void initializeData() async {
+    print('\n\n## Initialization of GoogleBeaconBloc data models ...🔵 🔵 🔵 ');
+    await getAssociations();
+    await getExistingBeacons();
+    await getExistingBeacons();
+    print('++ 🔵 🔵 🔵 Initialization complete.');
+  }
+
   Firestore fs = Firestore.instance;
+  StreamController<List<AssociationDTO>> _associationController =
+      StreamController.broadcast();
+  StreamController<List<VehicleDTO>> _vehicleController =
+      StreamController.broadcast();
+  StreamController<List<Beacon>> _beaconController =
+      StreamController.broadcast();
+  StreamController<List<EstimoteBeacon>> _estimoteBeaconController =
+      StreamController.broadcast();
+
+  List<VehicleDTO> _vehicles = List();
+  List<VehicleDTO> get vehicles => _vehicles;
+
+  List<AssociationDTO> _associations = List();
+  List<AssociationDTO> get associations => _associations;
+
+  List<Beacon> _beacons = List();
+  List<Beacon> get beacons => _beacons;
+
+  get beaconStream => _beaconController.stream;
+  get estimoteBeaconStream => _estimoteBeaconController.stream;
+  get associationStream => _associationController.stream;
+  get vehicleStream => _vehicleController.stream;
+
+  bool _isBusy = false;
+  get isBusy => _isBusy;
+
+  void closeStreams() {
+    _associationController.close();
+    _vehicleController.close();
+    _beaconController.close();
+    _estimoteBeaconController.close();
+  }
+
+  Future<Map> loadAsset() async {
+    String keys = await rootBundle.loadString('assets/auth_client_keys.json');
+    print('Authorized Client Keys:  🔵  🔵  - Ready to Rumble!!');
+    var map = json.decode(keys);
+    return map;
+  }
+
+  AccessCredentials _accessCredentials;
+  http.Client _httpClient;
 
   Future<int> initializeAuthClient() async {
-    print('#################### initializeAuthClient .....');
-    if (authClient != null) {
-      return 0;
-    }
-    var mJson = {
-      "type": "service_account",
-      "private_key_id": "bd98591d880e83cdb0a468f61152610762eb5eac",
-      "private_key":
-          "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC6NiIkONKMcEUq\nPjyobA2Z/vAh/QGB9ZgVMKXMGuaKwo7CX4FZOZCcyjAeoS0DRbujLkAyfbCS+CFs\nJLrB1n/qNSFe9/xgZa1q2/jr23ZSLCngIWmPcHb9GXTvUdtFdPYHoVu9EfNOlGHo\nI9WJiSSPPfOCg3QXHp2lhx2yaLwpv2YvWeJvls9CsgOZn9uLbPc2dvgpC2ErgqzC\nmSzth/bGpPmf+A6DcCXQeAz6qALdqdf0EhLggEg8F/Lyx2JDy+R+RbaY6QzOpH2D\nQIMevcWLTjEGv98Fl3Tuleslemq33gZ7GSl+OqIi8qhV4bJz/w0To8BFnAN2ZLqh\nz2q1pI05AgMBAAECggEAVOTyKs5nG1TiC5DFScm9Z7xlUTGOWugTlnGP3R5UheWO\nfUpaZ8nJRtodFxHHOksz8QDYjsxj0JVkc2/JXy8CMU5YsPnhKzef2OyBr1HmPy9Y\nRhEllZoh/WD6QVNx4tgghLkJYIkLAoO+oT2ZEHOgYdfOKW3x4sp39+vCW8DJLESI\nZmoquutx3IfTu0GvAaYK2wJdcN6W3kB2S+wsrEXyEfu17BOOtl43Eo+dVYO/f+U3\ngEZy50NMJR/h0kNkqw50S0lMYoB/gqpfKuiha3YCDeWznYDxbIUYjsOy9hkIRfU2\ndLN3mBstOhRuH8XoX/+X6a91gWpwTEtJpqRdmHYy8wKBgQD206y8a/M8CHsA56/A\n5iYAr0JO4IpZeZb4k6uYz7Rc+2mLhtcYxFjo/afITbc96j84rLGdeZKSMUTjtKKj\nimMWpodhXePoa86a3GiRHLdApChJ2IuTZLKtrEYEwyS6Wt0A4cTKOKM7NLUgdVMq\nQAhwE5O2KyMikxU9/z6VD65ijwKBgQDBIcKaAwVD8pWiNsk3P0UiOYR3+OByKJFp\n2jHZDRM2EASo47lwQLnKdHtv4ydu6wFPH/s9FSLqQ97EqlNzMFu9NctD0VazfgTC\nGoj/JW3gDgTfiCEsFNCQ0aYZ2qJeoO1c/l5oNkLJHSLaOiKiLpvMEy3VSobHPM6h\n9lbuBGrXtwKBgC5AwljYvc7dI/eqcvPp7Osp7HoNd7+GmnTgb0KGgZz+++tKjFo2\nyRZ4Gg3eCl2O3OQI8Iu68W110Bv/iI6u6xyefjYPuxqdwSyh6vJueCSj3mzgKF+p\nehYzdzeDPgmx50I4DIF8lZINsXdwpPIA59Pgx0hW0xGykEN65kZWlu4fAoGAdF+l\nZSwgxhqsc3xTrsifHcpOugPrKp6rUH87vjAUvWTVifb+TFeUHBwoLPlRT5KnzUfW\nGa5cxZBz8Uk405X2EYMSoiDH/4wVzegzWJrzJCkOYqsiYe+A5WKOldGaOS77GCfm\nNyFLCOhXkeup5tPy6Ps9iOJJaFCJqipHo1BiGO0CgYBmRKhrob1uyF/eTZlq3mNe\nXNWY8Wtv/l1UtSNQYhHNEm+Q+NobEKDY9Nv22Tp+eVcjCXLn/KfOJF8of6IvJDrB\nJ3Ie+6afVafOqHH0fyt8113Bw+8jbg/r+V07pq+RWrE8ZeJVXs+thTFP1E22TTxE\nhloZ9R6zQph34CjwdPfnTA==\n-----END PRIVATE KEY-----\n",
-      "client_email":
-          "beaconsaccount@aftarobot2019-dev1.iam.gserviceaccount.com",
-      "client_id": "108891195253414859996",
-    };
+    print('️ℹ️ ℹ️  ️#################### initializeAuthClient .....');
+//    if (_accessCredentials != null) {
+//      print('************* we are using an existing authorised client!   ✅ ');
+//      return 0;
+//    }
+
     try {
-      final accountCredentials = new ServiceAccountCredentials.fromJson(mJson);
-      clientViaServiceAccount(accountCredentials, Scopes)
-          .then((AuthClient client) {
-        authClient = client;
+      var map = await loadAsset();
+      final accountCredentials = new ServiceAccountCredentials.fromJson(map);
+      _httpClient = new http.Client();
+      _accessCredentials = await obtainAccessCredentialsViaServiceAccount(
+          accountCredentials, Scopes, _httpClient);
+      if (_accessCredentials == null) {
+        throw Exception('###### ERROR - unable to get access credentials');
+      } else {
         print(
-            '************* we have a authorised client!  🔵  🔵  🔵  🔵  🔵  ');
-        return 0;
-      });
+            'we got ourselvess an access token::🔵 🔵 🔵 ${_accessCredentials.accessToken.data} 🔵 🔵 🔵 ');
+      }
+      return 0;
     } catch (e) {
       print('⚠️ ⚠️ ⚠️  $e');
-      authClient.close();
+      if (_httpClient != null) {
+        _httpClient.close();
+      }
+      throw e;
     }
     return 9;
   }
 
   Future<Beacon> registerBeacon(Beacon beacon) async {
-    print('###### registering beacon ${beacon.toJson()}');
+    print('###### ️ ⚠️ registering beacon: ${beacon.toJson()}');
     var url = URL + 'beacons:register';
-    var res = await _callGoogle(url: url, data: beacon.toJson());
-    var b = Beacon.fromJson(json.decode(res));
-    return await addRegisteredBeacon(b);
-  }
-
-  Future addRegisteredBeacon(Beacon beacon) async {
-    print('##### adding beacon to Firestore: ${beacon.toJson()}');
-    DocumentReference ref = await fs.collection('beacons').add(beacon.toJson());
-    beacon.path = ref.path;
-    await ref.setData(beacon.toJson());
-    print('### beacon added to Firestore, path: ${beacon.path}');
-  }
-
-  Future<List<Beacon>> getRegistryBeacons() async {
-    var url = URL + "beacons" + "?pageSize=1000&q=";
-    var res = await _callGoogle(url: url);
-    List list = List<Beacon>();
-    //todo - parse list
-    return list;
-  }
-
-  Future testClient() async {
-    await initializeAuthClient();
-    if (authClient != null) {
-      var resp = await authClient
-          .get('https://www.youtube.com/watch?v=oiwDU6s8l3k')
-          .catchError((e) {
-        print(e);
-      });
-      print(resp);
-    } else {}
-  }
-
-  Future _callGoogle({String url, Map data}) async {
-    await initializeAuthClient();
-    if (authClient == null) {
-      throw Exception('️ ⚠️ ⚠️  We have no authorized client');
-    }
-
     try {
-      var resp;
-      if (data != null) {
-        resp = await authClient.post(url, body: data);
+      var data = {
+        'advertisedId': {
+          'id': beacon.advertisedId.id,
+          'type': 'EDDYSTONE',
+        },
+        'status': 'ACTIVE',
+        'expectedStability': 'ROVING',
+        'description': 'AftaRobot Vehicle Beacon',
+      };
+      var res = await _callGoogle(url: url, data: data);
+      if (res['error'] != null) {
+        throw Exception('Registry beacon already exists');
       } else {
-        resp = await authClient.get(url);
+        var b = Beacon.fromJson(json.decode(res));
+        print(
+            '###  ✅ beacon added to Google registry, returned: 🔵  🔵  ${b.toJson()}');
+        var c = await _addRegisteredBeacon(b);
+        _beacons.add(c);
+        _beaconController.sink.add(_beacons);
+        //get beacons from the Google registry
+        await getRegistryBeacons();
+        return c;
       }
-      print(resp.body);
-      print(
-          '\n\nGoogleBeaconApi._callGoogle  ✅  .... ::::: statusCode: ${resp.statusCode} for $url');
-      if (resp.statusCode == 200) {
-        print('\n✅ ✅ Call to Google Beacon API successful. yo!');
-      } else {
-        throw Exception(
-            '⚠️ ⚠️ ⚠️  - We have a problem calling Google Beacon API, status: ${resp.statusCode}');
-      }
-      return resp.body;
     } catch (e) {
-      print('️ ⚠️ ⚠️  - $e');
+      print('⚠️  ⚠️  ⚠️  \n$e\n ⚠️  ⚠️  ⚠️ ');
       throw e;
     }
   }
-}
 
-/*
-{
-  "advertisedId": {
-    "type": "EDDYSTONE",
-    "id": "Fr4Z98nSoW0hgAAAAAAAAg=="
-  },
-  "status": "ACTIVE",
-  "placeId": "ChIJTxax6NoSkFQRWPvFXI1LypQ",
-  "latLng": {
-    "latitude": "47.6693771",
-    "longitude": "-122.1966037"
-  },
-  "indoorLevel": {
-    "name": "1"
-  },
-  "expectedStability": "STABLE",
-  "description": "An example beacon.",
-  "properties": {
-    "position": "entryway"
+  Future _addRegisteredBeacon(Beacon beacon) async {
+    print('##### adding beacon to Firestore: ${beacon.toJson()}');
+
+    DocumentReference ref = await fs.collection('beacons').add(beacon.toJson());
+    beacon.path = ref.path;
+    await ref.setData(beacon.toJson());
+    print('###  ✅ beacon added to Firestore, path: ${beacon.path}');
+  }
+
+  Future<List<Beacon>> getRegistryBeacons() async {
+    print('........ ⚠️ getting list of registry beacons');
+    await initializeAuthClient();
+    var url = URL + "beacons" + "?pageSize=1000&q=";
+    var res = await _callGoogle(url: url);
+
+    print(' ⚠️ ⚠️ check format of response: $res');
+    List list = List<Beacon>();
+    //todo - parse list
+    var xx = json.decode(res);
+
+    List<dynamic> maps = xx['beacons'];
+    maps.forEach((m) {
+      var b = Beacon.fromJson(m);
+      if (b != null) {
+        list.add(Beacon.fromJson(m));
+      }
+    });
+    print(
+        '### list of registered beacons direct from the registry:✅ ✅ ✅ ---> ${list.length}');
+    int count = 0;
+    list.forEach((m) {
+      count++;
+      prettyPrint(m.toJson(),
+          'getRegistryBeacons ********* - 🔵 beacon #$count from the registry:');
+    });
+    return list;
+  }
+
+  Future _callGoogle({String url, Map data}) async {
+    _isBusy = true;
+    await initializeAuthClient();
+    if (_accessCredentials == null) {
+      _isBusy = false;
+      throw Exception('️ ⚠️ ⚠️  We have no authorized _accessCredentials');
+    }
+
+    try {
+      Map<String, String> headers = {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + _accessCredentials.accessToken.data,
+      };
+
+      http.Response resp;
+      if (data != null) {
+        //POST request
+        print('\n\n** ⚠️ .......... about to post beacon ..... ');
+        resp = await _httpClient
+            .post(
+          url,
+          body: json.encode(data),
+          headers: headers,
+        )
+            .whenComplete(() {
+          _httpClient.close();
+        });
+      } else {
+        //GET request
+        print('about to make a GET request.........');
+        resp = await _httpClient.get(url, headers: headers);
+      }
+      if (resp == null) {
+        throw new Exception(
+            '--- ⚠️ ⚠️ response from $url ⚠️ ⚠️ is null. --- check!');
+      }
+      print(resp.body);
+      print(
+          'GoogleBeaconApi._callGoogle  ✅  .... ::::: statusCode: ${resp.statusCode} for $url');
+      _isBusy = false;
+      switch (resp.statusCode) {
+        case 200:
+          print('✅ ✅ Call to Google Beacon API successful. yo!');
+          return resp.body;
+          break;
+        case 409:
+          prettyPrint(json.decode(resp.body),
+              '+++++++++++++++++++ ⚠️ ⚠️ existing registered, throwing a fit!');
+          throw Exception('Beacon already registered');
+          break;
+
+        default:
+          throw Exception(
+              '⚠️ ⚠️ ⚠️  - We have a problem calling Google Beacon API, status: ${resp.statusCode} \n ${resp.body}');
+          break;
+      }
+    } catch (e) {
+      _isBusy = false;
+      print('️ ⚠️ ⚠️ _callGoogle() -  problem calling Google - $e');
+      throw e;
+    }
+  }
+
+  Future<List<VehicleDTO>> getVehicles(String associationPath) async {
+    _isBusy = true;
+    var qs = await fs
+        .document(associationPath)
+        .collection('vehicles')
+        .getDocuments();
+    qs.documents.forEach((doc) {
+      _vehicles.add(VehicleDTO.fromJson(doc.data));
+    });
+    _vehicleController.sink.add(_vehicles);
+    print('ℹ️ ### found ${_vehicles.length} vehicles - 🔵 ');
+    _isBusy = false;
+    return _vehicles;
+  }
+
+  Future getAssociations() async {
+    _isBusy = true;
+    var qs = await fs.collection('associations').getDocuments();
+    _associations.clear();
+    qs.documents.forEach((doc) {
+      _associations.add(AssociationDTO.fromJson(doc.data));
+    });
+    _associationController.sink.add(_associations);
+    _vehicles.clear();
+    for (var ass in _associations) {
+      //prettyPrint(ass.toJson(), '###### ASSOCIATION: check path');
+      await getVehicles(ass.path);
+    }
+    print('ℹ️ ### found ${_associations.length} associations - 🔵 ');
+    _isBusy = false;
+    return null;
+  }
+
+  Future<List<Beacon>> getExistingBeacons() async {
+    _isBusy = true;
+    var qs = await fs.collection('beacons').getDocuments();
+    _beacons.clear();
+    qs.documents.forEach((doc) {
+      _beacons.add(Beacon.fromJson(doc.data));
+    });
+    _beaconController.sink.add(_beacons);
+    print(
+        'ℹ️ ### getExistingBeacons: found ${_beacons.length} beacons from Firestore - 🔵 ');
+    _isBusy = false;
+    return _beacons;
+  }
+
+  static const beaconScanStream = const EventChannel('aftarobot/beaconScan');
+
+  StreamSubscription _beaconScanSubscription;
+  List<EstimoteBeacon> _estimoteBeacons = List();
+  get estimoteBeacons => _estimoteBeacons;
+
+  int beaconCount = 0;
+  //control beacon scan - find EDDYSTONE beacons around you
+  void startBeaconScan() async {
+    print('\n\n################ ️ℹ️ ℹ️ startBeaconScan .....................');
+    beaconCount = 0;
+    _estimoteBeacons.clear();
+    _estimoteBeaconController.sink.add(_estimoteBeacons);
+    try {
+      _beaconScanSubscription =
+          beaconScanStream.receiveBroadcastStream().listen((scanResult) {
+        print(
+            '################  🔵 --- receiveBroadcastStream: scanResult: $scanResult');
+        Map map = json.decode(scanResult);
+        var estimoteBeacon = EstimoteBeacon.fromJson(map);
+        beaconCount++;
+        //check if beacon already in list
+        var isFound = false;
+        _estimoteBeacons.forEach((b) {
+          if (b.beaconName == estimoteBeacon.beaconName) {
+            isFound = true;
+          }
+        });
+        if (!isFound) {
+          _estimoteBeacons.add(estimoteBeacon);
+          _estimoteBeaconController.sink.add(_estimoteBeacons);
+        }
+        print(
+            'my beacon scan result is a EstimoteBeacon! ******** ️ℹ️ ℹ️ streamed responses: ${estimoteBeacons.length}');
+        if (beaconCount > 50) {
+          stopScan();
+        }
+      }, onError: handleError);
+    } on PlatformException {
+      print('️ ⚠️ ️ ⚠️ ️ ⚠️  We have an issue with beacon scanning, Senor!');
+    }
+    return null;
+  }
+
+  void handleError(Object message) {
+    print(
+        '️ ⚠️ ️ ⚠️ ️ ⚠️  We have an issue with beacon scanning, Senor! $message\n\nWhat do we do now?\n\n');
+  }
+
+  void stopScan() {
+    print('⚠️ ------------- stop beacon scan ---------------- 🔵 WORK DONE! ');
+    _beaconScanSubscription.cancel();
+    _beaconScanSubscription = null;
   }
 }
-*/
-
-/*
-private static final String TAG = ProximityBeaconAPI.class.getSimpleName();
-    private static final String ENDPOINT = "https://proximitybeacon.googleapis.com/v1beta1/";
-    private static final String SCOPE = "oauth2:https://www.googleapis.com/auth/userlocation.beacon.registry";
-    public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
-
-// These constants are in the Proximity Service Status enum:
-    public static final String STATUS_UNSPECIFIED = "STATUS_UNSPECIFIED";
-    public static final String STATUS_ACTIVE = "ACTIVE";
-    public static final String STATUS_INACTIVE = "INACTIVE";
-    public static final String STATUS_DECOMMISSIONED = "DECOMMISSIONED";
-    public static final String STABILITY_UNSPECIFIED = "STABILITY_UNSPECIFIED";
-
-    // These constants are convenience for this app:
-    public static final String UNREGISTERED = "UNREGISTERED";
-    public static final String NOT_AUTHORIZED = "NOT_AUTHORIZED";
-    //
-    .header(AUTHORIZATION, BEARER + tok)
-*/

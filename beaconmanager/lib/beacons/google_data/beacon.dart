@@ -3,10 +3,10 @@
 ####### rigged up by AM Esq.
 */
 
-import 'package:beaconmanager/beacons/google_data/advertisedid.dart';
-import 'package:beaconmanager/beacons/google_data/indoorlevel.dart';
-import 'package:beaconmanager/beacons/google_data/latlng.dart';
-import 'package:beaconmanager/beacons/google_data/properties.dart';
+import 'package:crashtest/beacons/google_data/advertisedid.dart';
+import 'package:crashtest/beacons/google_data/indoorlevel.dart';
+import 'package:crashtest/beacons/google_data/latlng.dart';
+import 'package:crashtest/beacons/google_data/properties.dart';
 
 class Beacon {
   String beaconName;

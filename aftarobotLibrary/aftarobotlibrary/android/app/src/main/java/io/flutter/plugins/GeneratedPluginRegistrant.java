@@ -11,7 +11,6 @@ import io.flutter.plugins.firebase.firebaseremoteconfig.FirebaseRemoteConfigPlug
 import io.flutter.plugins.firebase.storage.FirebaseStoragePlugin;
 import com.transistorsoft.flutter.backgroundgeolocation.FLTBackgroundGeolocationPlugin;
 import com.sidlatau.flutterdocumentpicker.FlutterDocumentPickerPlugin;
-import com.flutter_webview_plugin.FlutterWebviewPlugin;
 import io.flutter.plugins.googlemaps.GoogleMapsPlugin;
 import io.flutter.plugins.googlesignin.GoogleSignInPlugin;
 import com.lyokone.location.LocationPlugin;
@@ -37,7 +36,6 @@ public final class GeneratedPluginRegistrant {
     FirebaseStoragePlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebase.storage.FirebaseStoragePlugin"));
     FLTBackgroundGeolocationPlugin.registerWith(registry.registrarFor("com.transistorsoft.flutter.backgroundgeolocation.FLTBackgroundGeolocationPlugin"));
     FlutterDocumentPickerPlugin.registerWith(registry.registrarFor("com.sidlatau.flutterdocumentpicker.FlutterDocumentPickerPlugin"));
-    FlutterWebviewPlugin.registerWith(registry.registrarFor("com.flutter_webview_plugin.FlutterWebviewPlugin"));
     GoogleMapsPlugin.registerWith(registry.registrarFor("io.flutter.plugins.googlemaps.GoogleMapsPlugin"));
     GoogleSignInPlugin.registerWith(registry.registrarFor("io.flutter.plugins.googlesignin.GoogleSignInPlugin"));
     LocationPlugin.registerWith(registry.registrarFor("com.lyokone.location.LocationPlugin"));

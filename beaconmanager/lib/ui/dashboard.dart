@@ -1,4 +1,4 @@
-import 'package:beaconmanager/beacons/beacon_api.dart';
+import 'package:crashtest/beacons/beacon_api.dart';
 import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
@@ -15,7 +15,6 @@ class _DashboardState extends State<Dashboard> {
   test() {
     print('🔵  🔵  🔵  🔵  🔵  start your engines');
     GoogleBeaconBloc api = GoogleBeaconBloc();
-    api.testClient();
   }
 
   @override

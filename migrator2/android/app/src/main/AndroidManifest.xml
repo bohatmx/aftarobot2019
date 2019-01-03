@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.migrator2">
+    package="com.aftarobot.migrator2">
 
     <!--
          The INTERNET permission is required for development. Specifically,
@@ -25,7 +25,7 @@
     <application
         android:name="io.flutter.app.FlutterApplication"
         android:icon="@mipmap/ic_launcher"
-        android:label="migrator2"
+        android:label="AAMigrator"
         tools:replace="android:label">
         <uses-library android:name="org.apache.http.legacy"
             android:required="false"/>

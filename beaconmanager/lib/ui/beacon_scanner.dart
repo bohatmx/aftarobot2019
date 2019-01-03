@@ -1,74 +1,97 @@
-import 'dart:async';
-import 'dart:convert';
-
-import 'package:beaconmanager/util/functions.dart';
-import 'package:beaconmanager/util/snack.dart';
+import 'package:crashtest/beacons/beacon_api.dart';
+import 'package:crashtest/beacons/google_data/advertisedid.dart';
+import 'package:crashtest/beacons/google_data/beacon.dart';
+import 'package:crashtest/ui/beacon_registration.dart';
+import 'package:crashtest/util/functions.dart';
+import 'package:crashtest/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+enum MyPermissionGroup {
+  bluetooth,
+}
 
 class BeaconScanner extends StatefulWidget {
   @override
   _BeaconScannerState createState() => _BeaconScannerState();
 }
 
-class _BeaconScannerState extends State<BeaconScanner> {
-  static const beaconScanStream = const EventChannel('aftarobot/beaconScan');
-  GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
-  List<EstimoteBeacon> estimoteBeacons = List();
-  StreamSubscription subscription;
+class _BeaconScannerState extends State<BeaconScanner>
+    implements SnackBarListener {
+  final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
   bool isScanStarted = false;
-  int beaconCount = 0;
+  Beacon beacon;
+  List<EstimoteBeacon> estimoteBeacons = List();
 
   @override
   void initState() {
     super.initState();
+    _checkPermission();
+    googleBeaconBloc.getRegistryBeacons();
+  }
+
+  _requestPermission() async {
+    print('\n\n######################### requestPermission');
+    try {
+      Map<PermissionGroup, PermissionStatus> permissions =
+          await PermissionHandler()
+              .requestPermissions([PermissionGroup.location]);
+      print(permissions);
+      print("\n########### permission request for location is:  ✅ ");
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  _checkPermission() async {
+    print('\n\n######################### checkPermission');
+    try {
+      PermissionStatus locationPermission = await PermissionHandler()
+          .checkPermissionStatus(PermissionGroup.location);
+
+      if (locationPermission == PermissionStatus.denied) {
+        _requestPermission();
+      } else {
+        print(
+            "***************** location permission status is:  ✅  ✅ $locationPermission");
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   void _startBeaconScan() async {
-    print('################ startBeaconScan .....................');
-    setState(() {
-      estimoteBeacons.clear();
-      beaconCount = 0;
-    });
-    if (subscription == null) {
-      beaconCount = 0;
-      subscription =
-          beaconScanStream.receiveBroadcastStream().listen((scanResult) {
-        print(
-            '################ --- receiveBroadcastStream: scanResult: $scanResult');
-        beaconCount++;
-        Map map = json.decode(scanResult);
-        var estimoteBeacon = EstimoteBeacon.fromJson(map);
-        //check if beacon already in list
-        var isFound = false;
-        estimoteBeacons.forEach((b) {
-          if (b.beaconName == estimoteBeacon.beaconName) {
-            isFound = true;
-          }
-        });
-        if (!isFound) {
-          setState(() {
-            estimoteBeacons.add(estimoteBeacon);
-          });
-        }
-        print(
-            'my beacon scan result is a EstimoteBeacon! ******** streamed responses: ${estimoteBeacons.length}');
-        if (beaconCount > 80) {
-          _cancelScan();
-        }
-        _key.currentState.removeCurrentSnackBar();
-      });
-      _showSnackBar(message: 'Scanning started', color: Colors.lightBlue);
+    print('\n\n################ ️ℹ️ ℹ️ startBeaconScan .....................');
+    try {
+      isScanStarted = true;
+      googleBeaconBloc.startBeaconScan();
+    } on PlatformException {
+      print('️ ⚠️ ️ ⚠️ ️ ⚠️  We have an issue with beacon scanning, Senor!');
     }
-
     return null;
   }
 
   void _cancelScan() {
     print('------------- cancel beacon scan ----------------');
-    subscription.cancel();
-    subscription = null;
+    googleBeaconBloc.stopScan();
+    isScanStarted = false;
     _showSnackBar(message: 'Scanning stopped', color: Colors.white);
+  }
+
+  void _startRegistration(EstimoteBeacon eb) {
+    print(
+        '\n\n############################################# _startRegistration');
+    beacon = Beacon(
+      advertisedId: AdvertisedId(id: eb.advertisedId, type: 'EDDYSTONE'),
+      status: 'ACTIVE',
+      description: 'AftaRobot Vehicle Beacon',
+      expectedStability: 'ROVING',
+    );
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => BeaconRegistration(beacon: beacon)));
   }
 
   _showSnackBar({String message, Color color}) {
@@ -78,6 +101,78 @@ class _BeaconScannerState extends State<BeaconScanner> {
       message: message,
       scaffoldKey: _key,
     );
+  }
+
+  void _checkIfBeaconRegistered(EstimoteBeacon eb) {
+    bool isFound = false;
+    googleBeaconBloc.beacons.forEach((b) {
+      if (b.advertisedId.id == eb.advertisedId) {
+        isFound = true;
+      }
+    });
+    if (!isFound) {
+      _showConfirmDialog(eb);
+    } else {
+      AppSnackbar.showErrorSnackbar(
+          scaffoldKey: _key,
+          message: 'Beacon already registered',
+          listener: this,
+          actionLabel: 'close');
+    }
+  }
+
+  void _showConfirmDialog(EstimoteBeacon eb) {
+    showDialog(
+        context: context,
+        builder: (_) => new AlertDialog(
+              title: new Text(
+                "Beacon Registration",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor),
+              ),
+              content: Container(
+                height: 120.0,
+                child: Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text(
+                          'Do you want to register this beacon on the Google registry?'),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text(
+                    'NO',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: RaisedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _startRegistration(eb);
+                    },
+                    elevation: 4.0,
+                    color: Colors.teal.shade500,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Start Registration',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ));
   }
 
   Widget _getBottom() {
@@ -109,74 +204,103 @@ class _BeaconScannerState extends State<BeaconScanner> {
     );
   }
 
+  EstimoteBeacon estimoteBeacon;
+  int count = 0;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _key,
-      appBar: AppBar(
-        title: Text('BeaconScanner'),
-        bottom: _getBottom(),
-        backgroundColor: Colors.indigo.shade400,
-      ),
-      body: ListView.builder(
-        itemCount: estimoteBeacons.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(left: 12.0, right: 12),
-            child: Card(
-              elevation: 2,
-              color: getRandomPastelColor(),
-              child: ListTile(
-                leading: Icon(Icons.bluetooth_connected,
-                    color: Colors.blue.shade800, size: 28),
-                title: Text('${estimoteBeacons.elementAt(index).beaconName}',
-                    style: Styles.blackBoldSmall),
-                subtitle: Text(
-                  '${estimoteBeacons.elementAt(index).advertisedId}',
-                  style: Styles.greyLabelSmall,
+    count = googleBeaconBloc.estimoteBeacons.length;
+    return StreamBuilder(
+        initialData: googleBeaconBloc.estimoteBeacons,
+        stream: googleBeaconBloc.estimoteBeaconStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active) {
+            estimoteBeacons = snapshot.data;
+            print(
+                '️ 🔵 ℹ️ bringing beacons from the bloc: ${estimoteBeacons.length}');
+          }
+          return Scaffold(
+            key: _key,
+            appBar: AppBar(
+              title: Text('BeaconScanner'),
+              bottom: _getBottom(),
+              backgroundColor: Colors.indigo.shade400,
+            ),
+            body: ListView.builder(
+                itemCount: estimoteBeacons.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 12.0, right: 12),
+                    child: GestureDetector(
+                      onTap: () {
+                        _checkIfBeaconRegistered(
+                            estimoteBeacons.elementAt(index));
+                      },
+                      child: Card(
+                        elevation: 4,
+                        color: getRandomPastelColor(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: ListTile(
+                            leading: Icon(Icons.bluetooth_connected,
+                                color: Colors.blue.shade800, size: 28),
+                            title: Text(
+                                '${estimoteBeacons.elementAt(index).beaconName}',
+                                style: Styles.blackBoldSmall),
+                            subtitle: Text(
+                              '${estimoteBeacons.elementAt(index).advertisedId}',
+                              style: Styles.greyLabelSmall,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+            backgroundColor: Colors.brown.shade100,
+            bottomNavigationBar: BottomNavigationBar(
+              items: [
+                BottomNavigationBarItem(
+                  icon: Icon(
+                    Icons.list,
+                    size: 40,
+                  ),
+                  title: Text('List'),
                 ),
-              ),
+                BottomNavigationBarItem(
+                  icon: Icon(
+                    Icons.cancel,
+                    size: 40,
+                    color: Colors.pink,
+                  ),
+                  title: Text('Stop Scan'),
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bluetooth_searching,
+                      size: 40, color: Colors.blue),
+                  title: Text('Start Scan'),
+                ),
+              ],
+              onTap: (index) {
+                switch (index) {
+                  case 0:
+                    break;
+                  case 1:
+                    _cancelScan();
+                    break;
+                  case 2:
+                    _startBeaconScan();
+                    break;
+                }
+              },
             ),
           );
-        },
-      ),
-      backgroundColor: Colors.brown.shade100,
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.list,
-              size: 40,
-            ),
-            title: Text('List'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.cancel,
-              size: 40,
-              color: Colors.pink,
-            ),
-            title: Text('Stop Scan'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bluetooth_searching, size: 40, color: Colors.blue),
-            title: Text('Start Scan'),
-          ),
-        ],
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              break;
-            case 1:
-              _cancelScan();
-              break;
-            case 2:
-              _startBeaconScan();
-              break;
-          }
-        },
-      ),
-    );
+        });
+  }
+
+  @override
+  onActionPressed(int action) {
+    // TODO: implement onActionPressed
+    return null;
   }
 }
 

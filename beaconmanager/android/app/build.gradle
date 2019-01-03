@@ -32,9 +32,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.aftarobot.beaconmanager"
-        minSdkVersion 21
+        minSdkVersion 19
         targetSdkVersion 27
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -60,11 +59,11 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.google.firebase:firebase-core:16.0.1'
-    implementation 'com.estimote:sdk:1.0.12'
-    implementation 'com.google.code.gson:gson:2.8.2'
+    implementation 'com.google.android.gms:play-services-nearby:16.0.0'
+//    implementation 'com.estimote:sdk:1.0.12'
+    implementation 'com.google.code.gson:gson:2.8.5'
 
-    implementation 'com.estimote:proximity-sdk:1.0.3'
-    implementation 'com.estimote:mustard:0.2.1'
-
+//    implementation 'com.estimote:proximity-sdk:1.0.3'
+//    implementation 'com.estimote:mustard:0.2.1'
 }
 apply plugin: 'com.google.gms.google-services'
