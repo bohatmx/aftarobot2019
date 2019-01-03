@@ -184,7 +184,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
             child: IconButton(
               onPressed: _refresh,
               iconSize: 28,
-              icon: Icon(Icons.my_location),
+              icon: Icon(Icons.refresh),
             ),
           ),
         ],
@@ -204,7 +204,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
                           Text(
-                            '$routeCount',
+                            '📍$routeCount',
                             style: Styles.blackBoldLarge,
                           ),
                           Text(
@@ -220,7 +220,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
                           Text(
-                            '$landmarkCount',
+                            '📍$landmarkCount',
                             style: Styles.blackBoldLarge,
                           ),
                           Text(

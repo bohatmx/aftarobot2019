@@ -91,12 +91,12 @@ class _DashboardState extends State<Dashboard>
       var routes = await LocalDB.getRoutes();
 
       print(
-          '_DashboardState._getCachedData; \ncountries: ${countries.length}\nassocs: ${asses.length}\n'
+          '_DashboardState._getCachedData ️ℹ️ \ncountries: ${countries.length}\nassocs: ${asses.length}\n'
           'users: ${users.length} \ncars: ${cars.length} \ncarTypes: ${carTypes.length}\n'
           'landmarks: ${landmarks.length} \nroutes: ${routes.length}');
       var end = DateTime.now();
       print(
-          '_DashboardState._getCachedData - elapsed ${end.difference(start).inMilliseconds} ms');
+          '_DashboardState._getCachedData ️ ⚠️ - elapsed ${end.difference(start).inMilliseconds} ms');
       var total = countries.length +
           asses.length +
           users.length +
@@ -149,10 +149,9 @@ class _DashboardState extends State<Dashboard>
       bag.cars = mcars;
       bag.carTypes = _filter(ass, mcars);
       print(
-          '_DashboardState.getAssociationBags bag.cars: ${bag.cars.length} types: ${bag.carTypes.length} users: ${bag.users.length}');
+          '_DashboardState.getAssociationBags  🔵  bag.cars: ${bag.cars.length} types: ${bag.carTypes.length} users: ${bag.users.length}');
       setState(() {
         activeBags.add(bag);
-        counter++;
       });
     }
     activeBags.sort((a, b) => (a.association.associationName
@@ -190,8 +189,9 @@ class _DashboardState extends State<Dashboard>
     setState(() {
       activeBags.clear();
       errorText = null;
-      counter = 0;
     });
+    asses.clear();
+
     activeBags = await ListAPI.getAssociationBags(listener: this);
     activeBags.sort((a, b) => (a.association.associationName
         .compareTo(b.association.associationName)));
@@ -277,11 +277,11 @@ class _DashboardState extends State<Dashboard>
                   child: Column(
                     children: <Widget>[
                       Text(
-                        '$counter',
-                        style: Styles.blackBoldLarge,
+                        '${activeBags.length}',
+                        style: Styles.blackBoldReallyLarge,
                       ),
                       Text(
-                        'Associations',
+                        ' 📍 Associations',
                         style: Styles.blackBoldSmall,
                       )
                     ],
@@ -290,17 +290,14 @@ class _DashboardState extends State<Dashboard>
               ],
             ),
           ),
-          Text(
-            _batteryLevel == null ? 'Battery' : _batteryLevel,
-            style: Styles.blackSmall,
-          ),
         ],
       ),
     );
   }
 
   _doSomething() {
-    print('_DGHomePageState._doSomething ${DateTime.now().toIso8601String()}');
+    print(
+        '_DGHomePageState._doSomething  📍  📍 ${DateTime.now().toIso8601String()}');
   }
 
   @override
@@ -429,12 +426,9 @@ class _DashboardState extends State<Dashboard>
     });
   }
 
-  int counter = 0;
   @override
   onRecordAdded() {
-    setState(() {
-      counter++;
-    });
+    setState(() {});
   }
 
   @override
@@ -443,7 +437,6 @@ class _DashboardState extends State<Dashboard>
         '_ExistingDataPageState.onBag #################### bag coming in ....${DateTime.now().toIso8601String()}');
     setState(() {
       activeBags.add(bag);
-      counter++;
     });
   }
 }
@@ -476,10 +469,11 @@ class AssocCard extends StatelessWidget {
               ),
               Row(
                 children: <Widget>[
+                  Text(' 📍 '),
                   Flexible(
                     child: Container(
                       child: Text(
-                        bag.association.associationName,
+                        '${bag.association.associationName}',
                         style: Styles.blackBoldMedium,
                         overflow: TextOverflow.clip,
                       ),

@@ -184,7 +184,7 @@ class _LocationCollectionMapState extends State<LocationCollectionMap>
                 ),
               ),
               Positioned(
-                top: 10,
+                bottom: 10,
                 left: 10,
                 child: Hero(
                   child: Modes(
