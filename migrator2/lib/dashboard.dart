@@ -66,7 +66,7 @@ class _DashboardState extends State<Dashboard>
     print("############### writing route ..................");
     Firestore fs = Firestore.instance;
     var route = RouteDTO(
-        name: 'AA # Pecanwood - Centurion ',
+        name: 'AA # Pecanwood - OneConnect ',
         color: 'BLUE',
         countryID: 'b6b6b100-0b31-11e9-8cca-57477b5bfa32',
         countryName: 'South Africa',
@@ -76,7 +76,7 @@ class _DashboardState extends State<Dashboard>
     print('################ route added ............. ${route.name}');
     route.path = ref.path;
     await ref.setData(route.toJson());
-    print('################ path updated');
+    print('################ path updated: ${ref.path}');
   }
 
   Future _getCachedData() async {

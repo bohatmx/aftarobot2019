@@ -122,12 +122,14 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   void _getNewRoutes() async {
     routes = await LocalDB.getRoutes();
     landmarks = await LocalDB.getLandmarks();
-    if (routes.isEmpty) {
-      routes = await ListAPI.getRoutes();
-      landmarks = await ListAPI.getLandmarks();
-    }
+    _setCounters();
+    routes = await ListAPI.getRoutes();
+    landmarks = await ListAPI.getLandmarks();
+
     _sortRoutes();
     _setCounters();
+    LocalDB.saveRoutes(Routes(routes));
+    LocalDB.saveLandmarks(Landmarks(landmarks));
   }
 
   void _sortRoutes() {
