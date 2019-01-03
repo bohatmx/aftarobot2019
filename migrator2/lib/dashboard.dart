@@ -1,16 +1,16 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/api/list_api.dart';
 import 'package:aftarobotlibrary/data/association_bag.dart';
 import 'package:aftarobotlibrary/data/associationdto.dart';
+import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/userdto.dart';
 import 'package:aftarobotlibrary/data/vehicledto.dart';
 import 'package:aftarobotlibrary/data/vehicletypedto.dart';
-import 'package:aftarobotlibrary/directions/direct_util.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -48,60 +48,6 @@ class _DashboardState extends State<Dashboard>
       const EventChannel('aftarobot/beaconProximityAltBeacon');
   StreamSubscription subscription, altBeaconSubs;
 
-  Future _startEstimoteBeaconProximity() async {
-    print(
-        '\n\n################ ⚠️  --- _startEstimoteBeaconProximity: proximity :: start subscription');
-    subscription = estimoteStream.receiveBroadcastStream().listen((data) {
-      print(
-          '\n################ 📍 --- estimoteStream: proximity Result: $data');
-      Map map = json.decode(data);
-      //print(map);
-
-      AppSnackbar.showSnackbar(
-          scaffoldKey: _key,
-          message: '✅  ✅ Estimote Beacon within range: $map',
-          backgroundColor: Colors.teal.shade700,
-          textColor: Colors.white);
-    });
-  }
-
-  Future _startAltBeaconProximity() async {
-    print(
-        '\n\n################ ⚠️  --- _startAltBeaconProximity: proximity :: start subscription');
-    try {
-      altBeaconSubs = altBeaconStream.receiveBroadcastStream().listen((data) {
-        print(
-            '\n### 📍 📍 _startAltBeaconProximity: receiveBroadcastStream ✅  ✅  $data');
-        Map map = json.decode(data);
-        print(map);
-        AppSnackbar.showSnackbar(
-            scaffoldKey: _key,
-            message: '✅  ✅ Beacon via altBeacon: $map',
-            backgroundColor: Colors.teal.shade700,
-            textColor: Colors.white);
-      });
-    } on PlatformException catch (e) {
-      print(e);
-    }
-
-    setState(() {});
-  }
-
-  Future<String> _getBatteryLevel() async {
-    String batteryLevel;
-    try {
-      final int result = await platform.invokeMethod('getBatteryLevel');
-      batteryLevel = 'Battery: $result % .';
-    } on PlatformException catch (e) {
-      batteryLevel = "Failed: '${e.message}'.";
-    }
-
-    setState(() {
-      _batteryLevel = batteryLevel;
-    });
-    return batteryLevel;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -113,13 +59,24 @@ class _DashboardState extends State<Dashboard>
         new CurvedAnimation(parent: animationController, curve: Curves.linear);
 
     _getCachedData();
-    //_startEstimoteBeaconProximity();
-    //_startAltBeaconProximity();
+    //_addTestRoute();
   }
 
-  void test() async {
-    await DirectionsUtil.getDirections();
-    _batteryLevel = await _getBatteryLevel();
+  void _addTestRoute() async {
+    print("############### writing route ..................");
+    Firestore fs = Firestore.instance;
+    var route = RouteDTO(
+        name: 'AA # Pecanwood - Centurion ',
+        color: 'BLUE',
+        countryID: 'b6b6b100-0b31-11e9-8cca-57477b5bfa32',
+        countryName: 'South Africa',
+        associationID: 'KTzcm79kpPSSJlNQuFQ',
+        associationName: 'Brits Taxi Association');
+    var ref = await fs.collection('routes').add(route.toJson());
+    print('################ route added ............. ${route.name}');
+    route.path = ref.path;
+    await ref.setData(route.toJson());
+    print('################ path updated');
   }
 
   Future _getCachedData() async {
@@ -198,7 +155,8 @@ class _DashboardState extends State<Dashboard>
         counter++;
       });
     }
-
+    activeBags.sort((a, b) => (a.association.associationName
+        .compareTo(b.association.associationName)));
     return activeBags;
   }
 
@@ -228,14 +186,16 @@ class _DashboardState extends State<Dashboard>
     return isFound;
   }
 
-  void _refresh() {
-    //_start();
-    _startEstimoteBeaconProximity();
+  void _refresh() async {
     setState(() {
       activeBags.clear();
       errorText = null;
       counter = 0;
     });
+    activeBags = await ListAPI.getAssociationBags(listener: this);
+    activeBags.sort((a, b) => (a.association.associationName
+        .compareTo(b.association.associationName)));
+    setState(() {});
   }
 
   void _startGeofenceTestPage() {
@@ -356,10 +316,6 @@ class _DashboardState extends State<Dashboard>
         bottom: _getBottom(),
         backgroundColor: Colors.purple.shade300,
         actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _start,
-          ),
           IconButton(
             icon: Icon(Icons.my_location),
             onPressed: _startGeofenceTestPage,

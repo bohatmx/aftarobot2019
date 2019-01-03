@@ -126,17 +126,25 @@ class _RouteViewerPageState extends State<RouteViewerPage>
       routes = await ListAPI.getRoutes();
       landmarks = await ListAPI.getLandmarks();
     }
+    _sortRoutes();
     _setCounters();
+  }
+
+  void _sortRoutes() {
+    routes.sort((a, b) =>
+        (a.associationName + a.name).compareTo((b.associationName + b.name)));
   }
 
   void _refresh() async {
     print('_RouteViewerPageState._refresh .................');
     routes = await ListAPI.getRoutes();
     landmarks = await ListAPI.getLandmarks();
+    _sortRoutes();
     _setCounters();
 
     await LocalDB.saveRoutes(Routes(routes));
     await LocalDB.saveLandmarks(Landmarks(landmarks));
+
     print('_RouteViewerPageState._refresh ------- done. saved data in cache');
   }
 
