@@ -11,19 +11,17 @@ import 'package:aftarobotlibrary/data/vehicletypedto.dart';
 import 'package:aftarobotlibrary/directions/direct_util.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:migrator2/aftarobot_migrator_page.dart';
 import 'package:migrator2/beacon_scanner.dart';
-import 'package:migrator2/bloc/auth.dart';
-import 'package:migrator2/bloc/beacon_api.dart';
 import 'package:migrator2/city_migrate.dart';
 import 'package:migrator2/generator.dart';
 import 'package:migrator2/geofence_test_page.dart';
 import 'package:migrator2/location_collector.dart';
 import 'package:migrator2/main.dart';
 import 'package:migrator2/route_viewer_page.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 class Dashboard extends StatefulWidget {
   @override
@@ -125,8 +123,6 @@ class _DashboardState extends State<Dashboard>
   }
 
   Future _getCachedData() async {
-    GoogleBeaconApi api = GoogleBeaconApi();
-
     var start = DateTime.now();
     try {
       var countries = await LocalDB.getCountries();
@@ -166,7 +162,6 @@ class _DashboardState extends State<Dashboard>
   void _start() async {
     print('_DashboardState._start .................... get Bags!');
 
-    _startEstimoteBeaconProximity();
     if (asses.isNotEmpty && users.isNotEmpty && cars.isNotEmpty) {
       activeBags = await getAssociationBags();
     } else {
@@ -406,13 +401,6 @@ class _DashboardState extends State<Dashboard>
             ),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bluetooth),
-            title: Text(
-              'Beacons',
-              style: Styles.blackSmall,
-            ),
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.my_location),
             title: Text(
               'Routes',
@@ -442,22 +430,18 @@ class _DashboardState extends State<Dashboard>
                   '_ExistingDataPageState.build -- #1 _startCityMigrator() index: $index');
               _startCityMigrator();
               break;
+
             case 1:
-              print(
-                  '_ExistingDataPageState.build -- #2 _startBeaconScanner() index: $index');
-              _startBeaconScanner();
-              break;
-            case 2:
               print(
                   '_ExistingDataPageState.build -- #3 _startRouteViewerPage() index: $index');
               _startRouteViewerPage();
               break;
-            case 3:
+            case 2:
               print(
                   '_ExistingDataPageState.build -- #4 _startGenerationPage() index: $index');
               _startGenerationPage();
               break;
-            case 4:
+            case 3:
               print(
                   '_ExistingDataPageState.build -- #5 _startAftaMigrator() index: $index');
               _startAftaMigrator();

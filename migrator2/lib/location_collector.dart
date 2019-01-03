@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:aftarobotlibrary/api/file_util.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
@@ -7,14 +5,13 @@ import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import 'package:location/location.dart';
 import 'package:migrator2/bloc/route_builder_bloc.dart';
 import 'package:migrator2/location_collection_map.dart';
 import 'package:migrator2/snaptoroads_page.dart';
-import 'package:simple_permissions/simple_permissions.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class LocationCollector extends StatefulWidget {
   final RouteDTO route;
@@ -26,7 +23,6 @@ class LocationCollector extends StatefulWidget {
 class _LocationCollectorState extends State<LocationCollector>
     implements SnackBarListener, ModesListener {
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
-  Permission permission = Permission.AccessFineLocation;
   List<ARLocation> locationsCollected = List();
   var bloc = routeBuilderBloc;
   RouteDTO route;
@@ -170,8 +166,11 @@ class _LocationCollectorState extends State<LocationCollector>
   _requestPermission() async {
     print('\n\n######################### requestPermission');
     try {
-      final res = await SimplePermissions.requestPermission(permission);
-      print("\n########### permission request result is " + res.toString());
+      Map<PermissionGroup, PermissionStatus> permissions =
+          await PermissionHandler()
+              .requestPermissions([PermissionGroup.location]);
+      print(permissions);
+      print("\n########### permission request for location is:  ✅ ");
     } catch (e) {
       print(e);
     }
@@ -180,10 +179,14 @@ class _LocationCollectorState extends State<LocationCollector>
   _checkPermission() async {
     print('\n\n######################### checkPermission');
     try {
-      bool res = await SimplePermissions.checkPermission(permission);
-      print("***************** permission checked is " + res.toString() + '\n');
-      if (res == false) {
+      PermissionStatus locationPermission = await PermissionHandler()
+          .checkPermissionStatus(PermissionGroup.location);
+
+      if (locationPermission == PermissionStatus.denied) {
         _requestPermission();
+      } else {
+        print(
+            "***************** location permission status is:  ✅  ✅ $locationPermission");
       }
     } catch (e) {
       print(e);

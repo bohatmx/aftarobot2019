@@ -1,0 +1,202 @@
+Launching lib/main.dart on Pixel 2 in debug mode...
+Initializing gradle...                                           3,1s
+Resolving dependencies...                                        2,2s
+Gradle task 'assembleDebug'...                                  
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+registerResGeneratingTask is deprecated, use registerGeneratedResFolders(FileCollection)
+34,4s
+Built build/app/outputs/apk/debug/app-debug.apk.
+Installing build/app/outputs/apk/app.apk...                      4,2s
+I/TSLocationManager(19170): [c.t.l.adapter.TSConfig print] 
+I/TSLocationManager(19170): ╔═════════════════════════════════════════════
+I/TSLocationManager(19170): ║ TSLocationManager version: 2.13.4 (280)
+I/TSLocationManager(19170): ╠═════════════════════════════════════════════
+I/TSLocationManager(19170): {
+I/TSLocationManager(19170):   "activityRecognitionInterval": 10000,
+I/TSLocationManager(19170):   "allowIdenticalLocations": false,
+I/TSLocationManager(19170):   "autoSync": true,
+I/TSLocationManager(19170):   "autoSyncThreshold": 0,
+I/TSLocationManager(19170):   "batchSync": false,
+I/TSLocationManager(19170):   "debug": true,
+I/TSLocationManager(19170):   "deferTime": 0,
+I/TSLocationManager(19170):   "desiredAccuracy": -1,
+I/TSLocationManager(19170):   "desiredOdometerAccuracy": 100,
+I/TSLocationManager(19170):   "disableElasticity": false,
+I/TSLocationManager(19170):   "disableStopDetection": false,
+I/TSLocationManager(19170):   "distanceFilter": 10,
+I/TSLocationManager(19170):   "elasticityMultiplier": 1,
+I/TSLocationManager(19170):   "enableHeadless": false,
+I/TSLocationManager(19170):   "enableTimestampMeta": false,
+I/TSLocationManager(19170):   "extras": {},
+I/TSLocationManager(19170):   "fastestLocationUpdateInterval": 10000,
+I/TSLocationManager(19170):   "forceReloadOnBoot": false,
+I/TSLocationManager(19170):   "forceReloadOnGeofence": false,
+I/TSLocationManager(19170):   "forceReloadOnHeartbeat": false,
+I/TSLocationManager(19170):   "forceReloadOnLocationChange": false,
+I/TSLocationManager(19170):   "forceReloadOnMotionChange": false,
+I/TSLocationManager(19170):   "forceReloadOnSchedule": false,
+I/TSLocationManager(19170):   "foregroundService": false,
+I/TSLocationManager(19170):   "geofenceInitialTriggerEntry": true,
+I/TSLocationManager(19170):   "geofenceProximityRadius": 1000,
+I/TSLocationManager(19170):   "geofenceTemplate": "",
+I/TSLocationManager(19170):   "headers": {},
+I/TSLocationManager(19170):   "headlessJobService": "com.transistorsoft.flutter.backgroundgeolocation.HeadlessTask",
+I/TSLocationManager(19170):   "heartbeatInterval": -1,
+I/TSLocationManager(19170):   "httpRootProperty": "location",
+I/TSLocationManager(19170):   "httpTimeout": 60000,
+I/TSLocationManager(19170):   "isMoving": false,
+I/TSLocationManager(19170):   "locationTemplate": "",
+I/TSLocationManager(19170):   "locationTimeout": 60,
+I/TSLocationManager(19170):   "locationUpdateInterval": 1000,
+I/TSLocationManager(19170):   "locationsOrderDirection": "ASC",
+I/TSLocationManager(19170):   "logLevel": 5,
+I/TSLocationManager(19170):   "logMaxDays": 3,
+I/TSLocationManager(19170):   "maxBatchSize": -1,
+I/TSLocationManager(19170):   "maxDaysToPersist": 1,
+I/TSLocationManager(19170):   "maxRecordsToPersist": -1,
+I/TSLocationManager(19170):   "method": "POST",
+I/TSLocationManager(19170):   "minimumActivityRecognitionConfidence": 75,
+I/TSLocationManager(19170):   "notificationColor": "",
+I/TSLocationManager(19170):   "notificationLargeIcon": "",
+I/TSLocationManager(19170):   "notificationPriority": 0,
+I/TSLocationManager(19170):   "notificationSmallIcon": "",
+I/TSLocationManager(19170):   "notificationText": "Location Service activated",
+I/TSLocationManager(19170):   "notificationTitle": "",
+I/TSLocationManager(19170):   "params": {},
+I/TSLocationManager(19170):   "persist": true,
+I/TSLocationManager(19170):   "schedule": [],
+I/TSLocationManager(19170):   "startOnBoot": true,
+I/TSLocationManager(19170):   "stationaryRadius": 25,
+I/TSLocationManager(19170):   "stopAfterElapsedMinutes": 0,
+I/TSLocationManager(19170):   "stopOnStationary": false,
+I/TSLocationManager(19170):   "stopOnTerminate": false,
+I/TSLocationManager(19170):   "stopTimeout": 5,
+I/TSLocationManager(19170):   "triggerActivities": "in_vehicle, on_bicycle, on_foot, running, walking",
+I/TSLocationManager(19170):   "url": "",
+I/TSLocationManager(19170):   "enabled": true,
+I/TSLocationManager(19170):   "schedulerEnabled": false,
+I/TSLocationManager(19170):   "trackingMode": 0,
+I/TSLocationManager(19170):   "odometer": 0,
+I/TSLocationManager(19170):   "isFirstBoot": false
+I/TSLocationManager(19170): }
+I/TSLocationManager(19170): ╔═════════════════════════════════════════════
+I/TSLocationManager(19170): ║ DEVICE SENSORS
+I/TSLocationManager(19170): ╠═════════════════════════════════════════════
+I/TSLocationManager(19170): ╟─ ✅  ACCELEROMETER: {Sensor name="LSM6DSM Accelerometer", vendor="STMicroelectronics", version=1, type=1, maxRange=156.9064, resolution=0.0023956299, power=0.15, minDelay=2500}
+I/TSLocationManager(19170): ╟─ ✅  GYROSCOPE: {Sensor name="LSM6DSM Gyroscope", vendor="STMicroelectronics", version=1, type=4, maxRange=17.453293, resolution=0.0012207031, power=0.45, minDelay=2500}
+I/TSLocationManager(19170): ╟─ ✅  MAGNETOMETER: {Sensor name="AK09915 Magnetometer", vendor="AKM", version=1, type=2, maxRange=5160.0005, resolution=0.14953613, power=1.8, minDelay=10000}
+I/TSLocationManager(19170): ╟─ ✅  SIGNIFICANT_MOTION: {Sensor name="Significant Motion", vendor="Google", version=2, type=17, maxRange=1.0, resolution=1.0, power=0.25, minDelay=-1}
+I/TSLocationManager(19170): ╚═════════════════════════════════════════════
+I/TSLocationManager(19170): [c.t.l.a.BackgroundGeolocation <init>] 
+I/TSLocationManager(19170):   ✅  Google Play Services: connected (version code:12451000)
+D/TSLocationManager(19170): [c.t.locationmanager.data.a.c a] 
+D/TSLocationManager(19170):   ✅  Opened database
+D/TSLocationManager(19170): [c.t.locationmanager.data.a.c prune] 
+D/TSLocationManager(19170):   ℹ️  PRUNE -1 days
+D/NetworkSecurityConfig(19170): No Network Security Config specified, using platform default
+W/robot.migrator(19170): Accessing hidden method Ldalvik/system/CloseGuard;->get()Ldalvik/system/CloseGuard; (light greylist, reflection)
+W/robot.migrator(19170): Accessing hidden method Ldalvik/system/CloseGuard;->open(Ljava/lang/String;)V (light greylist, reflection)
+W/robot.migrator(19170): Accessing hidden method Ldalvik/system/CloseGuard;->warnIfOpen()V (light greylist, reflection)
+D/TSLocationManager(19170): [c.t.locationmanager.data.a.a f] 
+D/TSLocationManager(19170):   ✅  Opened database
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/location
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/motionchange
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/activitychange
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/geofenceschange
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/geofence
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/heartbeat
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/http
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/schedule
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/connectivitychange
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/enabledchange
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/providerchange
+D/TSLocationManager(19170): [c.t.f.b.streams.StreamHandler register] com.transistorsoft/flutter_background_geolocation/events/powersavechange
+I/BeaconManager(19170): BeaconManager started up on pid 19170 named 'com.aftarobot.migrator2' for application package 'com.aftarobot.migrator2'.  isMainProcess=true
+D/BeaconParser(19170): Parsing beacon layout: m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25
+D/BeaconParser(19170): Parsing beacon layout: s:0-1=feaa,m:2-2=00,p:3-3:-41,i:4-13,i:14-19
+D/BeaconParser(19170): Parsing beacon layout: x,s:0-1=feaa,m:2-2=20,d:3-3,d:4-5,d:6-7,d:8-11,d:12-15
+D/BeaconParser(19170): Parsing beacon layout: s:0-1=feaa,m:2-2=10,p:3-3:-41,i:4-21v
+D/MainActivity(19170): #### Open Source BeaconManager configured for Eddystone
+I/flutter (19170): 
+I/flutter (19170): 
+I/flutter (19170): ################ ⚠️  --- _startEstimoteBeaconProximity: proximity :: start subscription
+I/flutter (19170): 
+I/flutter (19170): 
+I/flutter (19170): ################ ⚠️  --- _startAltBeaconProximity: proximity :: start subscription
+Syncing files to device Pixel 2...                              
+I/FA      (19170): Tag Manager is not found and thus will not be used
+D/MainActivity(19170): 
+D/MainActivity(19170): 
+D/MainActivity(19170): ### +++++++++++++++ starting Estimote Beacon Proximity stream &&&&&&&...Tue Jan 01 04:49:02 GMT+02:00 2019
+D/MainActivity(19170): ################################### buildProximity: Tue Jan 01 04:49:02 GMT+02:00 2019
+D/MainActivity(19170): ++++++++++ ...................requirements fulfilled
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=5 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=6 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=7 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=8 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=9 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=10 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=11 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=12 mScannerId=0
+W/robot.migrator(19170): Accessing hidden field Lsun/misc/Unsafe;->theUnsafe:Lsun/misc/Unsafe; (light greylist, reflection)
+D/MainActivity(19170): 
+D/MainActivity(19170): 
+D/MainActivity(19170): ### +++++++++++++++ BEACON_PROXIMITY_CHANNEL_ALTBEACON: starting AltBeacon Proximity stream ...Tue Jan 01 04:49:03 GMT+02:00 2019
+D/MainActivity(19170): ############ manageAltBeacon: ............Tue Jan 01 04:49:03 GMT+02:00 2019
+D/MainActivity(19170): ########### setting up background monitoring for beacons and power saving
+D/MainActivity(19170): ########### altBeacon background service configured
+D/MainActivity(19170): ******** beacon manager is available: true
+I/OpenGLRenderer(19170): Initialized EGL, version 1.4
+D/OpenGLRenderer(19170): Swap behavior 1
+D/MainActivity(19170): 
+D/MainActivity(19170): 
+D/MainActivity(19170): ###### didDetermineStateForRegion, getUniqueId :: backgroundRegion
+D/MainActivity(19170): {
+D/MainActivity(19170):   "mIdentifiers": [
+D/MainActivity(19170):     null,
+D/MainActivity(19170):     null,
+D/MainActivity(19170):     null
+D/MainActivity(19170):   ],
+D/MainActivity(19170):   "mUniqueId": "backgroundRegion"
+D/MainActivity(19170): }
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=13 mScannerId=0
+W/robot.migrator(19170): Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->setAlpnProtocols([B)V (light greylist, reflection)
+I/flutter (19170): _DashboardState._getCachedData; 
+I/flutter (19170): countries: 13
+I/flutter (19170): assocs: 5
+I/flutter (19170): users: 402 
+I/flutter (19170): cars: 199 
+I/flutter (19170): carTypes: 10
+I/flutter (19170): landmarks: 456 
+I/flutter (19170): routes: 32
+I/flutter (19170): _DashboardState._getCachedData - elapsed 1100 ms
+I/flutter (19170): _DashboardState._start .................... get Bags!
+I/flutter (19170): _DashboardState.getAssociationBags bag.cars: 0 types: 0 users: 1
+I/flutter (19170): _DashboardState.getAssociationBags bag.cars: 45 types: 9 users: 90
+I/flutter (19170): _DashboardState.getAssociationBags bag.cars: 145 types: 10 users: 291
+I/flutter (19170): _DashboardState.getAssociationBags bag.cars: 6 types: 3 users: 11
+I/flutter (19170): _DashboardState.getAssociationBags bag.cars: 3 types: 3 users: 9
+W/robot.migrator(19170): Accessing hidden method Lcom/android/org/conscrypt/OpenSSLSocketImpl;->getAlpnSelectedProtocol()[B (light greylist, reflection)
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+ 2,3s
+
+🔥  To hot reload changes while running, press "r". To hot restart (and rebuild state), press "R".
+An Observatory debugger and profiler on Pixel 2 is available at: http://127.0.0.1:50948/
+For a more detailed help message, press "h". To detach, press "d"; to quit, press "q".
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=14 mScannerId=0
+D/BluetoothAdapter(19170): isLeEnabled(): ON
+D/BluetoothLeScanner(19170): onScannerRegistered() - status=0 scannerId=16 mScannerId=0
+Application finished.

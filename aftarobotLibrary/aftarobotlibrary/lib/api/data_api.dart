@@ -287,9 +287,6 @@ class DataAPI {
         throw Exception(res.body);
         break;
     }
-    if (res.statusCode != 200) {
-      throw Exception(res.body);
-    }
   }
 
   static Future<UserDTO> addUser(UserDTO user) async {

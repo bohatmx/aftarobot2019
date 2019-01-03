@@ -9,12 +9,11 @@ import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/data/spatialinfodto.dart';
 import 'package:aftarobotlibrary/util/city_map_search.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
-import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:migrator2/location_collector.dart';
-import 'package:simple_permissions/simple_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class RouteViewerPage extends StatefulWidget {
   @override
@@ -38,7 +37,6 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   static const beaconScanStream = const EventChannel('aftarobot/beaconScan');
 
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
-  Permission permission = Permission.AccessFineLocation;
   int beaconCount = 0;
   @override
   void initState() {
@@ -50,8 +48,11 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   _requestPermission() async {
     print('\n\n######################### requestPermission');
     try {
-      final res = await SimplePermissions.requestPermission(permission);
-      print("\n########### permission request result is " + res.toString());
+      Map<PermissionGroup, PermissionStatus> permissions =
+          await PermissionHandler()
+              .requestPermissions([PermissionGroup.location]);
+      print(permissions);
+      print("\n########### permission request for location is:  ✅ ");
     } catch (e) {
       print(e);
     }
@@ -60,10 +61,14 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   _checkPermission() async {
     print('\n\n######################### checkPermission');
     try {
-      bool res = await SimplePermissions.checkPermission(permission);
-      print("***************** permission checked is " + res.toString() + '\n');
-      if (res == false) {
+      PermissionStatus locationPermission = await PermissionHandler()
+          .checkPermissionStatus(PermissionGroup.location);
+
+      if (locationPermission == PermissionStatus.denied) {
         _requestPermission();
+      } else {
+        print(
+            "***************** location permission status is:  ✅  ✅ $locationPermission");
       }
     } catch (e) {
       print(e);
@@ -71,7 +76,6 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   }
 
   void _startRouteBuilding() async {
-    await _startDirectionsTest(route);
     print(
         '\n########### startRouteBuilding ------------------------------ ...');
     Navigator.push(

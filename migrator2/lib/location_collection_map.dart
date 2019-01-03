@@ -25,13 +25,15 @@ class _LocationCollectionMapState extends State<LocationCollectionMap>
   int collectionSeconds = 30;
   @override
   void initState() {
-      super.initState();
-      _getExistingRoutePoints();
-    }
-  void _getExistingRoutePoints() async{
+    super.initState();
+    _getExistingRoutePoints();
+  }
+
+  void _getExistingRoutePoints() async {
     assert(widget.route != null);
     await bloc.getRoutePoints(routeID: widget.route.routeID);
   }
+
   @override
   onModeSelected(int seconds) {
     setState(() {
@@ -42,7 +44,8 @@ class _LocationCollectionMapState extends State<LocationCollectionMap>
 
   startCollection() {
     try {
-      bloc.startRoutePointCollectionTimer(collectionSeconds: collectionSeconds);
+      bloc.startRoutePointCollectionTimer(
+          collectionSeconds: collectionSeconds, route: widget.route);
       _showSnack(
           message: 'Collection started -  ✅  ', color: Colors.lightGreen);
     } catch (e) {

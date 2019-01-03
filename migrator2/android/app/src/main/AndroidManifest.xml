@@ -33,22 +33,22 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
 
-        <receiver
-            android:name="com.webstersys.geofence.geofence.GeofenceBroadcastReceiver"
-            android:enabled="true"
-            android:exported="true" />
+        <!--<receiver-->
+            <!--android:name="com.webstersys.geofence.geofence.GeofenceBroadcastReceiver"-->
+            <!--android:enabled="true"-->
+            <!--android:exported="true" />-->
 
-        <service
-            android:name="com.webstersys.geofence.geofence.GeofenceTransitionsJobIntentService"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <!--<service-->
+            <!--android:name="com.webstersys.geofence.geofence.GeofenceTransitionsJobIntentService"-->
+            <!--android:enabled="true"-->
+            <!--android:exported="true"-->
+            <!--android:permission="android.permission.BIND_JOB_SERVICE" />-->
 
-        <receiver android:name="com.webstersys.geofence.BootDeviceReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
+        <!--<receiver android:name="com.webstersys.geofence.BootDeviceReceiver">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.BOOT_COMPLETED" />-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
 
         <activity
             android:name=".MainActivity"
