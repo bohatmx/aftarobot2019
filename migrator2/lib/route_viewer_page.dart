@@ -312,11 +312,10 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                 ),
               ),
               actions: <Widget>[
-                RaisedButton(
-                  elevation: 4.0,
+                FlatButton(
                   color: Colors.pink,
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'Route Build',
                       style: TextStyle(color: Colors.white),
@@ -330,15 +329,14 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                 SizedBox(
                   width: 20,
                 ),
-                RaisedButton(
+                FlatButton(
                   onPressed: () {
                     Navigator.pop(context);
                     _proceedToMap(route);
                   },
-                  elevation: 4.0,
                   color: Colors.teal.shade500,
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'Start Map',
                       style: TextStyle(color: Colors.white),

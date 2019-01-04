@@ -49,10 +49,14 @@ dependencies:
   flutter_document_picker: ^1.2.0
   autocomplete_textfield: ^1.6.4
   google_maps_webservice: ^0.0.11
-  # simple_permissions: ^0.1.9
+  permission_handler: ^2.1.2
+  googleapis_auth: ^0.2.6
+  flutter_blue: ^0.4.2
   # beacons: ^0.3.0
   #  geofence: ^1.0.3
-  flutter_background_geolocation: "^0.1.0"
+  flutter_background_geolocation:
+    git:
+      url: https://github.com/transistorsoft/flutter_background_geolocation
   url_launcher:
     git:
       url: git://github.com/flutter/plugins

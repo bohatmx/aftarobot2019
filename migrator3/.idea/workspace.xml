@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="10c8c685-e5f3-4fa0-993f-b6ee3e22f73e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/migrator3.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../beaconmanager/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../beaconmanager/android/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../beaconmanager2/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../beaconmanager2/android/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../beaconmanager2/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../beaconmanager2/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../beaconmanager2/android/app/src/main/java/com/aftarobot/beaconmanager2/MainActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/../beaconmanager2/android/app/src/main/java/com/aftarobot/beaconmanager2/MainActivity.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.dart_tool/" />
     <ignored path="$PROJECT_DIR$/.pub/" />
@@ -22,9 +22,8 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
-    <option name="y" value="23" />
-    <option name="width" value="1400" />
-    <option name="height" value="979" />
+    <option name="width" value="1680" />
+    <option name="height" value="1050" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -70,7 +69,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1680" height="1050" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24969475" />
       <window_info id="Captures" order="1" />

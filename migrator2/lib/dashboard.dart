@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:migrator2/aftarobot_migrator_page.dart';
+import 'package:migrator2/background_loc.dart';
 import 'package:migrator2/beacon_scanner.dart';
 import 'package:migrator2/city_migrate.dart';
 import 'package:migrator2/generator.dart';
@@ -59,7 +60,27 @@ class _DashboardState extends State<Dashboard>
         new CurvedAnimation(parent: animationController, curve: Curves.linear);
 
     _getCachedData();
-    //_addTestRoute();
+  }
+
+  static const beaconScanStream = const EventChannel('aftarobot/beaconMonitor');
+  StreamSubscription _beaconScanSubscription;
+
+  Future _testBeaconMonitor() async {
+    print(
+        '\n\n_Dashboardtate: ##################  🔵  🔵  🔵 _testBeaconMonitor ******************');
+    ;
+    try {
+      _beaconScanSubscription =
+          beaconScanStream.receiveBroadcastStream().listen((scanResult) {
+        print(
+            '################  🔵 --- receiveBroadcastStream: scanResult: $scanResult');
+
+//        print('my beacon scan result is a Beacon! ******** ️ℹ️ ℹ️ $scanResult');
+      }, onError: handleError);
+    } on PlatformException {
+      _beaconScanSubscription.cancel();
+      print('️ ⚠️ ️ ⚠️ ️ ⚠️  We have an issue with beacon scanning, Senor!');
+    }
   }
 
   void _addTestRoute() async {
@@ -106,7 +127,7 @@ class _DashboardState extends State<Dashboard>
           routes.length;
       if (total == 0) {
         print(
-            '_DashboardState._getCachedData ########## EMPTY LOCAL CACHE - start the MIGRATOR!!!');
+            '_DashboardState._getCachedData ##########   🔴 EMPTY LOCAL CACHE - start the MIGRATOR!!!');
         _startAftaMigrator();
       } else {
         _start();
@@ -117,7 +138,7 @@ class _DashboardState extends State<Dashboard>
   }
 
   void _start() async {
-    print('_DashboardState._start .................... get Bags!');
+    print('_DashboardState._start   🔴 .................... get Bags!');
 
     if (asses.isNotEmpty && users.isNotEmpty && cars.isNotEmpty) {
       activeBags = await getAssociationBags();
@@ -196,6 +217,13 @@ class _DashboardState extends State<Dashboard>
     activeBags.sort((a, b) => (a.association.associationName
         .compareTo(b.association.associationName)));
     setState(() {});
+  }
+
+  void _startBackgroundTest() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => HelloWorldApp()),
+    );
   }
 
   void _startGeofenceTestPage() {
@@ -321,6 +349,14 @@ class _DashboardState extends State<Dashboard>
             icon: Icon(Icons.location_on),
             onPressed: _startLocationCollectorTestPage,
           ),
+          IconButton(
+            icon: Icon(Icons.bluetooth_searching),
+            onPressed: _testBeaconMonitor,
+          ),
+          IconButton(
+            icon: Icon(Icons.beach_access),
+            onPressed: _startBackgroundTest,
+          ),
         ],
       ),
       backgroundColor: Colors.purple.shade100,
@@ -434,10 +470,14 @@ class _DashboardState extends State<Dashboard>
   @override
   onBag(AssociationBag bag) {
     print(
-        '_ExistingDataPageState.onBag #################### bag coming in ....${DateTime.now().toIso8601String()}');
+        '_ExistingDataPageState.onBag  📍 #################### bag coming in ....${DateTime.now().toIso8601String()}');
     setState(() {
       activeBags.add(bag);
     });
+  }
+
+  handleError(Object message) {
+    print(message);
   }
 }
 

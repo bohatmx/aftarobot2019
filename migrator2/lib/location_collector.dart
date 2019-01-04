@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:aftarobotlibrary/api/file_util.dart';
+import 'package:aftarobotlibrary/beacons/beacon_api.dart';
 import 'package:aftarobotlibrary/data/routedto.dart';
 import 'package:aftarobotlibrary/util/functions.dart';
 import 'package:aftarobotlibrary/util/maps/snap_to_roads.dart';
@@ -8,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
+import 'package:flutter_blue/flutter_blue.dart';
 import 'package:migrator2/bloc/route_builder_bloc.dart';
 import 'package:migrator2/location_collection_map.dart';
 import 'package:migrator2/snaptoroads_page.dart';
@@ -23,6 +27,8 @@ class LocationCollector extends StatefulWidget {
 class _LocationCollectorState extends State<LocationCollector>
     implements SnackBarListener, ModesListener {
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
+  FlutterBlue flutterBlue = FlutterBlue.instance;
+
   List<ARLocation> locationsCollected = List();
   var bloc = routeBuilderBloc;
   RouteDTO route;
@@ -122,14 +128,26 @@ class _LocationCollectorState extends State<LocationCollector>
     });
   }
 
+  StreamSubscription beaconStreamSubscription;
   _onLocation(bg.Location location) {
     print(
         '\n\n@@@@@@@@@@@ ✅  ✅  -- onLocation:  isMoving? ${location.isMoving}');
     print('${location.toMap()}');
     _showSnack(
       message:
-          'Moving? ${location.isMoving} 📍 Odometer: ${location.odometer} km',
+          'Moving? ${location.isMoving}   📍 Odometer: ${location.odometer} km',
     );
+    //todo remove after test
+    _startScan();
+    if (location.isMoving) {
+      _startScan();
+    }
+  }
+
+  GoogleBeaconBloc beaconBloc = googleBeaconBloc;
+  _startScan() {
+    print('\n\n\n##### start to look for beacons ..... 🎾 🎾 🎾 🎾 ');
+    beaconBloc.startBeaconScan(2);
   }
 
   _onMotionChanged(bg.Location location) {
@@ -429,7 +447,7 @@ class _LocationCollectorState extends State<LocationCollector>
                             tag: 'modes',
                           ),
                           SizedBox(
-                            width: 80,
+                            width: 40,
                           ),
                           Column(
                             children: <Widget>[

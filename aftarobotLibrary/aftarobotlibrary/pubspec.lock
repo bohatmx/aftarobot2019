@@ -15,6 +15,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.6.4"
+  background_fetch:
+    dependency: transitive
+    description:
+      name: background_fetch
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -120,6 +127,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.4"
+  fixnum:
+    dependency: transitive
+    description:
+      name: fixnum
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.10.9"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -128,10 +142,19 @@ packages:
   flutter_background_geolocation:
     dependency: "direct main"
     description:
-      name: flutter_background_geolocation
+      path: "."
+      ref: HEAD
+      resolved-ref: b04febd9f0940d2461105524e4084bbfb1e06e38
+      url: "https://github.com/transistorsoft/flutter_background_geolocation"
+    source: git
+    version: "0.2.3"
+  flutter_blue:
+    dependency: "direct main"
+    description:
+      name: flutter_blue
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.7"
+    version: "0.4.2"
   flutter_document_picker:
     dependency: "direct main"
     description:
@@ -172,6 +195,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.2.4"
+  googleapis_auth:
+    dependency: "direct main"
+    description:
+      name: googleapis_auth
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.6"
   http:
     dependency: "direct main"
     description:
@@ -228,6 +258,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.1"
+  permission_handler:
+    dependency: "direct main"
+    description:
+      name: permission_handler
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.1.2"
   platform:
     dependency: transitive
     description:
@@ -235,6 +272,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.2.0"
+  protobuf:
+    dependency: transitive
+    description:
+      name: protobuf
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.10.6"
   quiver:
     dependency: transitive
     description:

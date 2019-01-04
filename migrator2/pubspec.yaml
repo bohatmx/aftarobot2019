@@ -44,6 +44,7 @@ flutter:
     - assets/fincash.jpg
     - assets/fin3.jpeg
     - assets/computers.png
+    - auth_client_keys.json
   fonts:
     - family: Raleway
       fonts:

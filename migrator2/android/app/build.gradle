@@ -60,7 +60,17 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation 'com.google.firebase:firebase-core:16.0.6'
+    implementation 'com.google.android.gms:play-services-nearby:16.0.0'
+    implementation 'com.google.android.gms:play-services-awareness:16.0.0'
+    implementation "com.google.android.gms:play-services-places:16.0.0"
+
+//    implementation 'com.google.android.gms:play-services-contextmanager:9.4.0'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.estimote:proximity-sdk:1.0.3'
+    implementation 'com.estimote:mustard:0.2.1'
+    implementation 'com.estimote:sdk:1.4.5'
+
+
 
 
 }
