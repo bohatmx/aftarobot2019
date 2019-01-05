@@ -140,50 +140,6 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1027929957130:android:da9108253102eff7",
-        "android_client_info": {
-          "package_name": "com.aftarobot.migrator2"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1027929957130-uisdmr5ktqmc04eg8i43iq6sdba8tmpu.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.aftarobot.migrator2",
-            "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
-          }
-        },
-        {
-          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
-        }
-      ],
-      "services": {
-        "analytics_service": {
-          "status": 1
-        },
-        "appinvite_service": {
-          "status": 2,
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        },
-        "ads_service": {
-          "status": 2
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:1027929957130:android:d5dfa46464e9190e",
         "android_client_info": {
           "package_name": "com.aftarobot.migrator4"

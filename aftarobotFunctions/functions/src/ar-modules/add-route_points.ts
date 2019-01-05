@@ -38,7 +38,7 @@ export const addRoutePoints = functions.https.onRequest(
       const results = [];
       try {
         for (const location of locations) {
-          const result = await ref.("snappedPoints").add(location);
+          const result = await ref.collection("snappedPoints").add(location);
           results.push(result);
         }
         console.log(

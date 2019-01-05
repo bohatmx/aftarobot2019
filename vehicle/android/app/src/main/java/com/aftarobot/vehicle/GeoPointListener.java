@@ -6,5 +6,5 @@ import java.util.HashMap;
 import java.util.List;
 
 public interface GeoPointListener {
-    void onLandmarksFound(List<LandmarkDTO> landmarks);
+    void onGeoPointsFound(List<HashMap<String,String>> geoPoints);
 }

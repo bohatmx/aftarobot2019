@@ -40,7 +40,7 @@ public class MainActivity extends FlutterActivity {
                   LandmarkDTO landmark = G.fromJson(json, LandmarkDTO.class);
                   addQueryLocation(landmark);
                 } else {
-                  mResult.error("Method not feelin right", "Error", "Like, Fucked!");
+                  mResult.error("Method not feelin right  ⚠️", "Error", "Like, Fucked!");
                 }
               }
             });
@@ -52,8 +52,8 @@ public class MainActivity extends FlutterActivity {
    void addQueryLocation(final LandmarkDTO landmark) {
     CollectionReference geoQueryLocationsRef = fs.collection("geoQueryLocations");
     final GeoFirestore geoFirestore = new GeoFirestore(geoQueryLocationsRef);
-      String documentID = landmark.getLandmarkID();
-      geoFirestore.setLocation(documentID, new GeoPoint(landmark.getLatitude(), landmark.getLongitude()), new GeoFirestore.CompletionListener() {
+      String landmarkID = landmark.getLandmarkID();
+      geoFirestore.setLocation(landmarkID, new GeoPoint(landmark.getLatitude(), landmark.getLongitude()), new GeoFirestore.CompletionListener() {
           @Override
           public void onComplete(Exception exception) {
               if (exception == null) {

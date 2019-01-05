@@ -15,10 +15,12 @@ import com.google.android.gms.nearby.messages.MessageListener;
 import com.google.android.gms.nearby.messages.MessagesClient;
 import com.google.android.gms.nearby.messages.Strategy;
 import com.google.android.gms.nearby.messages.SubscribeOptions;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import io.flutter.app.FlutterActivity;
@@ -34,22 +36,44 @@ public class MainActivity extends FlutterActivity {
     MessageListener mMessageListener;
     Message mMessage;
     private static final String TAXI_MESSAGE_CHANNEL = "aftarobot/messages";
-    private static final String GEO_QUERY_CHANNEL = "aftarobot/geo";
+    private static final String GEO_QUERY_CHANNEL = "aftarobot/geoQuery";
+    private static final String GEO_QUERY_RESULTS_CHANNEL = "aftarobot/geoQueryResults";
     EventChannel.EventSink messageEvents;
+    EventChannel.EventSink geoQueryEvents;
     MethodChannel.Result mResult;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         GeneratedPluginRegistrant.registerWith(this);
 
-        Log.d(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Taxi Message Channel");
+        Log.d(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Taxi Message Channel ...");
 
+//        new EventChannel(getFlutterView(), GEO_QUERY_RESULTS_CHANNEL).setStreamHandler(
+//                new EventChannel.StreamHandler() {
+//
+//                    @Override
+//                    public void onListen(Object arguments, EventChannel.EventSink events) {
+//                        Log.d(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD GEO_QUERY_RESULTS_CHANNEL ready to go ... waiting to publish and subscribe. - "
+//                                + new Date().toString());
+//                        geoQueryEvents = events;
+//                        Log.d(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### ... wait for request to come in .... ");
+//
+//
+//                        Log.d(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### MessagesClient published and subscribed!!! ");
+//                    }
+//
+//                    @Override
+//                    public void onCancel(Object arguments) {
+//                        Log.d(TAG, "--- onCancel:  \uD83C\uDFBE  \uD83C\uDFBE cancelling EventChannel ..." + new Date().toString());
+//                    }
+//                }
+//        );
         new EventChannel(getFlutterView(), TAXI_MESSAGE_CHANNEL).setStreamHandler(
                 new EventChannel.StreamHandler() {
 
                     @Override
                     public void onListen(Object arguments, EventChannel.EventSink events) {
-                        Log.d(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD EventChannel ready to go ... waiting to publish and subscribe. - "
+                        Log.d(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD TAXI_MESSAGE_CHANNEL ready to go ... waiting to publish and subscribe. - "
                                 + new Date().toString());
                         messageEvents = events;
                         Log.d(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### trying ... MessagesClient publish and subscribe ");
@@ -76,7 +100,8 @@ public class MainActivity extends FlutterActivity {
                 }
         );
 
-        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Geo Query Channel");
+
+        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up GeoQuery Channel ...");
         new MethodChannel(getFlutterView(), GEO_QUERY_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
@@ -85,29 +110,28 @@ public class MainActivity extends FlutterActivity {
                         Object args = call.arguments;
 
                         Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
-                        double lat, lng, rad;
-
-                        if (call.method.equalsIgnoreCase("getLandmarks")) {
-                            getLandmarks();
+                        GeoRequest geoRequest = G.fromJson(args.toString(), GeoRequest.class);
+                        if (call.method.equalsIgnoreCase("findLandmarks")) {
+                            findLandmarks(geoRequest);
                         } else {
                             mResult.error("Method not right", "Error", "Like, Fucked!");
                         }
                     }
                 });
-
-
     }
 
-    void getLandmarks() {
-        Log.d(TAG, "\uD83D\uDCCD \uD83D\uDCCD getLandmarks: ............");
-        GeoPointHelper.findLandmarksWithin(-25.760506499999998, 27.852598, 10, new GeoPointListener() {
+    void findLandmarks(GeoRequest request) {
+        Log.d(TAG, "findLandmarks: #################################################################");
+        GeoPointHelper.findLandmarksWithin(request.latitude, request.longitude, request.radius, new GeoPointListener() {
             @Override
-            public void onLandmarksFound(List<LandmarkDTO> landmarks) {
-                if (landmarks.isEmpty()) {
-                    Log.d(TAG, "NO LANDMARKS FOUND:   \uD83D\uDD35,  like zero, zilch, nada!");
+            public void onGeoPointsFound(List<HashMap<String,String>> geoPoints) {
+                if (geoPoints.isEmpty()) {
+                    Log.d(TAG, "NO GEO POINTS FOUND:   \uD83D\uDD35,  like zero, zilch, nada!");
                 } else {
-                    Log.d(TAG, "onLandmarksFound:  ✅  ✅  ✅ " + landmarks.size());
-                    mResult.success(G.toJson(landmarks));
+                    Log.d(TAG, "\n\n................. HOOO - FUCKING - RAY!!! *** onGeoPointsFound:  ✅  ✅  ✅ " + geoPoints.size()
+                            + " ... sending to Flutter as JSON data\n\n");
+                    mResult.success(G.toJson(geoPoints));
+
                 }
             }
         });
@@ -187,6 +211,34 @@ public class MainActivity extends FlutterActivity {
         fgMessagesClient.unsubscribe(mMessageListener);
         super.onStop();
         Log.d(TAG, "onStop: ###  \uD83C\uDFBE \uD83C\uDFBE MessagesClient un-publish and unsubscribe ");
+    }
+
+    private class GeoRequest {
+        double latitude,longitude,radius;
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(double latitude) {
+            this.latitude = latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(double longitude) {
+            this.longitude = longitude;
+        }
+
+        public double getRadius() {
+            return radius;
+        }
+
+        public void setRadius(double radius) {
+            this.radius = radius;
+        }
     }
 }
 

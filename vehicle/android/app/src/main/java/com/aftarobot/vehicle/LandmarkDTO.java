@@ -16,7 +16,7 @@ public class LandmarkDTO implements Serializable{
     public static final String TAG = LandmarkDTO.class.getSimpleName();
 
     private String landmarkID, cityID, associationID,
-            routeID, countryID, routeName, associationName;
+            routeID, countryID, routeName, associationName,routePath,path;
     private int rankSequenceNumber;
     private double latitude, longitude;
 
@@ -24,53 +24,12 @@ public class LandmarkDTO implements Serializable{
     private Long date;
     private Boolean thisIsMainRank = Boolean.FALSE;
 
-    public String getAssociationName() {
-        return associationName;
+    public String getLandmarkID() {
+        return landmarkID;
     }
 
-    public void setAssociationName(String associationName) {
-        this.associationName = associationName;
-    }
-    public String getStringDate() {
-        return stringDate;
-    }
-
-    public void setStringDate(String stringDate) {
-        this.stringDate = stringDate;
-    }
-
-
-    public Boolean getThisIsMainRank() {
-        return thisIsMainRank;
-    }
-
-    public void setThisIsMainRank(Boolean thisIsMainRank) {
-        this.thisIsMainRank = thisIsMainRank;
-    }
-
-
-    public String getAssociationID() {
-        return associationID;
-    }
-
-    public void setAssociationID(String associationID) {
-        this.associationID = associationID;
-    }
-
-    public String getRouteName() {
-        return routeName;
-    }
-
-    public void setRouteName(String routeName) {
-        this.routeName = routeName;
-    }
-
-    public String getCountryID() {
-        return countryID;
-    }
-
-    public void setCountryID(String countryID) {
-        this.countryID = countryID;
+    public void setLandmarkID(String landmarkID) {
+        this.landmarkID = landmarkID;
     }
 
     public String getCityID() {
@@ -81,12 +40,60 @@ public class LandmarkDTO implements Serializable{
         this.cityID = cityID;
     }
 
-    public String getLandmarkID() {
-        return landmarkID;
+    public String getAssociationID() {
+        return associationID;
     }
 
-    public void setLandmarkID(String landmarkID) {
-        this.landmarkID = landmarkID;
+    public void setAssociationID(String associationID) {
+        this.associationID = associationID;
+    }
+
+    public String getRouteID() {
+        return routeID;
+    }
+
+    public void setRouteID(String routeID) {
+        this.routeID = routeID;
+    }
+
+    public String getCountryID() {
+        return countryID;
+    }
+
+    public void setCountryID(String countryID) {
+        this.countryID = countryID;
+    }
+
+    public String getRouteName() {
+        return routeName;
+    }
+
+    public void setRouteName(String routeName) {
+        this.routeName = routeName;
+    }
+
+    public String getAssociationName() {
+        return associationName;
+    }
+
+    public void setAssociationName(String associationName) {
+        this.associationName = associationName;
+    }
+
+    public String getRoutePath() {
+        return routePath;
+    }
+
+    public void setRoutePath(String routePath) {
+        this.routePath = routePath;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 
     public int getRankSequenceNumber() {
@@ -129,22 +136,6 @@ public class LandmarkDTO implements Serializable{
         this.status = status;
     }
 
-    public long getDate() {
-        return date;
-    }
-
-    public void setDate(long date) {
-        this.date = date;
-    }
-
-    public String getRouteID() {
-        return routeID;
-    }
-
-    public void setRouteID(String routeID) {
-        this.routeID = routeID;
-    }
-
     public String getCityName() {
         return cityName;
     }
@@ -153,5 +144,27 @@ public class LandmarkDTO implements Serializable{
         this.cityName = cityName;
     }
 
+    public String getStringDate() {
+        return stringDate;
+    }
 
+    public void setStringDate(String stringDate) {
+        this.stringDate = stringDate;
+    }
+
+    public Long getDate() {
+        return date;
+    }
+
+    public void setDate(Long date) {
+        this.date = date;
+    }
+
+    public Boolean getThisIsMainRank() {
+        return thisIsMainRank;
+    }
+
+    public void setThisIsMainRank(Boolean thisIsMainRank) {
+        this.thisIsMainRank = thisIsMainRank;
+    }
 }

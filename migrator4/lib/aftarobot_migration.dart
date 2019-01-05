@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:aftarobotlibrary3/api/data_api.dart';
@@ -734,15 +735,17 @@ class AftaRobotMigration {
     print(
         '\n\nAftaRobotMigration._writeLandmarks +++++++ writing batch of landmarks to cache: ${marks.length}');
     for (var mark in list) {
+      await addGeoQueryLocation(mark);
       await LocalDB.saveLandmark(mark);
       print(
           'AftaRobotMigration._writeLandmarks - returned from LocalDB - was landmark ADDED ....?????');
     }
+
     migrationListener.onLandmarksAdded(list);
     return list;
   }
 
-  void addGeoQueryLocation(LandmarkDTO landmark) async {
+  static Future addGeoQueryLocation(LandmarkDTO landmark) async {
     print(
         ' 🔵  🔵  start ADD GEO QUERY LOCATION for : ${landmark.landmarkName} geo query location .... ........................');
     try {
@@ -753,12 +756,15 @@ class AftaRobotMigration {
         'landmarkName': landmark.landmarkName,
       };
       var result = await addGeoQueryLocationChannel.invokeMethod(
-          'addGeoQueryLocation', args);
-      print('Result back from ADD GEO QUERY LOCATION  ....✅ ');
+          'addGeoQueryLocation', json.encode(args));
+      print(
+          'Result back from ADD GEO QUERY LOCATION from the WildSide:  ....✅ ');
       print(result);
+      return null;
     } on PlatformException catch (e) {
       print(e);
     }
+    return null;
   }
 
   static List<LandmarkDTO> _getRouteLandmarks(RouteDTO route) {

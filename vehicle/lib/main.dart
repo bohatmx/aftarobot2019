@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:aftarobotlibrary3/data/landmarkdto.dart';
+import 'package:aftarobotlibrary3/util/functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
@@ -34,11 +38,11 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+//(-25.760506499999998, 27.852598,
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
   StreamSubscription _beaconScanSubscription;
   static const beaconScanStream = const EventChannel('aftarobot/messages');
-  static const geoQueryChannel = const MethodChannel('aftarobot/geo');
+  static const geoQueryChannel = const MethodChannel('aftarobot/geoQuery');
 
   List<String> messages = List();
   VehicleBloc bloc = vehicleBloc;
@@ -58,16 +62,47 @@ class _MyHomePageState extends State<MyHomePage> {
     print(' 🔵  🔵  start geo query .... ........................');
     try {
       var args = {
-        'latitude': -25.76999,
-        'longitude': 27.6577999,
-        'radius': 40.0
+        'latitude': -25.760506499999998,
+        'longitude': 27.852598,
+        'radius': 5.0
       };
-      var result = await geoQueryChannel.invokeMethod('getLandmarks', args);
-      print('Result back from geoQuery ....✅ ✅ ✅ ');
-      print(result);
+      var result = await geoQueryChannel.invokeMethod(
+          'findLandmarks', json.encode(args));
+      print('Result back from geoQuery .... ✅ ✅ ✅ ');
+      List<dynamic> list = json.decode(result);
+      print('. ✅ ... number of geoPoints returned: ${list.length}');
+      List<String> landmarkIDs = List();
+
+      list.forEach((t) {
+        if (t is Map) {
+          t.forEach((key, value) {
+            print("++++++ landmarkID :::: $key ");
+            landmarkIDs.add(key);
+          });
+        }
+      });
+      getLocatedLandmarks(landmarkIDs);
     } on PlatformException catch (e) {
       print(e);
     }
+  }
+
+  void getLocatedLandmarks(List<String> ids) {
+    Firestore fs = Firestore.instance;
+    List<LandmarkDTO> landmarks = List();
+    int count = 0;
+    for (var id in ids) {
+      fs.collection('landmarks').document(id).get().then((documentSnap) {
+        if (documentSnap.exists) {
+          var lm = LandmarkDTO.fromJson(documentSnap.data);
+          landmarks.add(lm);
+          count++;
+          prettyPrint(lm.toJson(),
+              ' 🔵  🔵  ############# LANDMARK::: #$count  🔵  🔵  ✅ ');
+        }
+      });
+    }
+    print(' ✅  We have ${landmarks.length} landmarks found in area search');
   }
 
   void _startMessageChannel() {

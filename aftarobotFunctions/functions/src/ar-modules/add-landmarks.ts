@@ -79,14 +79,16 @@ export const addLandmarks = functions.https.onRequest(
               } routeID: ${mark.routeID}`;
               console.error(msg);
             } else {
+              mark.path = `landmarks/${mark.landmarkID}`;
               const ref = await fs
                 .collection(constants.Constants.FS_LANDMARKS)
-                .add(mark);
-              mark.path = ref.path;
-              await ref.set(mark);
+                .doc(mark.landmarkID)
+                .set(mark);
 
               console.log(
-                `Landmark written to Firestore ${ref.path} ${mark.landmarkName}`
+                `Landmark written to Firestore ${mark.path} - ${
+                  mark.landmarkName
+                }`
               );
             }
           }

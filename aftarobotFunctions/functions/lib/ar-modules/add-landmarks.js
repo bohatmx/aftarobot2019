@@ -80,12 +80,12 @@ exports.addLandmarks = functions.https.onRequest((request, response) => __awaite
                             console.error(msg);
                         }
                         else {
+                            mark.path = `landmarks/${mark.landmarkID}`;
                             const ref = yield fs
                                 .collection(constants.Constants.FS_LANDMARKS)
-                                .add(mark);
-                            mark.path = ref.path;
-                            yield ref.set(mark);
-                            console.log(`Landmark written to Firestore ${ref.path} ${mark.landmarkName}`);
+                                .doc(mark.landmarkID)
+                                .set(mark);
+                            console.log(`Landmark written to Firestore ${mark.path} - ${mark.landmarkName}`);
                         }
                     }
                 }
