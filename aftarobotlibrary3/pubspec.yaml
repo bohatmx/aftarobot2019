@@ -36,6 +36,8 @@ dependencies:
   permission_handler: ^2.1.2
   googleapis_auth: ^0.2.6
   google_maps_webservice: ^0.0.11
+  latlong: ^0.6.1
+
   flutter_background_geolocation:
     git:
       url: https://github.com/transistorsoft/flutter_background_geolocation

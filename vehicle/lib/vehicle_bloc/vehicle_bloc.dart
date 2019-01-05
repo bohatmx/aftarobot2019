@@ -6,6 +6,7 @@ import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:latlong/latlong.dart';
 
 final VehicleAppBloc vehicleBloc = VehicleAppBloc();
 
@@ -32,11 +33,27 @@ class VehicleAppBloc {
   get landmarksStream => _landmarksController.stream;
   get nearbyMessageStream => _nearbyMessagesController.stream;
 
+  final Distance distance = new Distance();
+
   void closeStreams() {
     _landmarksController.close();
     _nearbyMessagesController.close();
   }
 
+  void _calculateDistancesBetweenLandmarks() {
+    /*
+    // km = 423
+    final int km = distance.as(LengthUnit.Kilometer,
+     new LatLng(52.518611,13.408056),new LatLng(51.519475,7.46694444));
+
+    // meter = 422591.551
+    final int meter = distance(
+        new LatLng(52.518611,13.408056),
+        new LatLng(51.519475,7.46694444)
+        );
+
+     */
+  }
   void searchForLandmarks(
       double latitude, double longitude, double radius) async {
     print(

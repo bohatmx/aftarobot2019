@@ -1,3 +1,5 @@
+import 'package:aftarobotlibrary3/data/landmarkdto.dart';
+import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
@@ -17,6 +19,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.purple,
+        fontFamily: "Raleway",
       ),
       home: MyHomePage(title: 'AftaRobot CarApp'),
     );
@@ -68,15 +71,21 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  List<LandmarkDTO> landmarks = List();
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
         stream: bloc.landmarksStream,
         initialData: bloc.landmarks,
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active) {
+            landmarks = snapshot.data;
+          }
           return Scaffold(
             appBar: AppBar(
-              title: Text(widget.title),
+              title: Text(landmarks.isNotEmpty
+                  ? landmarks.elementAt(0).routeName
+                  : 'AftaRobot Vehicle App'),
               actions: <Widget>[
                 IconButton(
                   icon: Icon(Icons.location_on),
@@ -84,23 +93,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-            body: ListView.builder(
-                itemCount: messages.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                    child: Card(
-                      child: ListTile(
-                        leading: Icon(Icons.message),
-                        title: Text(
-                          messages.elementAt(index),
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
+            backgroundColor: Colors.brown.shade100,
+            body: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: LandmarkList(
+                landmarks: landmarks,
+              ),
+            ),
 
             floatingActionButton: FloatingActionButton(
               onPressed: _executeGeoQuery,
@@ -109,5 +108,89 @@ class _MyHomePageState extends State<MyHomePage> {
             ), // This trailing comma makes auto-formatting nicer for build methods.
           );
         });
+  }
+}
+
+class LandmarkList extends StatelessWidget {
+  final List<LandmarkDTO> landmarks;
+
+  const LandmarkList({Key key, this.landmarks}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        itemCount: landmarks == null ? 0 : landmarks.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+            child: Card(
+              elevation: 4,
+              color: getRandomPastelColor(),
+              child: ListTile(
+                leading: Icon(
+                  Icons.my_location,
+                  color: getRandomColor(),
+                ),
+                title: Row(
+                  children: <Widget>[
+                    TrickleCounter(
+                      total: 1765,
+                      caption: 'Passengers',
+                    ),
+                    SizedBox(
+                      width: 20,
+                    ),
+                    Text(
+                      landmarks == null
+                          ? ""
+                          : landmarks.elementAt(index).landmarkName,
+                      style:
+                          TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+  }
+}
+
+class LandmarkMap extends StatelessWidget {
+  final List<LandmarkDTO> landmarks;
+
+  const LandmarkMap({Key key, this.landmarks}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.purple.shade200,
+      child: SizedBox(
+        width: 200,
+      ),
+    );
+  }
+}
+
+class TrickleCounter extends StatelessWidget {
+  final int total;
+  final String caption;
+  final TextStyle totalStyle, captionStyle;
+
+  const TrickleCounter(
+      {Key key, this.total, this.caption, this.totalStyle, this.captionStyle})
+      : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Text(
+          total == null ? '1048' : '$total',
+          style: Styles.blueBoldLarge,
+        ),
+        Text(
+          caption == null ? 'People' : caption,
+          style: Styles.blackSmall,
+        ),
+      ],
+    );
   }
 }
