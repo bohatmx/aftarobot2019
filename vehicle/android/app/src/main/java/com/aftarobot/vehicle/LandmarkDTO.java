@@ -5,60 +5,24 @@
  */
 package com.aftarobot.vehicle;
 
-import android.location.Location;
-import android.location.LocationManager;
-
-import com.google.firebase.database.Exclude;
-import com.google.firebase.database.IgnoreExtraProperties;
-
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
+
 
 
 /**
  * @author Aubrey Malabie Esq.
  */
-@IgnoreExtraProperties
-public class LandmarkDTO implements Serializable, Comparable<LandmarkDTO> {
+public class LandmarkDTO implements Serializable{
     public static final String TAG = LandmarkDTO.class.getSimpleName();
 
     private String landmarkID, cityID, associationID,
-            routeID, countryID, provinceID, routeName, associationName;
+            routeID, countryID, routeName, associationName;
     private int rankSequenceNumber;
-    private double latitude, longitude, accuracy;
-    public Long cacheDate;
-    private UserDTO routeBuilder;
-    private Boolean gpsScanned;
+    private double latitude, longitude;
 
     private String landmarkName, status, cityName, stringDate;
     private Long date;
-    @Exclude
-    private double distanceFromMe;
-    private MainRankDTO mainRank;
-    private Boolean thisIsMainRank = Boolean.FALSE, virtualLandmark = Boolean.FALSE;
-    private HashMap<String, PhotoDTO> photos;
-    private HashMap<String, PlaceDTO> places;
-    private static final Locale loc = Locale.getDefault();
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("EEEE dd MMMM yyyy HH:mm",loc);
-
-    public Boolean getGpsScanned() {
-        return gpsScanned;
-    }
-
-    public HashMap<String, PlaceDTO> getPlaces() {
-        return places;
-    }
-
-    public void setPlaces(HashMap<String, PlaceDTO> places) {
-        this.places = places;
-    }
-
-    public void setGpsScanned(Boolean gpsScanned) {
-        this.gpsScanned = gpsScanned;
-    }
+    private Boolean thisIsMainRank = Boolean.FALSE;
 
     public String getAssociationName() {
         return associationName;
@@ -67,23 +31,6 @@ public class LandmarkDTO implements Serializable, Comparable<LandmarkDTO> {
     public void setAssociationName(String associationName) {
         this.associationName = associationName;
     }
-
-    public double getAccuracy() {
-        return accuracy;
-    }
-
-    public void setAccuracy(double accuracy) {
-        this.accuracy = accuracy;
-    }
-
-    public UserDTO getRouteBuilder() {
-        return routeBuilder;
-    }
-
-    public void setRouteBuilder(UserDTO routeBuilder) {
-        this.routeBuilder = routeBuilder;
-    }
-
     public String getStringDate() {
         return stringDate;
     }
@@ -92,13 +39,6 @@ public class LandmarkDTO implements Serializable, Comparable<LandmarkDTO> {
         this.stringDate = stringDate;
     }
 
-    public Boolean getVirtualLandmark() {
-        return virtualLandmark;
-    }
-
-    public void setVirtualLandmark(Boolean virtualLandmark) {
-        this.virtualLandmark = virtualLandmark;
-    }
 
     public Boolean getThisIsMainRank() {
         return thisIsMainRank;
@@ -108,13 +48,6 @@ public class LandmarkDTO implements Serializable, Comparable<LandmarkDTO> {
         this.thisIsMainRank = thisIsMainRank;
     }
 
-    public MainRankDTO getMainRank() {
-        return mainRank;
-    }
-
-    public void setMainRank(MainRankDTO mainRank) {
-        this.mainRank = mainRank;
-    }
 
     public String getAssociationID() {
         return associationID;
@@ -124,62 +57,12 @@ public class LandmarkDTO implements Serializable, Comparable<LandmarkDTO> {
         this.associationID = associationID;
     }
 
-    private HashMap<String, TripDTO> trips;
-
-    public LandmarkDTO() {
-        date = new Date().getTime();
-        stringDate = sdf.format(date);
-    }
-
-    public HashMap<String, PhotoDTO> getPhotos() {
-        return photos;
-    }
-
-    public void setPhotos(HashMap<String, PhotoDTO> photos) {
-        this.photos = photos;
-    }
-
-    public void calculateDistanceFromMe(Location loc) {
-        if (loc == null) {
-            return;
-        }
-        Location location = new Location(LocationManager.GPS_PROVIDER);
-        if (latitude == 0 && longitude == 0) {
-            distanceFromMe = -1.0;
-            return;
-        }
-        location.setLatitude(latitude);
-        location.setLongitude(longitude);
-        distanceFromMe = Double.parseDouble(String.valueOf(location.distanceTo(loc)));
-    }
-
-    @Exclude
-    public double getDistanceFromMe() {
-        return distanceFromMe;
-    }
-
-    public HashMap<String, TripDTO> getTrips() {
-        return trips;
-    }
-
-    public void setTrips(HashMap<String, TripDTO> trips) {
-        this.trips = trips;
-    }
-
     public String getRouteName() {
         return routeName;
     }
 
     public void setRouteName(String routeName) {
         this.routeName = routeName;
-    }
-
-    public String getProvinceID() {
-        return provinceID;
-    }
-
-    public void setProvinceID(String provinceID) {
-        this.provinceID = provinceID;
     }
 
     public String getCountryID() {
@@ -270,51 +153,5 @@ public class LandmarkDTO implements Serializable, Comparable<LandmarkDTO> {
         this.cityName = cityName;
     }
 
-    Boolean sortByRankSequence = false;
-    @Exclude
-    Boolean sortByName = false;
-    @Exclude
-    Boolean sortByDistance = false;
 
-    public void setSortByRankSequence(Boolean sortByRankSequence) {
-        this.sortByRankSequence = sortByRankSequence;
-    }
-
-    public void setSortByDistance(Boolean sortByDistance) {
-        this.sortByDistance = sortByDistance;
-    }
-
-    public void setSortByName(Boolean sortByName) {
-        this.sortByName = sortByName;
-    }
-
-    public void setCacheDate(Long cacheDate) {
-        this.cacheDate = cacheDate;
-    }
-
-    @Override
-    public int compareTo(LandmarkDTO another) {
-        if (sortByDistance) {
-            if (this.distanceFromMe > another.distanceFromMe) {
-                return 1;
-            }
-            if (this.distanceFromMe < another.distanceFromMe) {
-                return -1;
-            }
-        }
-        if (sortByRankSequence) {
-            if (this.rankSequenceNumber > another.rankSequenceNumber) {
-                return 1;
-            }
-            if (this.rankSequenceNumber < another.rankSequenceNumber) {
-                return -1;
-            }
-
-        }
-        if (sortByName) {
-            return this.landmarkName.compareTo(another.landmarkName);
-        }
-        return this.landmarkName.compareTo(another.landmarkName);
-
-    }
 }

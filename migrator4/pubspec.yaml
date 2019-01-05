@@ -16,8 +16,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  aftarobotlibrary:
-    path: /Users/mac/Documents/GitHub/aftarobot2019/aftarobotLibrary/aftarobotlibrary
+  aftarobotlibrary3:
+    path: /Users/mac/Documents/GitHub/aftarobot2019/aftarobotlibrary3
 #  googleapis_auth: ^0.2.6
 #  permission_handler: ^2.1.2
 

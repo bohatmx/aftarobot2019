@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
 void main() => runApp(MyApp());
 
@@ -37,17 +38,43 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   StreamSubscription _beaconScanSubscription;
   static const beaconScanStream = const EventChannel('aftarobot/messages');
+  static const geoQueryChannel = const MethodChannel('aftarobot/geo');
+
   List<String> messages = List();
+  VehicleBloc bloc = vehicleBloc;
 
   @override
   void initState() {
     super.initState();
     //_startMessageChannel();
+    _signIn();
+  }
+
+  void _signIn() async {
+    bloc.signInAnonymously();
+  }
+
+  void _testGeoQuery() async {
+    print(' 🔵  🔵  start geo query .... ........................');
+    try {
+      var args = {
+        'latitude': -25.76999,
+        'longitude': 27.6577999,
+        'radius': 40.0
+      };
+      var result = await geoQueryChannel.invokeMethod('getLandmarks', args);
+      print('Result back from geoQuery ....✅ ✅ ✅ ');
+      print(result);
+    } on PlatformException catch (e) {
+      print(e);
+    }
   }
 
   void _startMessageChannel() {
-    print('+++  🔵 starting message channel from the Flutter side');
+    print(
+        '+++  🔵 starting message channel and geoQuery from the Flutter side');
     try {
+      _testGeoQuery();
       _beaconScanSubscription =
           beaconScanStream.receiveBroadcastStream().listen((message) {
         print('### - 🔵 - message received :: ${message.toString()}');
@@ -62,17 +89,17 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.location_on),
+            onPressed: _testGeoQuery,
+          ),
+        ],
       ),
       body: ListView.builder(
           itemCount: messages.length,

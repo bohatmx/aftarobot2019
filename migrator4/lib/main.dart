@@ -1,111 +1,275 @@
+import 'package:aftarobotlibrary3/util/functions.dart';
+import 'package:aftarobotlibrary3/util/snack.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:migrator4/dashboard.dart';
+import 'package:migrator4/generator.dart';
+import 'package:migrator4/location_test_page.dart';
 
-void main() => runApp(MyApp());
+const API_KEY = "AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8";
+
+void main() {
+  try {
+    runApp(MyApp());
+  } catch (e) {
+    print(e);
+  }
+}
+
+//void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Migrator',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.indigo,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: Dashboard(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class GenerationPage extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _GenerationPageState createState() => _GenerationPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _GenerationPageState extends State<GenerationPage>
+    implements GeneratorListener, SnackBarListener {
+  List<Msg> _messages = List();
+  ScrollController scrollController = ScrollController();
+  final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
 
-  void _incrementCounter() {
+  void _start() {
+    _refresh();
+    Generator.generate(this);
+  }
+
+  void _showExistingData() {
+    Generator.getExistingData(this);
+  }
+
+  void _refresh() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _messages.clear();
+      errorText = null;
     });
+  }
+
+  Widget _getListView() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOut,
+      );
+    });
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        elevation: 4.0,
+        color: Colors.purple.shade50,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 20.0),
+          child: ListView.builder(
+              itemCount: _messages == null ? 0 : _messages.length,
+              controller: scrollController,
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  title: Text(
+                    _messages.elementAt(index).message,
+                    style: _messages.elementAt(index).style,
+                  ),
+                  leading: _messages.elementAt(index).icon,
+                );
+              }),
+        ),
+      ),
+    );
+  }
+
+  void _startLocationTestPage() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => LocationTestPage()),
+    );
+  }
+
+  void _startExistingPage() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => Dashboard()),
+    );
+  }
+
+  Widget _getThis() {
+    PageRouteBuilder(
+      pageBuilder: (BuildContext context, Animation<double> animation,
+          Animation<double> secondaryAnimation) {
+        return LocationTestPage();
+      },
+      transitionsBuilder: (BuildContext context, Animation<double> animation,
+          Animation<double> secondaryAnimation, Widget child) {
+        return SlideTransition(
+          position: new Tween<Offset>(
+            begin: const Offset(-1.0, 0.0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: new SlideTransition(
+            position: new Tween<Offset>(
+              begin: Offset.zero,
+              end: const Offset(-1.0, 0.0),
+            ).animate(secondaryAnimation),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  String errorText;
+  Widget _getCounterView() {
+    if (counter == 0) {
+      return Container();
+    }
+    if (counter < 3) {
+      return Text(
+        '$counter',
+        style: Styles.blackBoldSmall,
+      );
+    }
+    if (counter < 20) {
+      return Text(
+        '$counter',
+        style: Styles.blackBoldMedium,
+      );
+    }
+    if (counter < 100) {
+      return Text(
+        '$counter',
+        style: Styles.blackBoldLarge,
+      );
+    }
+
+    return Text(
+      '$counter',
+      style: Styles.blackBoldLarge,
+    );
+  }
+
+  Widget _getBottom() {
+    return PreferredSize(
+      preferredSize: Size.fromHeight(100.0),
+      child: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(
+                top: 10.0, bottom: 20.0, left: 10.0, right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                RaisedButton(
+                  color: Colors.pink,
+                  elevation: 8.0,
+                  onPressed: _start,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text(
+                      'Start Generation',
+                      style: Styles.whiteSmall,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0),
+                  child: _getCounterView(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _doSomething() {
+    print('_DGHomePageState._doSomething ${DateTime.now().toIso8601String()}');
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+      key: _key,
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('AftaRobot Data'),
+        leading: IconButton(icon: Icon(Icons.apps), onPressed: _doSomething),
+        bottom: _getBottom(),
+        backgroundColor: Colors.purple.shade300,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.location_on),
+            onPressed: _startLocationTestPage,
+          ),
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _refresh,
+          ),
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: _startExistingPage,
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+      backgroundColor: Colors.purple.shade100,
+      body: Stack(
+        children: <Widget>[
+          Opacity(
+            opacity: 0.3,
+            child: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/fincash.jpg'),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
+          ),
+          _getListView(),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  @override
+  onEvent(Msg msg) {
+    setState(() {
+      _messages.add(msg);
+    });
+  }
+
+  @override
+  onActionPressed(int action) {
+    return null;
+  }
+
+  @override
+  onError(String message) {
+    AppSnackbar.showErrorSnackbar(
+        scaffoldKey: _key, message: message, listener: this, actionLabel: "OK");
+    setState(() {
+      errorText = message;
+    });
+  }
+
+  int counter = 0;
+  @override
+  onRecordAdded() {
+    setState(() {
+      counter++;
+    });
   }
 }

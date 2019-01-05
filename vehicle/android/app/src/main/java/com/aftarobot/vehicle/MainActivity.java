@@ -76,7 +76,7 @@ public class MainActivity extends FlutterActivity {
                 }
         );
 
-        Log.d(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Geo Query Channel");
+        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Geo Query Channel");
         new MethodChannel(getFlutterView(), GEO_QUERY_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
@@ -89,6 +89,8 @@ public class MainActivity extends FlutterActivity {
 
                         if (call.method.equalsIgnoreCase("getLandmarks")) {
                             getLandmarks();
+                        } else {
+                            mResult.error("Method not right", "Error", "Like, Fucked!");
                         }
                     }
                 });
@@ -98,11 +100,15 @@ public class MainActivity extends FlutterActivity {
 
     void getLandmarks() {
         Log.d(TAG, "\uD83D\uDCCD \uD83D\uDCCD getLandmarks: ............");
-        GeoPointHelper.findLandmarksWithin(26.0623618, 27.8322481, 50, new GeoPointListener() {
+        GeoPointHelper.findLandmarksWithin(-25.760506499999998, 27.852598, 10, new GeoPointListener() {
             @Override
             public void onLandmarksFound(List<LandmarkDTO> landmarks) {
-                Log.d(TAG, "onLandmarksFound:  ✅  ✅  ✅ " + landmarks.size());
-                mResult.success(G.toJson(landmarks));
+                if (landmarks.isEmpty()) {
+                    Log.d(TAG, "NO LANDMARKS FOUND:   \uD83D\uDD35,  like zero, zilch, nada!");
+                } else {
+                    Log.d(TAG, "onLandmarksFound:  ✅  ✅  ✅ " + landmarks.size());
+                    mResult.success(G.toJson(landmarks));
+                }
             }
         });
     }
