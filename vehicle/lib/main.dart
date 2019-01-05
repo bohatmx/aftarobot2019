@@ -1,9 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
-
-import 'package:aftarobotlibrary3/data/landmarkdto.dart';
-import 'package:aftarobotlibrary3/util/functions.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
@@ -40,85 +34,35 @@ class MyHomePage extends StatefulWidget {
 
 //(-25.760506499999998, 27.852598,
 class _MyHomePageState extends State<MyHomePage> {
-  StreamSubscription _beaconScanSubscription;
-  static const beaconScanStream = const EventChannel('aftarobot/messages');
-  static const geoQueryChannel = const MethodChannel('aftarobot/geoQuery');
-
   List<String> messages = List();
-  VehicleBloc bloc = vehicleBloc;
+  VehicleAppBloc bloc = vehicleBloc;
 
   @override
   void initState() {
     super.initState();
-    //_startMessageChannel();
     _signIn();
+    _startMessageChannel();
   }
 
   void _signIn() async {
     bloc.signInAnonymously();
   }
 
-  void _testGeoQuery() async {
+  void _executeGeoQuery() async {
     print(' 🔵  🔵  start geo query .... ........................');
     try {
-      var args = {
-        'latitude': -25.760506499999998,
-        'longitude': 27.852598,
-        'radius': 5.0
-      };
-      var result = await geoQueryChannel.invokeMethod(
-          'findLandmarks', json.encode(args));
-      print('Result back from geoQuery .... ✅ ✅ ✅ ');
-      List<dynamic> list = json.decode(result);
-      print('. ✅ ... number of geoPoints returned: ${list.length}');
-      List<String> landmarkIDs = List();
-
-      list.forEach((t) {
-        if (t is Map) {
-          t.forEach((key, value) {
-            print("++++++ landmarkID :::: $key ");
-            landmarkIDs.add(key);
-          });
-        }
-      });
-      getLocatedLandmarks(landmarkIDs);
+      bloc.searchForLandmarks(-25.760506499999998, 27.852598, 12);
     } on PlatformException catch (e) {
       print(e);
     }
-  }
-
-  void getLocatedLandmarks(List<String> ids) {
-    Firestore fs = Firestore.instance;
-    List<LandmarkDTO> landmarks = List();
-    int count = 0;
-    for (var id in ids) {
-      fs.collection('landmarks').document(id).get().then((documentSnap) {
-        if (documentSnap.exists) {
-          var lm = LandmarkDTO.fromJson(documentSnap.data);
-          landmarks.add(lm);
-          count++;
-          prettyPrint(lm.toJson(),
-              ' 🔵  🔵  ############# LANDMARK::: #$count  🔵  🔵  ✅ ');
-        }
-      });
-    }
-    print(' ✅  We have ${landmarks.length} landmarks found in area search');
   }
 
   void _startMessageChannel() {
     print(
         '+++  🔵 starting message channel and geoQuery from the Flutter side');
     try {
-      _testGeoQuery();
-      _beaconScanSubscription =
-          beaconScanStream.receiveBroadcastStream().listen((message) {
-        print('### - 🔵 - message received :: ${message.toString()}');
-        setState(() {
-          messages.add(message.toString());
-        });
-      });
+      bloc.listenForCommuterMessages();
     } on PlatformException {
-      _beaconScanSubscription.cancel();
       print(
           'Things went south in a hurry, Jack!  ⚠️ ⚠️ Message listening not so hot ..');
     }
@@ -126,38 +70,44 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.location_on),
-            onPressed: _testGeoQuery,
-          ),
-        ],
-      ),
-      body: ListView.builder(
-          itemCount: messages.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-              child: Card(
-                child: ListTile(
-                  leading: Icon(Icons.message),
-                  title: Text(
-                    messages.elementAt(index),
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
+    return StreamBuilder(
+        stream: bloc.landmarksStream,
+        initialData: bloc.landmarks,
+        builder: (context, snapshot) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(widget.title),
+              actions: <Widget>[
+                IconButton(
+                  icon: Icon(Icons.location_on),
+                  onPressed: _executeGeoQuery,
                 ),
-              ),
-            );
-          }),
+              ],
+            ),
+            body: ListView.builder(
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                    child: Card(
+                      child: ListTile(
+                        leading: Icon(Icons.message),
+                        title: Text(
+                          messages.elementAt(index),
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: _startMessageChannel,
-        tooltip: 'Start Message Channel',
-        child: Icon(Icons.settings),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+            floatingActionButton: FloatingActionButton(
+              onPressed: _executeGeoQuery,
+              tooltip: 'Start Message Channel',
+              child: Icon(Icons.settings),
+            ), // This trailing comma makes auto-formatting nicer for build methods.
+          );
+        });
   }
 }
