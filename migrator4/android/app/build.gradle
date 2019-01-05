@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.aftarobot.vehicle"
+        applicationId "com.aftarobot.migrator4"
         minSdkVersion 21
         targetSdkVersion 27
         versionCode flutterVersionCode.toInteger()
@@ -59,8 +59,9 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.google.android.gms:play-services-nearby:16.0.0'
+    implementation 'com.google.android.gms:play-services-awareness:16.0.0'
     implementation "com.google.android.gms:play-services-places:16.0.0"
-    implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.1.1'
 
+    implementation 'com.google.code.gson:gson:2.8.5'
 }
+apply plugin: 'com.google.gms.google-services'

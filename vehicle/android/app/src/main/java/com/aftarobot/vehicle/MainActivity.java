@@ -19,9 +19,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.Date;
+import java.util.List;
 
 import io.flutter.app.FlutterActivity;
 import io.flutter.plugin.common.EventChannel;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
 
 public class MainActivity extends FlutterActivity {
@@ -31,8 +34,9 @@ public class MainActivity extends FlutterActivity {
     MessageListener mMessageListener;
     Message mMessage;
     private static final String TAXI_MESSAGE_CHANNEL = "aftarobot/messages";
+    private static final String GEO_QUERY_CHANNEL = "aftarobot/geo";
     EventChannel.EventSink messageEvents;
-
+    MethodChannel.Result mResult;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,7 +76,35 @@ public class MainActivity extends FlutterActivity {
                 }
         );
 
+        Log.d(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Geo Query Channel");
+        new MethodChannel(getFlutterView(), GEO_QUERY_CHANNEL).setMethodCallHandler(
+                new MethodChannel.MethodCallHandler() {
+                    @Override
+                    public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
+                        mResult = result;
+                        Object args = call.arguments;
 
+                        Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
+                        double lat, lng, rad;
+
+                        if (call.method.equalsIgnoreCase("getLandmarks")) {
+                            getLandmarks();
+                        }
+                    }
+                });
+
+
+    }
+
+    void getLandmarks() {
+        Log.d(TAG, "\uD83D\uDCCD \uD83D\uDCCD getLandmarks: ............");
+        GeoPointHelper.findLandmarksWithin(26.0623618, 27.8322481, 50, new GeoPointListener() {
+            @Override
+            public void onLandmarksFound(List<LandmarkDTO> landmarks) {
+                Log.d(TAG, "onLandmarksFound:  ✅  ✅  ✅ " + landmarks.size());
+                mResult.success(G.toJson(landmarks));
+            }
+        });
     }
 
     void startMessageListener() {
@@ -107,7 +139,7 @@ public class MainActivity extends FlutterActivity {
                 .setStrategy(Strategy.BLE_ONLY)
                 .build();
         bgMessagesClient = Nearby.getMessagesClient(this);
-        bgMessagesClient.subscribe(getPendingIntent(),options);
+        bgMessagesClient.subscribe(getPendingIntent(), options);
 
         bgPublishClient = Nearby.getMessagesClient(this);
         if (vehicle == null) {
@@ -123,15 +155,17 @@ public class MainActivity extends FlutterActivity {
         return PendingIntent.getBroadcast(this, 0, new Intent(this, CommuterMessageReceiver.class),
                 PendingIntent.FLAG_UPDATE_CURRENT);
     }
+
     public class CommuterBroadcastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-           String message = intent.getStringExtra("message");
+            String message = intent.getStringExtra("message");
             Log.d(TAG, "CommuterBroadcastReceiver \uD83D\uDCCD onReceive: sending message to Flutter");
-           messageEvents.success(message);
+            messageEvents.success(message);
         }
     }
+
     @Override
     public void onStart() {
         super.onStart();

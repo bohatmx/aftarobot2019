@@ -16,7 +16,6 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:migrator2/aftarobot_migrator_page.dart';
 import 'package:migrator2/background_loc.dart';
-import 'package:migrator2/beacon_scanner.dart';
 import 'package:migrator2/city_migrate.dart';
 import 'package:migrator2/generator.dart';
 import 'package:migrator2/geofence_test_page.dart';
@@ -42,8 +41,8 @@ class _DashboardState extends State<Dashboard>
   List<UserDTO> users = List();
   List<AssociationDTO> asses = List();
   List<VehicleDTO> cars = List();
-  static const platform = const MethodChannel('samples.flutter.io/battery');
-  String _batteryLevel = '0';
+  static const platform = const MethodChannel('aftarobot/geo');
+
   static const estimoteStream = const EventChannel('aftarobot/beaconProximity');
   static const altBeaconStream =
       const EventChannel('aftarobot/beaconProximityAltBeacon');
@@ -65,21 +64,13 @@ class _DashboardState extends State<Dashboard>
   static const beaconScanStream = const EventChannel('aftarobot/beaconMonitor');
   StreamSubscription _beaconScanSubscription;
 
-  Future _testBeaconMonitor() async {
-    print(
-        '\n\n_Dashboardtate: ##################  🔵  🔵  🔵 _testBeaconMonitor ******************');
-    ;
+  void _testGeoQuery() async {
     try {
-      _beaconScanSubscription =
-          beaconScanStream.receiveBroadcastStream().listen((scanResult) {
-        print(
-            '################  🔵 --- receiveBroadcastStream: scanResult: $scanResult');
-
-//        print('my beacon scan result is a Beacon! ******** ️ℹ️ ℹ️ $scanResult');
-      }, onError: handleError);
-    } on PlatformException {
-      _beaconScanSubscription.cancel();
-      print('️ ⚠️ ️ ⚠️ ️ ⚠️  We have an issue with beacon scanning, Senor!');
+      var args = {'latitude': -25.765428, 'longitude': 27.6577, 'radius': 40.0};
+      var result = await platform.invokeMethod('getLandmarks', args);
+      print(result);
+    } on PlatformException catch (e) {
+      print(e);
     }
   }
 
@@ -254,13 +245,6 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  void _startBeaconScanner() {
-    Navigator.push(
-      context,
-      new MaterialPageRoute(builder: (context) => BeaconScanner()),
-    );
-  }
-
   void _startCityMigrator() {
     Navigator.push(
       context,
@@ -350,8 +334,8 @@ class _DashboardState extends State<Dashboard>
             onPressed: _startLocationCollectorTestPage,
           ),
           IconButton(
-            icon: Icon(Icons.bluetooth_searching),
-            onPressed: _testBeaconMonitor,
+            icon: Icon(Icons.location_searching),
+            onPressed: _testGeoQuery,
           ),
           IconButton(
             icon: Icon(Icons.beach_access),

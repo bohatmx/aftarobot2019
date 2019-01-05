@@ -20,7 +20,7 @@ What the fucking hell???
  */
 class DataAPI {
   static const URL =
-      'https://us-central1-aftarobot2019-dev2.cloudfunctions.net/';
+      'https://us-central1-aftarobot2019-dev1.cloudfunctions.net/';
   static const ADD_ASSOCIATION_URL = URL + 'addAssociation',
       ADD_ASSOCIATIONS_URL = URL + 'addAssociations',
       ADD_VEHICLE_TYPE = URL + 'addVehicleType',
@@ -313,6 +313,7 @@ class DataAPI {
       List<LandmarkDTO> landmarks) async {
     List<Map> maps = List();
     landmarks.forEach((m) {
+      m.point = GeoPoint(m.latitude, m.longitude);
       maps.add(m.toJson());
     });
     var map = {

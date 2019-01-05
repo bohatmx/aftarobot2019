@@ -4,27 +4,8 @@ import android.Manifest;
 
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import com.estimote.mustard.rx_goodness.rx_requirements_wizard.Requirement;
-import com.estimote.mustard.rx_goodness.rx_requirements_wizard.RequirementsWizardFactory;
-import com.estimote.proximity_sdk.api.EstimoteCloudCredentials;
-import com.estimote.proximity_sdk.api.ProximityObserver;
-import com.estimote.proximity_sdk.api.ProximityObserverBuilder;
-import com.estimote.proximity_sdk.api.ProximityZone;
-import com.estimote.proximity_sdk.api.ProximityZoneBuilder;
-import com.estimote.proximity_sdk.api.ProximityZoneContext;
-import com.google.android.gms.nearby.Nearby;
-import com.google.android.gms.nearby.messages.Message;
-import com.google.android.gms.nearby.messages.MessageListener;
-import com.google.android.gms.nearby.messages.MessagesClient;
-import com.google.android.gms.nearby.messages.MessagesOptions;
-import com.google.android.gms.nearby.messages.NearbyPermissions;
-import com.google.android.gms.nearby.messages.Strategy;
-import com.google.android.gms.nearby.messages.SubscribeOptions;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,9 +15,7 @@ import java.util.Set;
 import io.flutter.app.FlutterActivity;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
+
 
 import static java.util.Locale.getDefault;
 
@@ -70,7 +49,8 @@ public class MainActivity extends FlutterActivity {
                                 + new Date().toString());
                         scanEvents = events;
                         try {
-                            BeaconScanner.scanBeacons(getApplicationContext(), scanEvents);
+                            //BeaconScanner.scanBeacons(getApplicationContext(), scanEvents);
+                            scanEvents.endOfStream();
                         } catch (Exception e) {
                             Log.e(TAG, "onListen:  . \uD83D\uDD34 could not scan beacons", e);
                             scanEvents.error(" ⚠ ⚠ Unable to start scan", "Error", "Stuffed!");

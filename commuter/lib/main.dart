@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.teal,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Commuter App'),
     );
   }
 }
@@ -71,6 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
         bottom:
             PreferredSize(child: Column(), preferredSize: Size.fromHeight(140)),
       ),
+      backgroundColor: Colors.brown.shade100,
       body: ListView.builder(
           itemCount: messages.length,
           itemBuilder: (context, index) {
