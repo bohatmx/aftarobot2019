@@ -1,6 +1,6 @@
 class ARGeofenceEvent {
   String landmarkID, activityType, action, userID, vehicleID, stringTimestamp;
-  String timestamp, vehicleReg, make,;
+  String timestamp, vehicleReg, make;
   int confidence;
   double odometer;
   bool isMoving;
@@ -15,7 +15,9 @@ class ARGeofenceEvent {
       this.timestamp,
       this.userID,
       this.isMoving,
-      this.vehicleID, this.vehicleReg, this.make});
+      this.vehicleID,
+      this.vehicleReg,
+      this.make});
 
   ARGeofenceEvent.fromJson(Map map) {
     landmarkID = map['landmarkID'];
@@ -45,7 +47,6 @@ class ARGeofenceEvent {
       'confidence': confidence,
       'odometer': odometer,
       'isMoving': isMoving,
-
       'vehicleReg': vehicleReg,
       'make': make,
     };

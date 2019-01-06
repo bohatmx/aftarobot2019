@@ -63,6 +63,8 @@ class VehicleAppBloc {
   get landmarksStream => _landmarksController.stream;
   get nearbyMessageStream => _nearbyMessagesController.stream;
   get locationStream => _locationController.stream;
+  get associationStream => _assocController.stream;
+  get vehicleStream => _vehicleController.stream;
 
   void closeStreams() {
     _landmarksController.close();
@@ -117,15 +119,17 @@ class VehicleAppBloc {
       print('## 📍 state :: ${state.toMap()}');
     });
 
-    bg.BackgroundGeolocation.start();
+    //bg.BackgroundGeolocation.start();
+    //bg.BackgroundGeolocation.startGeofences();
     print('### ✅ background location set. will start tracking ...');
   }
 
   _onGeofenceEvent(GeofenceEvent event) async {
     if (_vehicle == null) {
-      print('---  ⚠️ vehicle is null, geofence event will not be recorded');
+      print('\n---  ⚠️ vehicle is null, geofence event will not be recorded');
+      return null;
     }
-    print('+++  🎾 add geofence event to Firestore');
+    print('\n\n+++  🎾 add geofence event to Firestore');
     var m = ARGeofenceEvent(
       vehicleID: _vehicle.vehicleID,
       vehicleReg: _vehicle.vehicleReg,
@@ -133,7 +137,7 @@ class VehicleAppBloc {
       action: event.action,
       landmarkID: event.identifier,
       stringTimestamp: DateTime.now().toUtc().toIso8601String(),
-      timestamp: event.location.timestamp,,
+      timestamp: event.location.timestamp,
       isMoving: event.location.isMoving,
       odometer: event.location.odometer,
       activityType: event.location.activity.type,
@@ -210,13 +214,11 @@ class VehicleAppBloc {
     print('###  - 🔵 - associations found : ${_associations.length}');
   }
 
-  void getVehicles(String associationID) async {
-    print('+++ getVehicles for association: $associationID');
-    var qs = await fs
-        .collection('associations')
-        .document(associationID)
-        .collection('vehicles')
-        .getDocuments();
+  Future<List<VehicleDTO>> getVehicles(String path) async {
+    print('+++ getVehicles for association: $path');
+
+    var qs = await fs.document(path).collection('vehicles').getDocuments();
+
     _vehicles.clear();
     qs.documents.forEach((doc) {
       var v = VehicleDTO.fromJson(doc.data);
@@ -225,7 +227,8 @@ class VehicleAppBloc {
 
     _vehicleController.sink.add(_vehicles);
     print(
-        '###  - 🔵 - vehicles found: ${_vehicles.length} for association $associationID');
+        '###  - 🔵 - vehicles found: ${_vehicles.length} for association $path');
+    return _vehicles;
   }
 
   void _calculateDistancesBetweenLandmarks() {}
@@ -292,7 +295,12 @@ class VehicleAppBloc {
         identifier: landmark.landmarkID,
         radius: 200.0,
         latitude: landmark.latitude,
-        longitude: landmark.longitude));
+        longitude: landmark.longitude,
+        notifyOnDwell: true,
+        notifyOnEntry: true,
+        notifyOnExit: true));
+
+    print('+++ ✅ +++ geofence added for ${landmark.landmarkName}');
   }
 
   void listenForCommuterMessages() {

@@ -4,6 +4,7 @@ import 'package:fab_menu/fab_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vehicle/ui/landmark_map.dart';
+import 'package:vehicle/ui/register_vehicle.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
 void main() => runApp(MyApp());
@@ -12,10 +13,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
     return MaterialApp(
       title: 'VehicleApp',
       debugShowCheckedModeBanner: false,
@@ -46,9 +43,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _signIn();
-    _startMessageChannel();
-    _executeGeoQuery();
+
+    checkVehicle();
     menuDataList = [
       new MenuData(Icons.people, (context, menuData) {
         _executeGeoQuery();
@@ -63,6 +59,19 @@ class _MyHomePageState extends State<MyHomePage> {
         print('show vehicles on map');
       }, labelText: 'Panic Button'),
     ];
+  }
+
+  void checkVehicle() async {
+    print('########## check for app vehicle ...');
+    var v = await bloc.getVehicleForApp();
+    if (v == null) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => Registration()));
+    } else {
+      _signIn();
+      _startMessageChannel();
+      _executeGeoQuery();
+    }
   }
 
   void _signIn() async {
@@ -100,6 +109,10 @@ class _MyHomePageState extends State<MyHomePage> {
   List<LandmarkDTO> landmarks = List();
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     return StreamBuilder(
         stream: bloc.landmarksStream,
         initialData: bloc.landmarks,

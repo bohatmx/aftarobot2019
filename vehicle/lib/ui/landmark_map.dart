@@ -1,4 +1,5 @@
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
+import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
@@ -67,7 +68,7 @@ class _LandmarkMapState extends State<LandmarkMap> {
             _onMapCreated();
             break;
           case ConnectionState.waiting:
-            print(' 🎾 ConnectionState.waiting .......');
+            print(' 🎾 onnectionState.waiting .......');
             break;
           case ConnectionState.done:
             print(' 🎾 ConnectionState.done ???');
@@ -93,6 +94,34 @@ class _LandmarkMapState extends State<LandmarkMap> {
                   tiltGesturesEnabled: true,
                   scrollGesturesEnabled: true,
                   myLocationEnabled: true,
+                ),
+              ),
+              Positioned(
+                left: 40,
+                top: 20,
+                child: Card(
+                  color: getRandomPastelColor(),
+                  elevation: 8,
+                  child: Column(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                          },
+                          child: Row(
+                            children: <Widget>[
+                              Text(
+                                'AftaRobot Taxi Map',
+                                style: Styles.blackBoldSmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

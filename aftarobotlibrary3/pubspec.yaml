@@ -38,6 +38,7 @@ dependencies:
   google_maps_webservice: ^0.0.11
   fab_menu: ^0.0.2
   latlong: ^0.6.1
+  flutter_typeahead: ^0.5.0
 
   flutter_background_geolocation:
     git:
