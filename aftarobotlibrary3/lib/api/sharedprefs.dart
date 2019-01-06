@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:aftarobotlibrary3/data/associationdto.dart';
+import 'package:aftarobotlibrary3/data/vehicledto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Prefs {
-  static void saveAssociation(AssociationDTO association) async {
+  static Future saveAssociation(AssociationDTO association) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     Map jsonx = association.toJson();
@@ -14,6 +15,7 @@ class Prefs {
     prefs.setString('account', jx);
     //prefs.commit();
     print("SharedPrefs.saveAccount =========  data SAVED.........");
+    return null;
   }
 
   static Future<AssociationDTO> getAssociation() async {
@@ -27,6 +29,29 @@ class Prefs {
     prettyPrint(jx, 'Account from cache: ');
     var association = new AssociationDTO.fromJson(jx);
     return association;
+  }
+
+  static Future saveVehicle(VehicleDTO vehicle) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    Map jsonx = vehicle.toJson();
+    var jx = json.encode(jsonx);
+    print(jx);
+    prefs.setString('vehicle', jx);
+    print("Prefs.saveVehicle =========  data SAVED.........");
+    return null;
+  }
+
+  static Future<VehicleDTO> getVehicle() async {
+    var prefs = await SharedPreferences.getInstance();
+    var string = prefs.getString('vehicle');
+    if (string == null) {
+      return null;
+    }
+    var jx = json.decode(string);
+    prettyPrint(jx, 'Vehicle from cache: ');
+    var v = new VehicleDTO.fromJson(jx);
+    return v;
   }
 
   static Future saveFCMToken(String token) async {

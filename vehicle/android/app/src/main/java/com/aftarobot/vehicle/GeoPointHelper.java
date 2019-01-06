@@ -55,7 +55,7 @@ public class GeoPointHelper {
             @Override
             public void onKeyEntered(String s, GeoPoint geoPoint) {
                 map.put(s, geoPoint);
-                Log.d(TAG, "onKeyEntered: \uD83D\uDD35  \uD83D\uDD35  :: geoPoint found .... adding to hash map: " + map.size()
+                Log.d(TAG, "onKeyEntered: \uD83D\uDD35 :: geoPoint found .... adding to hash map: " + map.size()
                 + " geoPoint: " + new Gson().toJson(geoPoint));
             }
 

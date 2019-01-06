@@ -3,7 +3,9 @@
 ####### rigged up by AM Esq.
 */
 
-class LandmarkDTO {
+import 'package:latlong/latlong.dart';
+
+class LandmarkDTO with LandmarkDistance {
   String landmarkID;
   String cityID;
   String associationID;
@@ -112,5 +114,26 @@ class LandmarkDTO {
       'routePath': routePath,
     };
     return map;
+  }
+}
+
+class LandmarkDistance {
+  DateTime dateTime;
+  double distanceKM, distanceMetre;
+  int landmarkSequenceFrom, landmarkSequence;
+  Distance _distanceUtil = Distance();
+
+  calculateDistance(
+      {double fromLatitude,
+      double fromLongitude,
+      double toLatitude,
+      double toLongitude}) {
+    distanceKM = _distanceUtil.as(
+        LengthUnit.Kilometer,
+        new LatLng(fromLatitude, fromLongitude),
+        new LatLng(toLatitude, toLongitude));
+
+    distanceMetre = _distanceUtil(new LatLng(fromLatitude, fromLongitude),
+        new LatLng(toLatitude, toLongitude));
   }
 }

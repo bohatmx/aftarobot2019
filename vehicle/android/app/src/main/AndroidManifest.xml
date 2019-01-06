@@ -25,9 +25,11 @@
         tools:replace="android:label"
         android:label="vehicle">
         <meta-data
-            android:name="com.google.android.nearby.messages.API_KEY"
-            android:value="AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s" />
-
+                android:name="com.google.android.geo.API_KEY"
+                android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
+        <meta-data
+                android:name="com.google.android.nearby.messages.API_KEY"
+                android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density"

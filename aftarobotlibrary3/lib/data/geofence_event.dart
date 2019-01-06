@@ -1,6 +1,6 @@
 class ARGeofenceEvent {
   String landmarkID, activityType, action, userID, vehicleID, stringTimestamp;
-  String timestamp;
+  String timestamp, vehicleReg, make,;
   int confidence;
   double odometer;
   bool isMoving;
@@ -15,7 +15,7 @@ class ARGeofenceEvent {
       this.timestamp,
       this.userID,
       this.isMoving,
-      this.vehicleID});
+      this.vehicleID, this.vehicleReg, this.make});
 
   ARGeofenceEvent.fromJson(Map map) {
     landmarkID = map['landmarkID'];
@@ -28,6 +28,9 @@ class ARGeofenceEvent {
     confidence = map['confidence'];
     odometer = map['odometer'];
     isMoving = map['isMoving'];
+
+    vehicleReg = map['vehicleReg'];
+    make = map['make'];
   }
 
   Map<String, dynamic> toJson() {
@@ -42,19 +45,10 @@ class ARGeofenceEvent {
       'confidence': confidence,
       'odometer': odometer,
       'isMoving': isMoving,
+
+      'vehicleReg': vehicleReg,
+      'make': make,
     };
     return map;
   }
 }
-
-/*
-var map = {
-      'landmarkID': event.identifier,
-      'isMoving': event.location.isMoving,
-      'action': event.action,
-      'activityType': event.location.activity.type,
-      'confidence': event.location.activity.confidence,
-      'odometer': event.location.odometer,
-      'timestamp': event.location.timestamp,
-    };
-*/

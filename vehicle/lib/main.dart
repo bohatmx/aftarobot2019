@@ -1,7 +1,9 @@
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
+import 'package:fab_menu/fab_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vehicle/ui/landmark_map.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
 void main() => runApp(MyApp());
@@ -38,23 +40,47 @@ class MyHomePage extends StatefulWidget {
 //(-25.760506499999998, 27.852598,
 class _MyHomePageState extends State<MyHomePage> {
   List<String> messages = List();
-  VehicleAppBloc bloc = vehicleBloc;
+  VehicleAppBloc bloc = vehicleAppBloc;
+  List<MenuData> menuDataList;
 
   @override
   void initState() {
     super.initState();
     _signIn();
     _startMessageChannel();
+    _executeGeoQuery();
+    menuDataList = [
+      new MenuData(Icons.people, (context, menuData) {
+        _executeGeoQuery();
+      }, labelText: 'Commuters'),
+      new MenuData(Icons.map, (context, menuData) {
+        _startLandmarkMap();
+      }, labelText: 'Route Map'),
+      MenuData(Icons.airport_shuttle, (context, menuData) {
+        print('show vehicles on map');
+      }, labelText: 'Vehicles on Map'),
+      MenuData(Icons.pan_tool, (context, menuData) {
+        print('show vehicles on map');
+      }, labelText: 'Panic Button'),
+    ];
   }
 
   void _signIn() async {
     bloc.signInAnonymously();
   }
 
+  void _startLandmarkMap() {
+    Navigator.push(
+      context,
+      new MaterialPageRoute(builder: (context) => LandmarkMap()),
+    );
+  }
+
   void _executeGeoQuery() async {
     print(' 🔵  🔵  start geo query .... ........................');
     try {
-      bloc.searchForLandmarks(-25.760506499999998, 27.852598, 12);
+      bloc.searchForLandmarks(
+          latitude: -25.760506499999998, longitude: 27.852598, radius: 12);
     } on PlatformException catch (e) {
       print(e);
     }
@@ -82,17 +108,17 @@ class _MyHomePageState extends State<MyHomePage> {
             landmarks = snapshot.data;
           }
           return Scaffold(
-            appBar: AppBar(
-              title: Text(landmarks.isNotEmpty
-                  ? landmarks.elementAt(0).routeName
-                  : 'AftaRobot Vehicle App'),
-              actions: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.location_on),
-                  onPressed: _executeGeoQuery,
-                ),
-              ],
-            ),
+//            appBar: AppBar(
+//              title: Text(landmarks.isNotEmpty
+//                  ? landmarks.elementAt(0).routeName
+//                  : 'AftaRobot Vehicle App'),
+//              actions: <Widget>[
+//                IconButton(
+//                  icon: Icon(Icons.location_on),
+//                  onPressed: _executeGeoQuery,
+//                ),
+//              ],
+//            ),
             backgroundColor: Colors.brown.shade100,
             body: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -101,11 +127,13 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
 
-            floatingActionButton: FloatingActionButton(
-              onPressed: _executeGeoQuery,
-              tooltip: 'Start Message Channel',
-              child: Icon(Icons.settings),
-            ), // This trailing comma makes auto-formatting nicer for build methods.
+            floatingActionButton: new FabMenu(
+              mainIcon: Icons.list,
+              menus: menuDataList,
+              maskColor: Colors.black,
+            ),
+            floatingActionButtonLocation:
+                fabMenuLocation, // This trailing comma makes auto-formatting nicer for build methods.
           );
         });
   }
@@ -125,48 +153,47 @@ class LandmarkList extends StatelessWidget {
             child: Card(
               elevation: 4,
               color: getRandomPastelColor(),
-              child: ListTile(
-                leading: Icon(
-                  Icons.my_location,
-                  color: getRandomColor(),
-                ),
-                title: Row(
-                  children: <Widget>[
-                    TrickleCounter(
-                      total: 1765,
-                      caption: 'Passengers',
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    Text(
-                      landmarks == null
-                          ? ""
-                          : landmarks.elementAt(index).landmarkName,
-                      style:
-                          TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-                    ),
-                  ],
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12.0, top: 8),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.my_location,
+                    color: getRandomColor(),
+                  ),
+                  title: Row(
+                    children: <Widget>[
+                      TrickleCounter(
+                        total: 1765,
+                        caption: 'Passengers',
+                      ),
+                      SizedBox(
+                        width: 20,
+                      ),
+                      Text(
+                        landmarks == null
+                            ? ""
+                            : landmarks.elementAt(index).landmarkName,
+                        style: TextStyle(
+                            fontSize: 28, fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                  subtitle: Row(
+                    children: <Widget>[
+                      SizedBox(
+                        width: 100,
+                      ),
+                      Text(
+                        landmarks.elementAt(index).routeName,
+                        style: Styles.blackSmall,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           );
         });
-  }
-}
-
-class LandmarkMap extends StatelessWidget {
-  final List<LandmarkDTO> landmarks;
-
-  const LandmarkMap({Key key, this.landmarks}) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.purple.shade200,
-      child: SizedBox(
-        width: 200,
-      ),
-    );
   }
 }
 
