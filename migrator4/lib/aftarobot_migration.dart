@@ -163,13 +163,14 @@ class AftaRobotMigration {
           ass.associationName.contains('Krugersdorp And District Taxi Union') ||
           ass.associationName
               .contains('Johannesburg Southern Suburbs Taxi Association') ||
-          ass.associationName.contains('Inanda Taxi Owners Association')) {
+          ass.associationName.contains('Inanda Taxi Owners Association') ||
+          ass.associationName.contains('AftaRobot General Association')) {
         ass.countryID = za.countryID;
         ass.countryName = za.name;
         assList.add(ass);
         var mEmail =
             ass.associationName.replaceAll(" ", '.').toLowerCase().trim() +
-                rand.nextInt(99999).toString() +
+                rand.nextInt(999).toString() +
                 '@aftarobot.io';
         var adminUser = UserDTO(
             email: mEmail,
@@ -730,19 +731,28 @@ class AftaRobotMigration {
   static Future<List<LandmarkDTO>> _writeLandmarks(
       List<LandmarkDTO> marks) async {
     print(
-        '\n\nAftaRobotMigration._writeLandmarks +++++++ writing batch of landmarks: ${marks.length}');
-    var list = await DataAPI.addLandmarks(marks);
+        '\n\nAftaRobotMigration._writeLandmarks *** ️⚠️ filtering  batch of landmarks: ${marks.length}');
+
+    List<LandmarkDTO> mList = List();
+    marks.forEach((m) {
+      if (m.landmarkName.toLowerCase().contains('virtual')) {
+        print('**** ⚠️⚠ ignore virtual landmark **** ${m.landmarkName}');
+      } else {
+        mList.add(m);
+      }
+    });
     print(
-        '\n\nAftaRobotMigration._writeLandmarks +++++++ writing batch of landmarks to cache: ${marks.length}');
-    for (var mark in list) {
+        'AftaRobotMigration._writeLandmarks *** ️⚠️ writing  batch of landmarks to Firestore: ${mList.length}');
+    var resultList = await DataAPI.addLandmarks(mList);
+    print(
+        '\n\nAftaRobotMigration._writeLandmarks +++  🔵 writing batch of landmarks to LocalDB: ${resultList.length}');
+    for (var mark in resultList) {
       await addGeoQueryLocation(mark);
       await LocalDB.saveLandmark(mark);
-      print(
-          'AftaRobotMigration._writeLandmarks - returned from LocalDB - was landmark ADDED ....?????');
     }
 
-    migrationListener.onLandmarksAdded(list);
-    return list;
+    migrationListener.onLandmarksAdded(resultList);
+    return resultList;
   }
 
   static Future addGeoQueryLocation(LandmarkDTO landmark) async {
@@ -773,8 +783,11 @@ class AftaRobotMigration {
     List<LandmarkDTO> landmarks = List();
     Map<String, LandmarkDTO> map = Map();
     route.spatialInfos.forEach((si) {
-      map[si.fromLandmark.landmarkID] = si.fromLandmark;
-      map[si.toLandmark.landmarkID] = si.toLandmark;
+      var string = si.fromLandmark.landmarkName.toLowerCase();
+      if (!string.contains('virtual')) {
+        map[si.fromLandmark.landmarkID] = si.fromLandmark;
+        map[si.toLandmark.landmarkID] = si.toLandmark;
+      }
     });
 
     map.forEach((key, landmark) {

@@ -18,6 +18,7 @@ import org.imperiumlabs.geofirestore.GeoQuery;
 import org.imperiumlabs.geofirestore.GeoQueryEventListener;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,30 @@ import io.flutter.plugin.common.EventChannel;
 public class GeoPointHelper {
     private static FirebaseFirestore fs = FirebaseFirestore.getInstance();
 
+    static void writeVehicleLocation(String vehicleID,
+                                     double latitude, double longitude,
+                                     final VehiclePointListener listener) {
+        Log.d(TAG, "\n writeVehicleLocation: ***  ℹ️ vehicleID: " + vehicleID);
+        CollectionReference geoFirestoreRef = fs.collection("geoVehicleLocations");
+        final GeoFirestore geoFirestore = new GeoFirestore(geoFirestoreRef);
+
+        GeoPoint point = new GeoPoint(latitude, longitude);
+        long time = new Date().getTime();
+        String id = vehicleID + "@" + time;
+
+        geoFirestore.setLocation(id, point, new GeoFirestore.CompletionListener() {
+            @Override
+            public void onComplete(Exception e) {
+                if (e == null) {
+                    listener.onGeoPointWritten();
+                } else {
+                    Log.e(TAG, "onComplete: ERROR writing vehicle location", e );
+                    listener.onError(e.getMessage());
+                }
+            }
+        });
+
+    }
     static void findLandmarksWithin(final double latitude,
                                     final double longitude,
                                     final double radius,

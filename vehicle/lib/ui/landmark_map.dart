@@ -11,7 +11,7 @@ class LandmarkMap extends StatefulWidget {
 
 class _LandmarkMapState extends State<LandmarkMap> {
   List<LandmarkDTO> landmarks;
-  VehicleAppBloc bloc = vehicleAppBloc;
+  VehicleAppBloc bloc = VehicleAppBloc();
   GoogleMapController _mapController;
 
   @override
@@ -29,7 +29,7 @@ class _LandmarkMapState extends State<LandmarkMap> {
 
         _mapController.addMarker(MarkerOptions(
           position: LatLng(si.latitude, si.longitude),
-          icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+          icon: BitmapDescriptor.fromAsset('assets/condominium.png'),
           zIndex: 4.0,
           infoWindowText: InfoWindowText(si.landmarkName, si.associationName),
         ));

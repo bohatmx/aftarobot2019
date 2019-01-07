@@ -37,10 +37,10 @@ public class MainActivity extends FlutterActivity {
     Message mMessage;
     private static final String TAXI_MESSAGE_CHANNEL = "aftarobot/messages";
     private static final String GEO_QUERY_CHANNEL = "aftarobot/geoQuery";
-    private static final String GEO_QUERY_RESULTS_CHANNEL = "aftarobot/geoQueryResults";
+    private static final String VEHICLE_LOCATION_CHANNEL = "aftarobot/vehicleLocation";
     EventChannel.EventSink messageEvents;
-    EventChannel.EventSink geoQueryEvents;
     MethodChannel.Result mResult;
+    MethodChannel.Result mVehicleLocationResult;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,7 +101,7 @@ public class MainActivity extends FlutterActivity {
         );
 
 
-        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up GeoQuery Channel ...");
+        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up GEO_QUERY_CHANNEL  ...");
         new MethodChannel(getFlutterView(), GEO_QUERY_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
@@ -118,8 +118,47 @@ public class MainActivity extends FlutterActivity {
                         }
                     }
                 });
+        ///
+        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up VEHICLE_LOCATION_CHANNEL  ...");
+        new MethodChannel(getFlutterView(), VEHICLE_LOCATION_CHANNEL).setMethodCallHandler(
+                new MethodChannel.MethodCallHandler() {
+                    @Override
+                    public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
+                        mVehicleLocationResult = result;
+                        Object args = call.arguments;
+
+                        Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
+                        VehicleLocationRequest geoRequest = G.fromJson(args.toString(), VehicleLocationRequest.class);
+                        if (call.method.equalsIgnoreCase("writeVehicleLocation")) {
+                            writeVehicleLocation(geoRequest);
+                        } else {
+                            mResult.error("Method not right", "Error", "Like, Fucked!");
+                        }
+                    }
+                });
     }
 
+    void writeVehicleLocation(VehicleLocationRequest request) {
+        Log.d(TAG, "writeVehicleLocation: ***************************** ");
+        GeoPointHelper.writeVehicleLocation(request.vehicleID, request.latitude, request.longitude, new VehiclePointListener() {
+            @Override
+            public void onGeoPointWritten() {
+                String date = new Date().toString();
+                Log.d(TAG, "onGeoPointWritten: +++ sending geoVehicleLocations success result back to Flutter at: " + date);
+                try {
+                    mVehicleLocationResult.success("Vehicle location written to Firestore: geoVehicleLocations: " + date);
+                } catch (IllegalStateException e) {
+                    Log.e(TAG, "onGeoPointWritten:  ⚠️ ⚠️IllegalStateException - tried to send response back to Flutter ::  ⚠️ ⚠️",e );
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                Log.e(TAG, "onError: " + message );
+                mVehicleLocationResult.error(message, "Error", "Fucked!");
+            }
+        });
+    }
     void findLandmarks(GeoRequest request) {
         Log.d(TAG, "findLandmarks: #################################################################");
         GeoPointHelper.findLandmarksWithin(request.latitude, request.longitude, request.radius, new GeoPointListener() {
@@ -238,6 +277,35 @@ public class MainActivity extends FlutterActivity {
 
         public void setRadius(double radius) {
             this.radius = radius;
+        }
+    }
+
+    private class VehicleLocationRequest {
+        double latitude,longitude;
+        String vehicleID;
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(double latitude) {
+            this.latitude = latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(double longitude) {
+            this.longitude = longitude;
+        }
+
+        public String getVehicleID() {
+            return vehicleID;
+        }
+
+        public void setVehicleID(String vehicleID) {
+            this.vehicleID = vehicleID;
         }
     }
 }

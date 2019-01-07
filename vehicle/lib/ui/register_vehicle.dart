@@ -1,11 +1,10 @@
-import 'package:aftarobotlibrary3/api/sharedprefs.dart';
 import 'package:aftarobotlibrary3/data/associationdto.dart';
 import 'package:aftarobotlibrary3/data/vehicledto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:aftarobotlibrary3/util/snack.dart';
-import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vehicle/ui/landing_page.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
 class Registration extends StatefulWidget {
@@ -15,15 +14,18 @@ class Registration extends StatefulWidget {
 
 class _RegistrationState extends State<Registration> {
   TextEditingController textEditingController = TextEditingController();
-  GlobalKey<AutoCompleteTextFieldState<AssociationDTO>> _assocKey = GlobalKey();
 
   List<AssociationDTO> _associations = List();
-  VehicleAppBloc bloc = vehicleAppBloc;
 
   @override
   void initState() {
     super.initState();
-    bloc.getAssociations();
+    _getAssociations();
+  }
+
+  void _getAssociations() async {
+    _associations = await VehicleAppBloc.getAssociationsFirstTime();
+    setState(() {});
   }
 
   void onAssociationTapped(AssociationDTO ass) {
@@ -43,59 +45,59 @@ class _RegistrationState extends State<Registration> {
       DeviceOrientation.portraitDown,
       DeviceOrientation.portraitUp,
     ]);
-    return StreamBuilder<List<AssociationDTO>>(
-      initialData: bloc.associations,
-      stream: bloc.associationStream,
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.active:
-            print('\n\n####### stream active, passing on associations .....');
-            _associations = snapshot.data;
-//            _buildDropDown();
-            break;
-          case ConnectionState.none:
-            break;
-          case ConnectionState.waiting:
-            break;
-          case ConnectionState.done:
-            break;
-        }
-        return WillPopScope(
-          onWillPop: () {
-            print('ignoring pleas to leave The Roach Motel');
-          },
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text('Vehicle Registration'),
-            ),
-            backgroundColor: Colors.brown.shade100,
-            body: ListView.builder(
-                itemCount: _associations.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8.0, right: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        onAssociationTapped(_associations.elementAt(index));
-                      },
-                      child: Card(
-                        color: getRandomPastelColor(),
-                        elevation: 4,
-                        child: ListTile(
-                          leading: Icon(
-                            Icons.location_city,
-                            color: getRandomColor(),
-                          ),
-                          title: Text(
-                              '${_associations.elementAt(index).associationName}'),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-          ),
-        );
+    return WillPopScope(
+      onWillPop: () {
+        print('ignoring pleas to leave The Roach Motel');
       },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Vehicle Registration',
+            style: Styles.whiteBoldMedium,
+          ),
+          bottom: PreferredSize(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: <Widget>[
+                    Text(
+                      'Tap Association and and search it\'s Vehicles for selection for the App.',
+                      style: Styles.whiteMedium,
+                    ),
+                    SizedBox(
+                      height: 40,
+                    ),
+                  ],
+                ),
+              ),
+              preferredSize: Size.fromHeight(140)),
+        ),
+        backgroundColor: Colors.brown.shade100,
+        body: ListView.builder(
+            itemCount: _associations.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 16.0, right: 16, top: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    onAssociationTapped(_associations.elementAt(index));
+                  },
+                  child: Card(
+                    color: getRandomPastelColor(),
+                    elevation: 4,
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.location_city,
+                        color: getRandomColor(),
+                      ),
+                      title: Text(
+                          '${_associations.elementAt(index).associationName}'),
+                    ),
+                  ),
+                ),
+              );
+            }),
+      ),
     );
   }
 }
@@ -114,13 +116,20 @@ class VehicleSelector extends StatefulWidget {
 class VehicleSelectorState extends State<VehicleSelector>
     implements SnackBarListener {
   GlobalKey<ScaffoldState> _key = GlobalKey();
-  VehicleAppBloc bloc = vehicleAppBloc;
   List<VehicleDTO> vehicles = List(), filteredVehicles = List();
   String filter;
   @override
   void initState() {
     super.initState();
-    bloc.getVehicles(widget.associationPath);
+    _getVehicles();
+  }
+
+  void _getVehicles() async {
+    vehicles =
+        await VehicleAppBloc.getVehiclesFirstTime(widget.associationPath);
+    print(
+        '+++ have found vehicles using static bloc call, list has: ${vehicles.length}');
+    setState(() {});
   }
 
   void _filterVehicles() {
@@ -145,14 +154,21 @@ class VehicleSelectorState extends State<VehicleSelector>
   }
 
   _registerVehicle(VehicleDTO v) async {
-    print('### 🎾 --- registerVehicle ....... ${v.vehicleReg}');
-    await Prefs.saveVehicle(v);
-    print('### 🔵 --- vehicle registered on device : ${v.vehicleReg}');
-    AppSnackbar.showSnackbar(
+    print('\n\n### 🎾 --- registerVehicle ....... ${v.vehicleReg}');
+    AppSnackbar.showSnackbarWithProgressIndicator(
         scaffoldKey: _key,
-        message: 'Vehicle ${v.vehicleReg} registered for device',
+        message: 'Registering vehicle',
         textColor: Colors.yellow,
         backgroundColor: Colors.black);
+
+    await VehicleAppBloc.registerVehicleOnDevice(v);
+    print(
+        '### 🎾 --- registerVehicle DONE! popping twice ....... ${v.vehicleReg}');
+    _key.currentState.removeCurrentSnackBar();
+    Navigator.pop(context);
+    Navigator.pop(context);
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => LandingPage()));
   }
 
   Widget _getBottom() {
@@ -196,8 +212,22 @@ class VehicleSelectorState extends State<VehicleSelector>
                   style: Styles.blackBoldReallyLarge,
                 ),
                 SizedBox(
+                  width: 20,
+                ),
+                Text(
+                  'of',
+                  style: Styles.whiteBoldMedium,
+                ),
+                SizedBox(
+                  width: 20,
+                ),
+                Text(
+                  '${vehicles.length}',
+                  style: Styles.blackBoldReallyLarge,
+                ),
+                SizedBox(
                   width: 40,
-                )
+                ),
               ],
             ),
             SizedBox(
@@ -210,92 +240,70 @@ class VehicleSelectorState extends State<VehicleSelector>
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-        initialData: bloc.vehicles,
-        stream: bloc.vehicleStream,
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.active:
-              print('🔵 ConnectionState.active set vehicles from stream data');
-              vehicles = snapshot.data;
-              break;
-            case ConnectionState.waiting:
-              print(' 🎾 ConnectionState.waiting .......');
-              break;
-            case ConnectionState.done:
-              print(' 🎾 ConnectionState.done ???');
-              break;
-            case ConnectionState.none:
-              print(' 🎾 ConnectionState.none - do nuthin ...');
-              break;
-          }
-          return Scaffold(
-            key: _key,
-            appBar: AppBar(
-              title: Text(
-                'Vehicle App Registration',
-                style: Styles.whiteBoldMedium,
+    return Scaffold(
+      key: _key,
+      appBar: AppBar(
+        title: Text(
+          'Vehicle App Registration',
+          style: Styles.whiteBoldMedium,
+        ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              _getVehicles();
+            },
+          ),
+        ],
+        bottom: _getBottom(),
+        backgroundColor: Colors.indigo.shade300,
+      ),
+      body: Stack(
+        children: <Widget>[
+          Opacity(
+            opacity: 0.2,
+            child: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/fincash.jpg'),
+                  fit: BoxFit.cover,
+                ),
               ),
-              actions: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.refresh),
-                  onPressed: () {
-                    bloc.getVehicles(widget.associationPath);
-                  },
-                ),
-              ],
-              bottom: _getBottom(),
-              backgroundColor: Colors.indigo.shade300,
             ),
-            body: Stack(
-              children: <Widget>[
-                Opacity(
-                  opacity: 0.2,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/fincash.jpg'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-                filteredVehicles.isEmpty
-                    ? Container()
-                    : ListView.builder(
-                        itemCount: filteredVehicles.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding:
-                                const EdgeInsets.only(left: 16.0, right: 16),
-                            child: GestureDetector(
-                              onTap: () {
-                                _registerVehicle(
-                                    filteredVehicles.elementAt(index));
-                              },
-                              child: Card(
-                                elevation: 4,
-                                child: ListTile(
-                                  leading: Icon(
-                                    Icons.airport_shuttle,
-                                    color: getRandomColor(),
-                                  ),
-                                  title: Text(
-                                    '${filteredVehicles.elementAt(index).vehicleReg}',
-                                    style: Styles.blackBoldMedium,
-                                  ),
-                                  subtitle: Text(
-                                      '${filteredVehicles.elementAt(index).vehicleType.make} '
-                                      '${filteredVehicles.elementAt(index).vehicleType.model}'),
-                                ),
-                              ),
+          ),
+          filteredVehicles.isEmpty
+              ? Container()
+              : ListView.builder(
+                  itemCount: filteredVehicles.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 16.0, right: 16),
+                      child: GestureDetector(
+                        onTap: () {
+                          _registerVehicle(filteredVehicles.elementAt(index));
+                        },
+                        child: Card(
+                          elevation: 4,
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.airport_shuttle,
+                              color: getRandomColor(),
                             ),
-                          );
-                        }),
-              ],
-            ),
-          );
-        });
+                            title: Text(
+                              '${filteredVehicles.elementAt(index).vehicleReg}',
+                              style: Styles.blackBoldMedium,
+                            ),
+                            subtitle: Text(
+                                '${filteredVehicles.elementAt(index).vehicleType.make} '
+                                '${filteredVehicles.elementAt(index).vehicleType.model}'),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+        ],
+      ),
+    );
   }
 
   @override
