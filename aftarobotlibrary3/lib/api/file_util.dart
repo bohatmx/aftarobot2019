@@ -368,6 +368,50 @@ class LocalDB {
     }
   }
 
+  static const LogData = 'LogData0';
+
+  static Future<int> saveLog(String log) async {
+    try {
+      var fileName = LogData;
+      dir = await getApplicationDocumentsDirectory();
+      jsonFile = new File(dir.path + "/" + fileName + '.json');
+      fileExists = await jsonFile.exists();
+      if (fileExists) {
+        var m = jsonFile.readAsStringSync();
+        var newString = m +
+            "\n" +
+            log +
+            "\t  stamp: ${DateTime.now().toUtc().toIso8601String()}";
+        jsonFile.writeAsStringSync(newString);
+        return 0;
+      } else {
+        var file = await jsonFile.create();
+        await file.writeAsString(log);
+        return 0;
+      }
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  static Future<File> getLogs() async {
+    try {
+      dir = await getApplicationDocumentsDirectory();
+      jsonFile = new File(dir.path + "/" + LogData + ".json");
+      fileExists = await jsonFile.exists();
+
+      if (fileExists) {
+        return jsonFile;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print(e);
+    }
+    return null;
+  }
+
   static Future<List<ARLocation>> getARLocations() async {
     print('LocalDB.getARLocations -- ################## starting ...');
     //FIX - turned off local cache for route points

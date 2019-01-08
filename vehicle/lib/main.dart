@@ -1,10 +1,15 @@
 import 'package:aftarobotlibrary3/api/sharedprefs.dart';
+import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:vehicle/ui/landing_page.dart';
 import 'package:vehicle/ui/register_vehicle.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  await VehicleAppBloc.initializeLogUploadAlarm();
+  runApp(MyApp());
+  VehicleAppBloc.scheduleAlarm();
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -45,14 +50,14 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isVehicleAvailable = false;
 
   void checkVehicle() async {
-    print('########## ⚠️ ⚠️ check for app vehicle ...');
+    printLog('########## ⚠️ ⚠️ check for app vehicle ...');
     var v = await Prefs.getVehicle();
     if (v == null) {
-      print('########## ⚠️ ⚠️  vehicle has not been set up for the App ...');
+      printLog('########## ⚠️ ⚠️  vehicle has not been set up for the App ...');
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => Registration()));
     } else {
-      print(
+      printLog(
           '\n\n🔵 🔵 🔵 _MyHomePageState: ############# CREATING NEW VehicleAppBloc 🔵 🔵 🔵 \n\n');
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => LandingPage()));

@@ -30,6 +30,10 @@
         <meta-data
                 android:name="com.google.android.nearby.messages.API_KEY"
                 android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
+
+        <service
+                android:name="io.flutter.plugins.androidalarmmanager.AlarmService"
+                android:exported="false"/>
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density"

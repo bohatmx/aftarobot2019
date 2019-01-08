@@ -1,10 +1,16 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:aftarobotlibrary3/api/file_util.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+
+printLog(String log) async {
+  print(log);
+  await LocalDB.saveLog(log);
+}
 
 List<Color> _colors = List();
 Random _rand = Random(new DateTime.now().millisecondsSinceEpoch);

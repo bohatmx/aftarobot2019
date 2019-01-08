@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
-class LandmarkMap extends StatefulWidget {
+class VehiclesMap extends StatefulWidget {
   @override
-  _LandmarkMapState createState() => _LandmarkMapState();
+  _VehiclesMapState createState() => _VehiclesMapState();
 }
 
-class _LandmarkMapState extends State<LandmarkMap> {
+class _VehiclesMapState extends State<VehiclesMap> {
   List<LandmarkDTO> landmarks;
   VehicleAppBloc bloc = VehicleAppBloc();
   GoogleMapController _mapController;

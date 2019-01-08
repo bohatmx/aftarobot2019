@@ -59,16 +59,16 @@ class _LandingPageState extends State<LandingPage> {
           },
         )));
 
-    childButtons.add(UnicornButton(
-        hasLabel: true,
-        labelText: "Route Map",
-        currentButton: FloatingActionButton(
-          heroTag: "routeMap",
-          backgroundColor: Colors.purple,
-          mini: true,
-          child: Icon(Icons.map),
-          onPressed: _startLandmarkMap,
-        )));
+//    childButtons.add(UnicornButton(
+//        hasLabel: true,
+//        labelText: "Route Map",
+//        currentButton: FloatingActionButton(
+//          heroTag: "routeMap",
+//          backgroundColor: Colors.purple,
+//          mini: true,
+//          child: Icon(Icons.map),
+//          onPressed: _startLandmarkMap,
+//        )));
 
     childButtons.add(UnicornButton(
         hasLabel: true,
@@ -81,7 +81,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   void _findCommuterRequests() async {
-    print('### 🔵 _findCommuterRequests - NOT IMPLEMENTED yet');
+    printLog('### 🔵 _findCommuterRequests - NOT IMPLEMENTED yet');
   }
 
   void _startLandmarkMap() {

@@ -29,7 +29,7 @@ class _RegistrationState extends State<Registration> {
   }
 
   void onAssociationTapped(AssociationDTO ass) {
-    print('### association selected : ${ass.associationName}');
+    printLog('### association selected : ${ass.associationName}');
 
     Navigator.push(
         context,
@@ -47,7 +47,7 @@ class _RegistrationState extends State<Registration> {
     ]);
     return WillPopScope(
       onWillPop: () {
-        print('ignoring pleas to leave The Roach Motel');
+        printLog('ignoring pleas to leave The Roach Motel');
       },
       child: Scaffold(
         appBar: AppBar(
@@ -127,7 +127,7 @@ class VehicleSelectorState extends State<VehicleSelector>
   void _getVehicles() async {
     vehicles =
         await VehicleAppBloc.getVehiclesFirstTime(widget.associationPath);
-    print(
+    printLog(
         '+++ have found vehicles using static bloc call, list has: ${vehicles.length}');
     setState(() {});
   }
@@ -154,7 +154,7 @@ class VehicleSelectorState extends State<VehicleSelector>
   }
 
   _registerVehicle(VehicleDTO v) async {
-    print('\n\n### 🎾 --- registerVehicle ....... ${v.vehicleReg}');
+    printLog('\n\n### 🎾 --- registerVehicle ....... ${v.vehicleReg}');
     AppSnackbar.showSnackbarWithProgressIndicator(
         scaffoldKey: _key,
         message: 'Registering vehicle',
@@ -162,7 +162,7 @@ class VehicleSelectorState extends State<VehicleSelector>
         backgroundColor: Colors.black);
 
     await VehicleAppBloc.registerVehicleOnDevice(v);
-    print(
+    printLog(
         '### 🎾 --- registerVehicle DONE! popping twice ....... ${v.vehicleReg}');
     _key.currentState.removeCurrentSnackBar();
     Navigator.pop(context);

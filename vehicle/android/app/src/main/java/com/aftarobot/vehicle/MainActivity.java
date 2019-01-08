@@ -15,7 +15,6 @@ import com.google.android.gms.nearby.messages.MessageListener;
 import com.google.android.gms.nearby.messages.MessagesClient;
 import com.google.android.gms.nearby.messages.Strategy;
 import com.google.android.gms.nearby.messages.SubscribeOptions;
-import com.google.firebase.firestore.GeoPoint;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -37,10 +36,11 @@ public class MainActivity extends FlutterActivity {
     Message mMessage;
     private static final String TAXI_MESSAGE_CHANNEL = "aftarobot/messages";
     private static final String GEO_QUERY_CHANNEL = "aftarobot/geoQuery";
-    private static final String VEHICLE_LOCATION_CHANNEL = "aftarobot/vehicleLocation";
+    private static final String ADD_VEHICLE_LOCATION_CHANNEL = "aftarobot/vehicleLocation";
+    private static final String FIND_VEHICLE_LOCATIONS_CHANNEL = "aftarobot/findVehicleLocations";
     EventChannel.EventSink messageEvents;
     MethodChannel.Result mResult;
-    MethodChannel.Result mVehicleLocationResult;
+    MethodChannel.Result mVehicleLocationResult, mVehicleSearchResult;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,26 +48,6 @@ public class MainActivity extends FlutterActivity {
 
         Log.d(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Taxi Message Channel ...");
 
-//        new EventChannel(getFlutterView(), GEO_QUERY_RESULTS_CHANNEL).setStreamHandler(
-//                new EventChannel.StreamHandler() {
-//
-//                    @Override
-//                    public void onListen(Object arguments, EventChannel.EventSink events) {
-//                        Log.d(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD GEO_QUERY_RESULTS_CHANNEL ready to go ... waiting to publish and subscribe. - "
-//                                + new Date().toString());
-//                        geoQueryEvents = events;
-//                        Log.d(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### ... wait for request to come in .... ");
-//
-//
-//                        Log.d(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### MessagesClient published and subscribed!!! ");
-//                    }
-//
-//                    @Override
-//                    public void onCancel(Object arguments) {
-//                        Log.d(TAG, "--- onCancel:  \uD83C\uDFBE  \uD83C\uDFBE cancelling EventChannel ..." + new Date().toString());
-//                    }
-//                }
-//        );
         new EventChannel(getFlutterView(), TAXI_MESSAGE_CHANNEL).setStreamHandler(
                 new EventChannel.StreamHandler() {
 
@@ -108,7 +88,6 @@ public class MainActivity extends FlutterActivity {
                     public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
                         mResult = result;
                         Object args = call.arguments;
-
                         Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
                         GeoRequest geoRequest = G.fromJson(args.toString(), GeoRequest.class);
                         if (call.method.equalsIgnoreCase("findLandmarks")) {
@@ -119,36 +98,70 @@ public class MainActivity extends FlutterActivity {
                     }
                 });
         ///
-        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up VEHICLE_LOCATION_CHANNEL  ...");
-        new MethodChannel(getFlutterView(), VEHICLE_LOCATION_CHANNEL).setMethodCallHandler(
+        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up ADD_VEHICLE_LOCATION_CHANNEL  ...");
+        new MethodChannel(getFlutterView(), ADD_VEHICLE_LOCATION_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
                     public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
                         mVehicleLocationResult = result;
                         Object args = call.arguments;
-
                         Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
-                        VehicleLocationRequest geoRequest = G.fromJson(args.toString(), VehicleLocationRequest.class);
+                        AddVehicleLocationRequest geoRequest = G.fromJson(args.toString(), AddVehicleLocationRequest.class);
                         if (call.method.equalsIgnoreCase("writeVehicleLocation")) {
                             writeVehicleLocation(geoRequest);
                         } else {
-                            mResult.error("Method not right", "Error", "Like, Fucked!");
+                            result.error("Method not right", "Error", "Like, Fucked!");
+                        }
+                    }
+                });
+        ///
+        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up FIND_VEHICLE_LOCATIONS_CHANNEL  ...");
+        new MethodChannel(getFlutterView(), FIND_VEHICLE_LOCATIONS_CHANNEL).setMethodCallHandler(
+                new MethodChannel.MethodCallHandler() {
+                    @Override
+                    public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
+                        mVehicleSearchResult = result;
+                        Object args = call.arguments;
+                        Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
+                        SearchVehiclesRequest geoRequest = G.fromJson(args.toString(), SearchVehiclesRequest.class);
+                        if (call.method.equalsIgnoreCase("findVehicleLocations")) {
+                            findVehicleLocations(geoRequest);
+                        } else {
+                            mVehicleSearchResult.error("Method not right", "Error", "Like, Fucked!");
                         }
                     }
                 });
     }
 
-    void writeVehicleLocation(VehicleLocationRequest request) {
-        Log.d(TAG, "writeVehicleLocation: ***************************** ");
-        GeoPointHelper.writeVehicleLocation(request.vehicleID, request.latitude, request.longitude, new VehiclePointListener() {
+    void findVehicleLocations(SearchVehiclesRequest request) {
+        VehicleLocationSearch.findVehicleLocations(request.minutes,
+                request.latitude, request.longitude, request.radius,new VehicleLocationListener() {
+
             @Override
-            public void onGeoPointWritten() {
+            public void onVehiclesFound(List<VehicleLocation> vehicleLocations) {
+                Log.d(TAG, "onVehiclesFound: \uD83D\uDD35  \uD83D\uDD35  +++ send found vehicles to Flutter: " + vehicleLocations.size());
+                Log.d(TAG, "onVehiclesFound, details, details. what is sent to flutter: ".concat(G.toJson(vehicleLocations)).concat("\n\n"));
+                mVehicleSearchResult.success(G.toJson(vehicleLocations));
+            }
+
+            @Override
+            public void onError(String message) {
+                Log.e(TAG, "onError: ".concat(message) );
+                mVehicleSearchResult.error("Failed to find vehicles", message, "Cooked!");
+            }
+        });
+    }
+    void writeVehicleLocation(AddVehicleLocationRequest request) {
+        Log.d(TAG, "writeVehicleLocation: ⚠️ ********* request: " + G.toJson(request));
+        GeoPointHelper.writeVehicleLocation(request.vehiclePath, request.latitude, request.longitude, new AddVehicleLocationListener() {
+            @Override
+            public void onVehicleLocationAdded() {
                 String date = new Date().toString();
-                Log.d(TAG, "onGeoPointWritten: +++ sending geoVehicleLocations success result back to Flutter at: " + date);
+                Log.d(TAG, "onVehicleLocationAdded: +++ sending geoVehicleLocations success result back to Flutter at: " + date);
                 try {
                     mVehicleLocationResult.success("Vehicle location written to Firestore: geoVehicleLocations: " + date);
                 } catch (IllegalStateException e) {
-                    Log.e(TAG, "onGeoPointWritten:  ⚠️ ⚠️IllegalStateException - tried to send response back to Flutter ::  ⚠️ ⚠️",e );
+                    Log.e(TAG, "onVehicleLocationAdded:  ⚠️ ⚠️IllegalStateException - tried to send response back to Flutter ::  ⚠️ ⚠️",e );
                 }
             }
 
@@ -161,13 +174,13 @@ public class MainActivity extends FlutterActivity {
     }
     void findLandmarks(GeoRequest request) {
         Log.d(TAG, "findLandmarks: #################################################################");
-        GeoPointHelper.findLandmarksWithin(request.latitude, request.longitude, request.radius, new GeoPointListener() {
+        GeoPointHelper.findLandmarksWithin(request.latitude, request.longitude, request.radius, new LandmarkGeoPointListener() {
             @Override
-            public void onGeoPointsFound(List<HashMap<String,String>> geoPoints) {
+            public void onLandmarkPointsFound(List<HashMap<String,String>> geoPoints) {
                 if (geoPoints.isEmpty()) {
                     Log.d(TAG, "NO GEO POINTS FOUND:   \uD83D\uDD35,  like zero, zilch, nada!");
                 } else {
-                    Log.d(TAG, "\n\n................. HOOO - FUCKING - RAY!!! *** onGeoPointsFound:  ✅  ✅  ✅ " + geoPoints.size()
+                    Log.d(TAG, "\n\n................. HOOO - FUCKING - RAY!!! *** onLandmarkPointsFound:  ✅  ✅  ✅ " + geoPoints.size()
                             + " ... sending to Flutter as JSON data\n\n");
                     mResult.success(G.toJson(geoPoints));
 
@@ -280,9 +293,9 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
-    private class VehicleLocationRequest {
+    private class AddVehicleLocationRequest {
         double latitude,longitude;
-        String vehicleID;
+        String vehiclePath;
 
         public double getLatitude() {
             return latitude;
@@ -300,12 +313,49 @@ public class MainActivity extends FlutterActivity {
             this.longitude = longitude;
         }
 
-        public String getVehicleID() {
-            return vehicleID;
+        public String getVehiclePath() {
+            return vehiclePath;
         }
 
-        public void setVehicleID(String vehicleID) {
-            this.vehicleID = vehicleID;
+        public void setVehiclePath(String vehiclePath) {
+            this.vehiclePath = vehiclePath;
+        }
+    }
+
+    private class SearchVehiclesRequest {
+        double latitude,longitude, radius;
+        int minutes;
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(double latitude) {
+            this.latitude = latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(double longitude) {
+            this.longitude = longitude;
+        }
+
+        public double getRadius() {
+            return radius;
+        }
+
+        public void setRadius(double radius) {
+            this.radius = radius;
+        }
+
+        public int getMinutes() {
+            return minutes;
+        }
+
+        public void setMinutes(int minutes) {
+            this.minutes = minutes;
         }
     }
 }

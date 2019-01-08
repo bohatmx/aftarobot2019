@@ -1,15 +1,10 @@
 package com.aftarobot.vehicle;
 
-import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -21,31 +16,25 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-
-import io.flutter.plugin.common.EventChannel;
 
 public class GeoPointHelper {
     private static FirebaseFirestore fs = FirebaseFirestore.getInstance();
 
-    static void writeVehicleLocation(String vehicleID,
-                                     double latitude, double longitude,
-                                     final VehiclePointListener listener) {
-        Log.d(TAG, "\n writeVehicleLocation: ***  ℹ️ vehicleID: " + vehicleID);
+    static void writeVehicleLocation(String vehiclePath, double latitude, double longitude, final AddVehicleLocationListener listener) {
+        Log.d(TAG, "writeVehicleLocation: ***  ℹ️ vehiclePath: " + vehiclePath);
         CollectionReference geoFirestoreRef = fs.collection("geoVehicleLocations");
         final GeoFirestore geoFirestore = new GeoFirestore(geoFirestoreRef);
 
-        GeoPoint point = new GeoPoint(latitude, longitude);
-        long time = new Date().getTime();
-        String id = vehicleID + "@" + time;
+        String time = "" + new Date().getTime();
+        String modifiedPath = time + "@" + vehiclePath.replace("/", "@");
 
-        geoFirestore.setLocation(id, point, new GeoFirestore.CompletionListener() {
+        GeoPoint point = new GeoPoint(latitude, longitude);
+        geoFirestore.setLocation(modifiedPath, point, new GeoFirestore.CompletionListener() {
             @Override
             public void onComplete(Exception e) {
                 if (e == null) {
-                    listener.onGeoPointWritten();
+                    listener.onVehicleLocationAdded();
                 } else {
-                    Log.e(TAG, "onComplete: ERROR writing vehicle location", e );
                     listener.onError(e.getMessage());
                 }
             }
@@ -55,7 +44,7 @@ public class GeoPointHelper {
     static void findLandmarksWithin(final double latitude,
                                     final double longitude,
                                     final double radius,
-                                    final GeoPointListener listener) {
+                                    final LandmarkGeoPointListener listener) {
 
         Log.d(TAG, "findLandmarksWithin: ***  ℹ️ setting up GeoFirestore for geo query  ℹ️");
         CollectionReference geoFirestoreRef = fs.collection("geoQueryLocations");
@@ -69,7 +58,7 @@ public class GeoPointHelper {
     private static void searchGeoPoints(double latitude,
                                         double longitude,
                                         double radius,
-                                        final GeoPointListener listener, GeoFirestore geoFirestore) {
+                                        final LandmarkGeoPointListener listener, GeoFirestore geoFirestore) {
         Log.d(TAG, "\n\n---- ****** searchGeoPoints: \uD83D\uDCCD \uD83D\uDCCD starting geo search ...............");
 
         final HashMap<String, GeoPoint> map = new HashMap<>();
@@ -104,7 +93,7 @@ public class GeoPointHelper {
                     list.add(mapx);
                 }
                 Log.d(TAG, "onGeoQueryReady:   ✅ - returning " + list.size() + " geoPoints");
-                listener.onGeoPointsFound(list);
+                listener.onLandmarkPointsFound(list);
             }
 
             @Override

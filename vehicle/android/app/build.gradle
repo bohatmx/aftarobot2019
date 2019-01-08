@@ -64,5 +64,12 @@ dependencies {
     implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.1.1'
     implementation 'com.squareup.okio:okio:1.14.0'
 
+    def work_version = "1.0.0-beta01"
+
+    implementation "android.arch.work:work-runtime:$work_version" // use -ktx for Kotlin+Coroutines
+    implementation "android.arch.work:work-rxjava2:$work_version"
+    // optional - Test helpers
+    androidTestImplementation "android.arch.work:work-testing:$work_version"
+
 }
 apply plugin: 'com.google.gms.google-services'

@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:aftarobotlibrary3/api/sharedprefs.dart';
+import 'package:aftarobotlibrary3/api/storage_api.dart';
 import 'package:aftarobotlibrary3/data/associationdto.dart';
 import 'package:aftarobotlibrary3/data/geofence_event.dart';
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
 import 'package:aftarobotlibrary3/data/vehicle_logdto.dart';
 import 'package:aftarobotlibrary3/data/vehicledto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
+import 'package:android_alarm_manager/android_alarm_manager.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -18,9 +20,9 @@ import 'package:latlong/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 //✅  🎾 🔵  📍   ℹ️
-class VehicleAppBloc {
+class VehicleAppBloc implements UploadListener {
   VehicleAppBloc() {
-    print('+++ ℹ️ +++  ++++++++++++++++++ initializing Vehicle App Bloc');
+    printLog('+++ ℹ️ +++  ++++++++++++++++++ initializing Vehicle App Bloc');
     _setBackgroundLocation();
     _initialize();
   }
@@ -33,6 +35,7 @@ class VehicleAppBloc {
   static const LOITERING_DELAY = 30000; //dwell in milliseconds :: 30 seconds
   static const GEOFENCE_RADIUS = 200.0; //radius in metres
   static const GEO_QUERY_RADIUS = 20.0; //radius in KM
+  static const VEHICLE_SEARCH_MINUTES = 5; //radius in KM
 
   StreamSubscription _messagesSubscription;
 
@@ -98,16 +101,34 @@ class VehicleAppBloc {
   }
 
   void _initialize() async {
-    print('### initialise - 🔵 - check if vehicle has been saved in Prefs');
+    printLog('### initialise - 🔵 - check if vehicle has been saved in Prefs');
     _appVehicle = await getVehicleForApp();
     if (_appVehicle == null) {
-      print('###  ℹ️ App has no vehicle set up yet');
+      printLog('###  ℹ️ App has no vehicle set up yet');
       await getAssociations();
     } else {
-      print('###   ℹ️ ℹ️ ℹ️ App has vehicle ${_appVehicle.vehicleReg} set up.');
+      printLog(
+          '###   ℹ️ ℹ️ ℹ️ App has vehicle ${_appVehicle.vehicleReg} set up.');
       await signInAnonymously();
       getCurrentLocation();
+      //_initializeLogUploadAlarm();
     }
+  }
+
+  static Future initializeLogUploadAlarm() async {
+    printLog(
+        '\n+++  ℹ️ ℹ️ ℹ️ initialize Alarm Manager for uploading log files\n');
+    await AndroidAlarmManager.initialize();
+  }
+
+  static Future scheduleAlarm() async {
+    final int helloAlarmID = 0;
+    await AndroidAlarmManager.periodic(
+        const Duration(minutes: 10), helloAlarmID, () {
+      printLog(
+          '\n\n  📍  📍  📍 Alarm manager triggered upload of log file ...\n');
+      StorageAPI.uploadLogFile(listener: null);
+    });
   }
 
   void _setBackgroundLocation() {
@@ -117,6 +138,7 @@ class VehicleAppBloc {
     bg.BackgroundGeolocation.onActivityChange(_onActivityChanged);
     bg.BackgroundGeolocation.onProviderChange(_onProviderChange);
     bg.BackgroundGeolocation.onConnectivityChange(_onConnectivityChange);
+    bg.BackgroundGeolocation.onSchedule(_onVehicleLogSchedule);
     _setGeofencing();
 
     // 2.  Configure the plugin
@@ -127,43 +149,62 @@ class VehicleAppBloc {
             startOnBoot: true,
             debug: true,
             geofenceProximityRadius: 5000,
-            logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+            schedule: [
+              '1-7 4:00-22:00', // Sun-Sat: 4:00am to 10:00pm
+            ],
+            logLevel: bg.Config.LOG_LEVEL_INFO,
             reset: true))
         .then((bg.State state) {
-      print('## 📍 ODOMETER: ${state.odometer}');
-      print('## 📍 📍 BackgroundGeolocation state :: ${state.toMap()} 📍 📍 ');
+      printLog('## 📍 ODOMETER: ${state.odometer}');
+      printLog(
+          '## 📍 📍 BackgroundGeolocation state :: ${state.toMap()} 📍 📍 ');
     });
 
     //bg.BackgroundGeolocation.start();
     //bg.BackgroundGeolocation.startGeofences();
-    print('### ✅ background location set. will start tracking ...');
+    printLog('### ✅ background location set. will start tracking ...');
+  }
+
+  _onVehicleLogSchedule(bg.State state) async {
+    if (state.enabled) {
+      printLog(
+          '\n\n\n[onSchedule] 🔵 🔵 🔵 vehicle log scheduled. get location and add log to Firestore\n');
+      BackgroundGeolocation.getCurrentPosition().then((loc) {
+        _currentLocation = loc;
+        _locationController.sink.add(_currentLocation);
+        _writeVehicleLocationLog();
+      });
+    } else {
+      printLog('\n\n[onSchedule]  🎾 scheduled stop tracking');
+    }
   }
 
   _setGeofencing() async {
-    print('+++  🎾 setting up geofencing background listeners ...');
+    printLog('+++  🎾 setting up geofencing background listeners ...');
     bg.BackgroundGeolocation.onGeofence(_onGeofenceEvent);
     bg.BackgroundGeolocation.onGeofencesChange((changeEvent) {
-      print('\n\n +++  🔵 List of ACTIVATED GEOFENCES');
+      printLog('\n\n +++  🔵 List of ACTIVATED GEOFENCES');
       changeEvent.on.forEach((Geofence geofence) {
         //createGeofenceMarker(geofence)
-        print('+++ 🔵  ${geofence.toMap()} extras: ${geofence.extras}');
+        printLog('+++ 🔵  ${geofence.toMap()} extras: ${geofence.extras}');
       });
 
       // Remove map circles
       changeEvent.off.forEach((String identifier) {
         //removeGeofenceMarker(identifier);
-        print('\n\n +++  ⚠️ List of DE- ACTIVATED GEOFENCES');
-        print(' ⚠️ $identifier -- DE-ACTIVATED ----------');
+        printLog('\n\n +++  ⚠️ List of DE- ACTIVATED GEOFENCES');
+        printLog(' ⚠️ $identifier -- DE-ACTIVATED ----------');
       });
     });
   }
 
   _onGeofenceEvent(GeofenceEvent event) async {
     if (_appVehicle == null) {
-      print('\n---  ⚠️ vehicle is null, geofence event will not be recorded');
+      printLog(
+          '\n---  ⚠️ vehicle is null, geofence event will not be recorded');
       return null;
     }
-    print('\n\n+++  🎾 add geofence event to Firestore');
+    printLog('\n\n+++  🎾 add geofence event to Firestore');
     var name;
     _landmarks.forEach((m) {
       if (m.landmarkID == event.identifier) {
@@ -185,51 +226,56 @@ class VehicleAppBloc {
       confidence: event.location.activity.confidence,
     );
 
-    await fs.collection('geofenceEvents').add(m.toJson());
-    print(
+    LandmarkDTO landmark;
+    _landmarks.forEach((m) {
+      if (event.identifier == m.landmarkID) {
+        landmark = m;
+      }
+    });
+    //write geofence event to landmark
+    await fs
+        .document(landmark.path)
+        .collection('geofenceEvents')
+        .add(m.toJson());
+    printLog(
         '+++ 🔵 +++ geofence event recorded for landmark: $name id: ${event.identifier} vehicle: ${_appVehicle.vehicleReg} action: ${m.action} at ${m.timestamp}');
     _geofenceEvents.add(m);
     _arGeofenceController.sink.add(_geofenceEvents);
   }
 
   _onMotionChanged(bg.Location location) {
-    print('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
+    printLog('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
     _currentLocation = location;
     _locationController.sink.add(location);
   }
 
   _onConnectivityChange(bg.ConnectivityChangeEvent event) {
-    print(
+    printLog(
         '+++++++++++++++ _onConnectivityChange connected: ${event.connected}');
   }
 
   _onActivityChanged(bg.ActivityChangeEvent event) {
-    print('#############  ℹ️ _onActivityChanged: ${event.toMap()}');
+    printLog('#############  ℹ️ _onActivityChanged: ${event.toMap()}');
   }
 
   _onLocation(bg.Location location) {
-    print('\n\n@@@@@@@@@@@ ✅  -- onLocation:  isMoving? ${location.isMoving}');
-    print('${location.toMap()}');
+    printLog(
+        '\n\n@@@@@@@@@@@ ✅  -- onLocation:  isMoving? ${location.isMoving}');
+    printLog('${location.toMap()}');
+
     _currentLocation = location;
     _locationController.sink.add(location);
     _writeVehicleLocationLog();
-//
-//    print('### ℹ️ ℹ️ start searching for nearby landmarks, radius: $Radius');
-//    searchForLandmarks(
-//      latitude: _currentLocation.coords.latitude,
-//      longitude: _currentLocation.coords.longitude,
-//      radius: Radius,
-//    );
   }
 
   _onProviderChange(ProviderChangeEvent event) {
-    print('_onProviderChange --- ');
+    printLog('_onProviderChange --- ');
   }
 
   _writeVehicleLocationLog() async {
-    print('### 📍📍 writing vehicle location log entry ......');
+    printLog('### 📍📍 writing vehicle location log entry ......');
     if (_appVehicle == null) {
-      print('#### vehicle is null. not tracking ....');
+      printLog('#### vehicle is null. not tracking ....');
     } else {
       var log = VehicleLogDTO(
         date: DateTime.now().toUtc().millisecondsSinceEpoch,
@@ -246,7 +292,8 @@ class VehicleAppBloc {
           .collection('vehicleLogs')
           .add(log.toJson());
 
-      print('\n\n\n### 🔵 vehicle location log has been written to Firestore: '
+      printLog(
+          '\n\n\n### 🔵 vehicle location log has been written to Firestore: '
           '${ref.path} vehicle: ${_appVehicle.vehicleReg}\n\n');
 
       _writeVehicleGeoLocation(
@@ -260,24 +307,24 @@ class VehicleAppBloc {
   bool isBusy = false;
   void _writeVehicleGeoLocation(double latitude, double longitude) async {
     if (isBusy) {
-      print('⚠️⚠️⚠️⚠️⚠️ _writeVehicleGeoLocation is BUSY! ... quit.');
+      printLog('⚠️⚠️⚠️⚠️⚠️ _writeVehicleGeoLocation is BUSY! ... quit.');
       return;
     }
-    print(
+    printLog(
         '\n\n+++  🔵 VehicleAppBloc: writeVehicleLocation over the channel to the WildSide .......');
     var map = {
       'latitude': latitude,
       'longitude': longitude,
-      'vehicleID': _appVehicle.vehicleID,
+      'vehiclePath': _appVehicle.path,
     };
     var string = json.encode(map);
-    print("⚠️... sending $string to WildSide for vehicle location recording");
+    printLog(
+        "⚠️... sending $string to WildSide for vehicle location recording");
     try {
       isBusy = true;
-
       final String result = await vehicleLocationChannel.invokeMethod(
           'writeVehicleLocation', string);
-      print('+++ 🔵 vehicle location request response :: $result');
+      printLog('+++ 🔵 vehicle location request response :: $result');
       isBusy = false;
       isSearchingForLandmarks = false;
       searchForLandmarks(
@@ -286,9 +333,9 @@ class VehicleAppBloc {
         radius: 5.0,
       );
     } on PlatformException catch (e) {
-      print(
+      printLog(
           'Things went south in a hurry, Jack!  ⚠️ ⚠️ Message listening not so hot ..');
-      print(e);
+      printLog(e.toString());
     }
   }
 
@@ -303,7 +350,7 @@ class VehicleAppBloc {
       _associations.add(ass);
     });
     _assocController.sink.add(_associations);
-    print('###  - 🔵 - associations found : ${_associations.length}');
+    printLog('###  - 🔵 - associations found : ${_associations.length}');
   }
 
   static Future<List<AssociationDTO>> getAssociationsFirstTime() async {
@@ -317,12 +364,12 @@ class VehicleAppBloc {
       var ass = AssociationDTO.fromJson(doc.data);
       list.add(ass);
     });
-    print('###  - 🔵 - associations found : ${list.length}');
+    printLog('###  - 🔵 - associations found : ${list.length}');
     return list;
   }
 
   Future<List<VehicleDTO>> getVehicles(String path) async {
-    print('+++ getVehicles for association: $path');
+    printLog('+++ getVehicles for association: $path');
 
     var qs = await fs.document(path).collection('vehicles').getDocuments();
 
@@ -333,13 +380,13 @@ class VehicleAppBloc {
     });
 
     _vehicleController.sink.add(_vehicles);
-    print(
+    printLog(
         '###  - 🔵 - vehicles found: ${_vehicles.length} for association $path');
     return _vehicles;
   }
 
   static Future<List<VehicleDTO>> getVehiclesFirstTime(String path) async {
-    print('+++ getVehicles for association: $path');
+    printLog('+++ getVehicles for association: $path');
     Firestore fsx = Firestore.instance;
     var qs = await fsx.document(path).collection('vehicles').getDocuments();
 
@@ -349,13 +396,14 @@ class VehicleAppBloc {
       list.add(v);
     });
 
-    print('###  - 🔵 - vehicles found: ${list.length} for association $path');
+    printLog(
+        '###  - 🔵 - vehicles found: ${list.length} for association $path');
     return list;
   }
 
   void _calculateDistancesBetweenLandmarks() {}
   Future getCurrentLocation() async {
-    print(
+    printLog(
         '###  🎾 getCurrentLocation -- ............ and then search for landmarks ..............');
     //check location permission
 
@@ -365,7 +413,8 @@ class VehicleAppBloc {
           await bg.BackgroundGeolocation.getCurrentPosition();
       _currentLocation = location;
 
-      print('############# searchForLandmarks: Should this be done here??????');
+      printLog(
+          '############# searchForLandmarks: Should this be done here??????');
       searchForLandmarks(
           latitude: _currentLocation.coords.latitude,
           longitude: _currentLocation.coords.longitude,
@@ -374,14 +423,14 @@ class VehicleAppBloc {
   }
 
   Future<bool> _requestPermission() async {
-    print('\n\n######################### requestPermission');
+    printLog('\n\n######################### requestPermission');
     try {
       Map<PermissionGroup, PermissionStatus> permissions =
           await PermissionHandler()
               .requestPermissions([PermissionGroup.location]);
-      print(permissions);
+      printLog(permissions.toString());
 
-      print("\n########### permission request for location is:  ✅ ");
+      printLog("\n########### permission request for location is:  ✅ ");
       if (permissions.containsKey(PermissionGroup.location)) {
         if (permissions[PermissionGroup.location] == PermissionStatus.granted) {
           return true;
@@ -391,13 +440,13 @@ class VehicleAppBloc {
       }
       return false;
     } catch (e) {
-      print(e);
+      printLog(e);
       throw e;
     }
   }
 
   Future<bool> _checkPermission() async {
-    print('\n\n######################### checkPermission');
+    printLog('\n\n######################### checkPermission');
     try {
       PermissionStatus locationPermission = await PermissionHandler()
           .checkPermissionStatus(PermissionGroup.location);
@@ -405,13 +454,56 @@ class VehicleAppBloc {
       if (locationPermission == PermissionStatus.denied) {
         return await _requestPermission();
       } else {
-        print(
+        printLog(
             "***************** location permission status is:  ✅  ✅ $locationPermission");
         return true;
       }
     } catch (e) {
-      print(e);
+      printLog(e);
       return false;
+    }
+  }
+
+  bool isSearchingForVehicleLocations = false;
+  MethodChannel vehicleSearchChannel =
+      MethodChannel('aftarobot/findVehicleLocations');
+
+  Future searchForVehiclesAroundUs(
+      {double latitude, double longitude, double radius, int minutes}) async {
+    if (isSearchingForVehicleLocations) {
+      printLog(
+          '\nsearchForVehiclesAroundUs ⚠️ ⚠️ we are still busy .... sorry!');
+      return null;
+    }
+    if (latitude == null || longitude == null) {
+      latitude = _currentLocation.coords.latitude;
+      longitude = _currentLocation.coords.longitude;
+    }
+    if (radius == null) {
+      radius = GEO_QUERY_RADIUS;
+    }
+    if (minutes == null) {
+      minutes = VEHICLE_SEARCH_MINUTES;
+    }
+    isSearchingForVehicleLocations = true;
+    var searchRequest = {
+      'latitude': latitude,
+      'longitude': longitude,
+      'radius': radius,
+      'minutes': minutes
+    };
+    //use method channel to find vehicles around us ----
+    printLog(
+        '\n###  ⚠️ ⚠️ Find vehicles around us. Limit by time ...$minutes minutes.');
+    try {
+      var result = await vehicleSearchChannel.invokeMethod(
+          'findVehicleLocations', json.encode(searchRequest));
+      printLog('\n\n🔵 🔵 🔵 VEHICLES FOUND AROUND US:\n');
+      printLog(result);
+      isSearchingForVehicleLocations = false;
+    } on PlatformException catch (e) {
+      isSearchingForVehicleLocations = false;
+      printLog(e.toString());
     }
   }
 
@@ -419,18 +511,18 @@ class VehicleAppBloc {
   void searchForLandmarks(
       {double latitude, double longitude, double radius}) async {
     if (isSearchingForLandmarks) {
-      print(
+      printLog(
           '########## ⚠️⚠️⚠️⚠️ ... isSearchingForLandmarks : $isSearchingForLandmarks, quit!');
       return;
     }
-    print(
+    printLog(
         '\n\n🔵  🔵  VehicleBloc: start geo query .... ........................');
     isSearchingForLandmarks = true;
     if (_currentLocation == null) {
       await getCurrentLocation();
     }
     if (_currentLocation == null) {
-      print(
+      printLog(
           '\n\n########## ⚠️⚠️⚠️⚠️ --- _currentLocation is NULL! What the Fuck????\n\n');
       throw Exception('_currentLocation is NULL! What the Fuck????');
     }
@@ -450,10 +542,10 @@ class VehicleAppBloc {
       };
       var result = await geoQueryChannel.invokeMethod(
           'findLandmarks', json.encode(args));
-      print('\n\nVehicleBloc: Result back from geoQuery ....  ✅ ');
+      printLog('\n\nVehicleBloc: Result back from geoQuery ....  ✅ ');
 
       List<dynamic> list = json.decode(result);
-      print('. ✅ ... number of searched geoPoints returned: ${list.length}');
+      printLog('. ✅ ... number of searched geoPoints returned: ${list.length}');
 
       list.forEach((t) {
         if (t is Map) {
@@ -465,10 +557,10 @@ class VehicleAppBloc {
       bg.BackgroundGeolocation.startGeofences();
       isSearchingForLandmarks = false;
     } on PlatformException catch (e) {
-      print('\nVehicleBloc: Why is the result coming back twice??????????? '
+      printLog('\nVehicleBloc: Why is the result coming back twice??????????? '
           '- will check for already located landmarks: ${_landmarks.length}');
       isSearchingForLandmarks = false;
-      print(e);
+      printLog(e.toString());
       throw Exception(e);
     }
   }
@@ -478,8 +570,8 @@ class VehicleAppBloc {
     if (ds.exists) {
       var lm = LandmarkDTO.fromJson(ds.data);
       _landmarks.add(lm);
-      _setGeoFence(lm);
-      print(
+      _addLandmarkGeoFence(lm);
+      printLog(
           ' 🔵 ## LANDMARK ::: ✅  #${lm.rankSequenceNumber}  ${lm.landmarkName} ');
     }
 
@@ -488,8 +580,9 @@ class VehicleAppBloc {
     _landmarksController.sink.add(_landmarks);
   }
 
-  void _setGeoFence(LandmarkDTO landmark) async {
-    print('\n\n+++ ℹ️ℹ️ℹ️ℹ️ℹ️  adding geofence for ${landmark.landmarkName}');
+  void _addLandmarkGeoFence(LandmarkDTO landmark) async {
+    printLog(
+        '\n\n+++ ℹ️ℹ️ℹ️ℹ️ℹ️  adding geofence for ${landmark.landmarkName}');
 
     bg.BackgroundGeolocation.addGeofence(Geofence(
             identifier: landmark.landmarkID,
@@ -505,52 +598,72 @@ class VehicleAppBloc {
             notifyOnEntry: false,
             notifyOnExit: false))
         .then((ok) {
-      print('+++ ℹ️ℹ️ℹ️ℹ️ℹ️ successfule geofence set up: $ok');
+      printLog('+++ ℹ️ℹ️ℹ️ℹ️ℹ️ successfule geofence set up: $ok');
     });
 
-    print('+++ ✅ +++ geofence added for ${landmark.landmarkName}');
+    printLog('+++ ✅ +++ geofence added for ${landmark.landmarkName}');
   }
 
   void listenForCommuterMessages() {
-    print('+++  🔵 starting commuter message channel .......');
+    printLog('+++  🔵 starting commuter message channel .......');
     try {
       _messagesSubscription =
           messageStream.receiveBroadcastStream().listen((message) {
-        print('### - 🔵 - message received :: ${message.toString()}');
-        print('### - 📍 - place arriving message on the stream');
+        printLog('### - 🔵 - message received :: ${message.toString()}');
+        printLog('### - 📍 - place arriving message on the stream');
         //todo check if this is from a commuter
         _nearbyMessagesController.sink.add(message.toString());
       });
     } on PlatformException {
       _messagesSubscription.cancel();
-      print(
+      printLog(
           'Things went south in a hurry, Jack!  ⚠️ ⚠️ Message listening not so hot ..');
     }
   }
 
   Future signInAnonymously() async {
-    print('📍 checking current user ..... 📍 ');
+    printLog('📍 checking current user ..... 📍 ');
     var user = await auth.currentUser();
 
     if (user == null) {
-      print('ℹ️ signing in ..... .......');
+      printLog('ℹ️ signing in ..... .......');
       user = await auth.signInAnonymously();
       return null;
     } else {
-      print('User already signed in: 🔵 🔵 🔵 ');
+      printLog('User already signed in: 🔵 🔵 🔵 ');
       return null;
     }
   }
 
   void publishMessage() {
-    print('+++ publishMessage ');
+    printLog('+++ publishMessage ');
   }
 
   static Future registerVehicleOnDevice(VehicleDTO v) async {
-    print('### 📍📍--- registerVehicle ....... ${v.vehicleReg}');
+    printLog('### 📍📍--- registerVehicle ....... ${v.vehicleReg}');
     await Prefs.saveVehicle(v);
-    print(
+    printLog(
         '### 🔵 --- vehicle registered on device : ${v.vehicleReg} ... getting current location');
+    return null;
+  }
+
+  @override
+  onComplete(String url, String totalByteCount, String bytesTransferred) {
+    print(
+        '######### COMPLETE: uploaded log file: bytesTransferred: $bytesTransferred of totalByteCount: $totalByteCount');
+    return null;
+  }
+
+  @override
+  onError(String message) {
+    print(message);
+    return null;
+  }
+
+  @override
+  onProgress(String totalByteCount, String bytesTransferred) {
+    print(
+        '######### uploading log file: bytesTransferred: $bytesTransferred of totalByteCount: $totalByteCount');
     return null;
   }
 }
