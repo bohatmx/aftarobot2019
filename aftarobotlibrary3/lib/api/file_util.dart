@@ -374,18 +374,16 @@ class LocalDB {
     try {
       var fileName = LogData;
       dir = await getApplicationDocumentsDirectory();
-      jsonFile = new File(dir.path + "/" + fileName + '.json');
-      fileExists = await jsonFile.exists();
+      File logFile = new File(dir.path + "/" + fileName + '.log');
+      bool fileExists = await logFile.exists();
       if (fileExists) {
-        var m = jsonFile.readAsStringSync();
-        var newString = m +
-            "\n" +
-            log +
-            "\t  stamp: ${DateTime.now().toUtc().toIso8601String()}";
-        jsonFile.writeAsStringSync(newString);
+        var m = logFile.readAsStringSync();
+        var newString =
+            m + "\n${DateTime.now().toUtc().toIso8601String()} - " + log;
+        logFile.writeAsStringSync(newString);
         return 0;
       } else {
-        var file = await jsonFile.create();
+        var file = await logFile.create();
         await file.writeAsString(log);
         return 0;
       }

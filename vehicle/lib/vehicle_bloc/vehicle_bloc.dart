@@ -19,7 +19,7 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
 import 'package:latlong/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-//✅  🎾 🔵  📍   ℹ️
+//✅  🎾 🔵  📍  ℹ️
 class VehicleAppBloc implements UploadListener {
   VehicleAppBloc() {
     printLog('+++ ℹ️ +++  ++++++++++++++++++ initializing Vehicle App Bloc');
@@ -101,14 +101,15 @@ class VehicleAppBloc implements UploadListener {
   }
 
   void _initialize() async {
-    printLog('### initialise - 🔵 - check if vehicle has been saved in Prefs');
+    printLog(
+        '\n### initialise - 🔵 - check if vehicle has been saved in Prefs\n');
     _appVehicle = await getVehicleForApp();
     if (_appVehicle == null) {
       printLog('###  ℹ️ App has no vehicle set up yet');
       await getAssociations();
     } else {
       printLog(
-          '###   ℹ️ ℹ️ ℹ️ App has vehicle ${_appVehicle.vehicleReg} set up.');
+          '\n###   ℹ️ ℹ️ ℹ️ App has vehicle ${_appVehicle.vehicleReg} set up. Cool! Ready to Rumble !!  🔵 \n\n');
       await signInAnonymously();
       getCurrentLocation();
       //_initializeLogUploadAlarm();
@@ -152,17 +153,15 @@ class VehicleAppBloc implements UploadListener {
             schedule: [
               '1-7 4:00-22:00', // Sun-Sat: 4:00am to 10:00pm
             ],
-            logLevel: bg.Config.LOG_LEVEL_INFO,
+            logLevel: bg.Config.LOG_LEVEL_ERROR,
             reset: true))
         .then((bg.State state) {
-      printLog('## 📍 ODOMETER: ${state.odometer}');
-      printLog(
-          '## 📍 📍 BackgroundGeolocation state :: ${state.toMap()} 📍 📍 ');
+      //not doing nuthin ...
     });
 
     //bg.BackgroundGeolocation.start();
     //bg.BackgroundGeolocation.startGeofences();
-    printLog('### ✅ background location set. will start tracking ...');
+    printLog('### ✅ background location set. will start tracking ...\n');
   }
 
   _onVehicleLogSchedule(bg.State state) async {
@@ -180,20 +179,19 @@ class VehicleAppBloc implements UploadListener {
   }
 
   _setGeofencing() async {
-    printLog('+++  🎾 setting up geofencing background listeners ...');
+    printLog('+++ 🎾 setting up geofencing background listeners ...\n');
     bg.BackgroundGeolocation.onGeofence(_onGeofenceEvent);
     bg.BackgroundGeolocation.onGeofencesChange((changeEvent) {
-      printLog('\n\n +++  🔵 List of ACTIVATED GEOFENCES');
+      printLog('\n\n+++ ✅ ✅ ✅  List of ACTIVATED GEOFENCES\n');
       changeEvent.on.forEach((Geofence geofence) {
         //createGeofenceMarker(geofence)
-        printLog('+++ 🔵  ${geofence.toMap()} extras: ${geofence.extras}');
+        printLog('+++ 🔵  ${geofence.identifier}');
       });
+      printLog("\n\n");
 
-      // Remove map circles
+      printLog('\n\n⚠️ List of DE- ACTIVATED GEOFENCES');
       changeEvent.off.forEach((String identifier) {
-        //removeGeofenceMarker(identifier);
-        printLog('\n\n +++  ⚠️ List of DE- ACTIVATED GEOFENCES');
-        printLog(' ⚠️ $identifier -- DE-ACTIVATED ----------');
+        printLog('⚠️ $identifier -- DE-ACTIVATED --');
       });
     });
   }
@@ -273,7 +271,7 @@ class VehicleAppBloc implements UploadListener {
   }
 
   _writeVehicleLocationLog() async {
-    printLog('### 📍📍 writing vehicle location log entry ......');
+    printLog('\n\n\n### 📍📍 writing vehicle location log entry ......');
     if (_appVehicle == null) {
       printLog('#### vehicle is null. not tracking ....');
     } else {
@@ -292,8 +290,7 @@ class VehicleAppBloc implements UploadListener {
           .collection('vehicleLogs')
           .add(log.toJson());
 
-      printLog(
-          '\n\n\n### 🔵 vehicle location log has been written to Firestore: '
+      printLog('### 🔵 vehicle location log has been written to Firestore: '
           '${ref.path} vehicle: ${_appVehicle.vehicleReg}\n\n');
 
       _writeVehicleGeoLocation(
@@ -307,7 +304,8 @@ class VehicleAppBloc implements UploadListener {
   bool isBusy = false;
   void _writeVehicleGeoLocation(double latitude, double longitude) async {
     if (isBusy) {
-      printLog('⚠️⚠️⚠️⚠️⚠️ _writeVehicleGeoLocation is BUSY! ... quit.');
+      printLog(
+          '\n\n⚠️⚠️⚠️⚠️⚠️ _writeVehicleGeoLocation is BUSY! ... quit.\n\n');
       return;
     }
     printLog(
@@ -330,11 +328,11 @@ class VehicleAppBloc implements UploadListener {
       searchForLandmarks(
         latitude: latitude,
         longitude: longitude,
-        radius: 5.0,
+        radius: GEO_QUERY_RADIUS,
       );
     } on PlatformException catch (e) {
       printLog(
-          'Things went south in a hurry, Jack!  ⚠️ ⚠️ Message listening not so hot ..');
+          '\n\nThings went south in a hurry, Jack!  ⚠️ ⚠️ vehicleLocationChannel listening not so hot ..');
       printLog(e.toString());
     }
   }
@@ -554,6 +552,7 @@ class VehicleAppBloc implements UploadListener {
           });
         }
       });
+      printLog("\n");
       bg.BackgroundGeolocation.startGeofences();
       isSearchingForLandmarks = false;
     } on PlatformException catch (e) {
@@ -571,8 +570,6 @@ class VehicleAppBloc implements UploadListener {
       var lm = LandmarkDTO.fromJson(ds.data);
       _landmarks.add(lm);
       _addLandmarkGeoFence(lm);
-      printLog(
-          ' 🔵 ## LANDMARK ::: ✅  #${lm.rankSequenceNumber}  ${lm.landmarkName} ');
     }
 
     _landmarks.sort(
@@ -581,9 +578,6 @@ class VehicleAppBloc implements UploadListener {
   }
 
   void _addLandmarkGeoFence(LandmarkDTO landmark) async {
-    printLog(
-        '\n\n+++ ℹ️ℹ️ℹ️ℹ️ℹ️  adding geofence for ${landmark.landmarkName}');
-
     bg.BackgroundGeolocation.addGeofence(Geofence(
             identifier: landmark.landmarkID,
             radius: GEOFENCE_RADIUS,
@@ -598,10 +592,12 @@ class VehicleAppBloc implements UploadListener {
             notifyOnEntry: false,
             notifyOnExit: false))
         .then((ok) {
-      printLog('+++ ℹ️ℹ️ℹ️ℹ️ℹ️ successfule geofence set up: $ok');
+      printLog(
+          '+++ ℹ️ℹ️ℹ️ℹ️ℹ️ successful geofence set up: $ok :: ${landmark.landmarkID} - ${landmark.landmarkName}');
     });
 
-    printLog('+++ ✅ +++ geofence added for ${landmark.landmarkName}');
+    printLog(
+        ' 🔵 ## LANDMARK GEOFENCE  ::: ✅  #${landmark.rankSequenceNumber}  ${landmark.landmarkName} is being set up ...');
   }
 
   void listenForCommuterMessages() {
@@ -624,13 +620,12 @@ class VehicleAppBloc implements UploadListener {
   Future signInAnonymously() async {
     printLog('📍 checking current user ..... 📍 ');
     var user = await auth.currentUser();
-
     if (user == null) {
-      printLog('ℹ️ signing in ..... .......');
+      printLog('ℹ️ ############### signing in ..... .......');
       user = await auth.signInAnonymously();
       return null;
     } else {
-      printLog('User already signed in: 🔵 🔵 🔵 ');
+      printLog('############## User already signed in: 🔵 🔵 🔵 ');
       return null;
     }
   }

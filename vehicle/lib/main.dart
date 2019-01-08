@@ -6,9 +6,7 @@ import 'package:vehicle/ui/register_vehicle.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
 void main() async {
-  await VehicleAppBloc.initializeLogUploadAlarm();
   runApp(MyApp());
-  VehicleAppBloc.scheduleAlarm();
 }
 
 class MyApp extends StatelessWidget {

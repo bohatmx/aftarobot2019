@@ -9,6 +9,15 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.aftarobot.vehicle.log.LogFileWriter;
+import com.aftarobot.vehicle.log.LogFileManager;
+import com.aftarobot.vehicle.util.AddVehicleLocationListener;
+import com.aftarobot.vehicle.util.GeoPointHelper;
+import com.aftarobot.vehicle.util.LandmarkGeoPointListener;
+import com.aftarobot.vehicle.util.VehicleDTO;
+import com.aftarobot.vehicle.util.VehicleLocation;
+import com.aftarobot.vehicle.util.VehicleLocationListener;
+import com.aftarobot.vehicle.util.VehicleLocationSearch;
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.messages.Message;
 import com.google.android.gms.nearby.messages.MessageListener;
@@ -46,17 +55,18 @@ public class MainActivity extends FlutterActivity {
         super.onCreate(savedInstanceState);
         GeneratedPluginRegistrant.registerWith(this);
 
-        Log.d(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Taxi Message Channel ...");
+        LogFileManager.scheduleWork();
+        LogFileWriter.print(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up Taxi Message Channel ...");
 
         new EventChannel(getFlutterView(), TAXI_MESSAGE_CHANNEL).setStreamHandler(
                 new EventChannel.StreamHandler() {
 
                     @Override
                     public void onListen(Object arguments, EventChannel.EventSink events) {
-                        Log.d(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD TAXI_MESSAGE_CHANNEL ready to go ... waiting to publish and subscribe. - "
+                        LogFileWriter.print(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD TAXI_MESSAGE_CHANNEL ready to go ... waiting to publish and subscribe. - "
                                 + new Date().toString());
                         messageEvents = events;
-                        Log.d(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### trying ... MessagesClient publish and subscribe ");
+                        LogFileWriter.print(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### trying ... MessagesClient publish and subscribe ");
 
                         if (vehicle == null) {
                             mMessage = new Message(("AftaRobot Taxi - "
@@ -70,25 +80,25 @@ public class MainActivity extends FlutterActivity {
 
                         fgPublishClient.publish(mMessage);
                         fgMessagesClient.subscribe(mMessageListener);
-                        Log.d(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### MessagesClient published and subscribed!!! ");
+                        LogFileWriter.print(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### MessagesClient published and subscribed!!! ");
                     }
 
                     @Override
                     public void onCancel(Object arguments) {
-                        Log.d(TAG, "--- onCancel:  \uD83C\uDFBE  \uD83C\uDFBE cancelling EventChannel ..." + new Date().toString());
+                        LogFileWriter.print(TAG, "--- onCancel:  \uD83C\uDFBE  \uD83C\uDFBE cancelling EventChannel ..." + new Date().toString());
                     }
                 }
         );
 
 
-        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up GEO_QUERY_CHANNEL  ...");
+        LogFileWriter.print(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up GEO_QUERY_CHANNEL  ...");
         new MethodChannel(getFlutterView(), GEO_QUERY_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
                     public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
                         mResult = result;
                         Object args = call.arguments;
-                        Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
+                        LogFileWriter.print(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
                         GeoRequest geoRequest = G.fromJson(args.toString(), GeoRequest.class);
                         if (call.method.equalsIgnoreCase("findLandmarks")) {
                             findLandmarks(geoRequest);
@@ -98,14 +108,14 @@ public class MainActivity extends FlutterActivity {
                     }
                 });
         ///
-        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up ADD_VEHICLE_LOCATION_CHANNEL  ...");
+        LogFileWriter.print(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up ADD_VEHICLE_LOCATION_CHANNEL  ...");
         new MethodChannel(getFlutterView(), ADD_VEHICLE_LOCATION_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
                     public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
                         mVehicleLocationResult = result;
                         Object args = call.arguments;
-                        Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
+                        LogFileWriter.print(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
                         AddVehicleLocationRequest geoRequest = G.fromJson(args.toString(), AddVehicleLocationRequest.class);
                         if (call.method.equalsIgnoreCase("writeVehicleLocation")) {
                             writeVehicleLocation(geoRequest);
@@ -115,14 +125,14 @@ public class MainActivity extends FlutterActivity {
                     }
                 });
         ///
-        Log.d(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up FIND_VEHICLE_LOCATIONS_CHANNEL  ...");
+        LogFileWriter.print(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up FIND_VEHICLE_LOCATIONS_CHANNEL  ...");
         new MethodChannel(getFlutterView(), FIND_VEHICLE_LOCATIONS_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
                     public void onMethodCall(MethodCall call, final MethodChannel.Result result) {
                         mVehicleSearchResult = result;
                         Object args = call.arguments;
-                        Log.d(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
+                        LogFileWriter.print(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
                         SearchVehiclesRequest geoRequest = G.fromJson(args.toString(), SearchVehiclesRequest.class);
                         if (call.method.equalsIgnoreCase("findVehicleLocations")) {
                             findVehicleLocations(geoRequest);
@@ -139,9 +149,14 @@ public class MainActivity extends FlutterActivity {
 
             @Override
             public void onVehiclesFound(List<VehicleLocation> vehicleLocations) {
-                Log.d(TAG, "onVehiclesFound: \uD83D\uDD35  \uD83D\uDD35  +++ send found vehicles to Flutter: " + vehicleLocations.size());
-                Log.d(TAG, "onVehiclesFound, details, details. what is sent to flutter: ".concat(G.toJson(vehicleLocations)).concat("\n\n"));
-                mVehicleSearchResult.success(G.toJson(vehicleLocations));
+                LogFileWriter.print(TAG, "onVehiclesFound: \uD83D\uDD35  \uD83D\uDD35  +++ send found vehicles to Flutter: " + vehicleLocations.size());
+                LogFileWriter.print(TAG, "onVehiclesFound, details, details. what is sent to flutter: ".concat(G.toJson(vehicleLocations)).concat("\n\n"));
+
+                try {
+                    mVehicleSearchResult.success(G.toJson(vehicleLocations));
+                } catch (IllegalStateException e) {
+                    LogFileWriter.print(TAG, "onVehiclesFound: ⚠️  ⚠️  ⚠️  ⚠️  run into the familiar problem: " + e.getMessage());
+                }
             }
 
             @Override
@@ -152,12 +167,12 @@ public class MainActivity extends FlutterActivity {
         });
     }
     void writeVehicleLocation(AddVehicleLocationRequest request) {
-        Log.d(TAG, "writeVehicleLocation: ⚠️ ********* request: " + G.toJson(request));
+        LogFileWriter.print(TAG, "writeVehicleLocation: ⚠️ ********* request: " + G.toJson(request));
         GeoPointHelper.writeVehicleLocation(request.vehiclePath, request.latitude, request.longitude, new AddVehicleLocationListener() {
             @Override
             public void onVehicleLocationAdded() {
                 String date = new Date().toString();
-                Log.d(TAG, "onVehicleLocationAdded: +++ sending geoVehicleLocations success result back to Flutter at: " + date);
+                LogFileWriter.print(TAG, "onVehicleLocationAdded: +++ sending geoVehicleLocations success result back to Flutter at: " + date);
                 try {
                     mVehicleLocationResult.success("Vehicle location written to Firestore: geoVehicleLocations: " + date);
                 } catch (IllegalStateException e) {
@@ -173,16 +188,20 @@ public class MainActivity extends FlutterActivity {
         });
     }
     void findLandmarks(GeoRequest request) {
-        Log.d(TAG, "findLandmarks: #################################################################");
+        LogFileWriter.print(TAG, "findLandmarks: #################################################################");
         GeoPointHelper.findLandmarksWithin(request.latitude, request.longitude, request.radius, new LandmarkGeoPointListener() {
             @Override
             public void onLandmarkPointsFound(List<HashMap<String,String>> geoPoints) {
                 if (geoPoints.isEmpty()) {
-                    Log.d(TAG, "NO GEO POINTS FOUND:   \uD83D\uDD35,  like zero, zilch, nada!");
+                    LogFileWriter.print(TAG, "NO GEO POINTS FOUND:   \uD83D\uDD35,  like zero, zilch, nada!");
                 } else {
-                    Log.d(TAG, "\n\n................. HOOO - FUCKING - RAY!!! *** onLandmarkPointsFound:  ✅  ✅  ✅ " + geoPoints.size()
+                    LogFileWriter.print(TAG, "\n\n................. HOOO - FUCKING - RAY!!! *** onLandmarkPointsFound:  ✅  ✅  ✅ " + geoPoints.size()
                             + " ... sending to Flutter as JSON data\n\n");
-                    mResult.success(G.toJson(geoPoints));
+                    try {
+                        mResult.success(G.toJson(geoPoints));
+                    } catch (IllegalStateException e) {
+                        LogFileWriter.print(TAG, "onLandmarkPointsFound: ⚠️  ⚠️  ⚠️  ⚠️  run into the familiar problem: " + e.getMessage());
+                    }
 
                 }
             }
@@ -190,18 +209,18 @@ public class MainActivity extends FlutterActivity {
     }
 
     void startMessageListener() {
-        Log.d(TAG, "startMessageListener: +++ \uD83D\uDCCD \uD83D\uDCCD  set up Message Listener");
+        LogFileWriter.print(TAG, "startMessageListener: +++ \uD83D\uDCCD \uD83D\uDCCD  set up Message Listener");
         mMessageListener = new MessageListener() {
             @Override
             public void onFound(Message message) {
-                Log.d(TAG, " ✅ Found message: " + new String(message.getContent()));
-                Log.d(TAG, " ✅ onFound: namespace: " + message.getNamespace() + " type: " + message.getType());
+                LogFileWriter.print(TAG, " ✅ Found message: " + new String(message.getContent()));
+                LogFileWriter.print(TAG, " ✅ onFound: namespace: " + message.getNamespace() + " type: " + message.getType());
                 messageEvents.success(new String(message.getContent()));
             }
 
             @Override
             public void onLost(Message message) {
-                Log.d(TAG, "\uD83C\uDFBE \uD83C\uDFBE  Lost sight of message: " + new String(message.getContent()));
+                LogFileWriter.print(TAG, "\uD83C\uDFBE \uD83C\uDFBE  Lost sight of message: " + new String(message.getContent()));
             }
         };
         IntentFilter filter = new IntentFilter(
@@ -209,14 +228,14 @@ public class MainActivity extends FlutterActivity {
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(new CommuterBroadcastReceiver(), filter);
         backgroundSubscribe();
-        Log.d(TAG, "startMessageListener: \uD83D\uDD35 MessageListener started. Fingers crossed :)");
+        LogFileWriter.print(TAG, "startMessageListener: \uD83D\uDD35 MessageListener started. Fingers crossed :)");
     }
 
     // Subscribe to messages in the background.
     MessagesClient bgMessagesClient, fgMessagesClient, fgPublishClient, bgPublishClient;
 
     private void backgroundSubscribe() {
-        Log.i(TAG, "\uD83D\uDCCD \uD83D\uDCCD Subscribing for background commuter messages....");
+        LogFileWriter.print(TAG, "\uD83D\uDCCD \uD83D\uDCCD Subscribing for background commuter messages....");
         SubscribeOptions options = new SubscribeOptions.Builder()
                 .setStrategy(Strategy.BLE_ONLY)
                 .build();
@@ -243,7 +262,7 @@ public class MainActivity extends FlutterActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String message = intent.getStringExtra("message");
-            Log.d(TAG, "CommuterBroadcastReceiver \uD83D\uDCCD onReceive: sending message to Flutter");
+            LogFileWriter.print(TAG, "CommuterBroadcastReceiver \uD83D\uDCCD onReceive: sending message to Flutter");
             messageEvents.success(message);
         }
     }
@@ -251,7 +270,7 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart: \uD83D\uDD35  \uD83D\uDD35 ### do nuthin ... ");
+        LogFileWriter.print(TAG, "onStart: \uD83D\uDD35  \uD83D\uDD35 ### do nuthin ... ");
 
     }
 
@@ -262,7 +281,7 @@ public class MainActivity extends FlutterActivity {
         bgMessagesClient.unsubscribe(mMessageListener);
         fgMessagesClient.unsubscribe(mMessageListener);
         super.onStop();
-        Log.d(TAG, "onStop: ###  \uD83C\uDFBE \uD83C\uDFBE MessagesClient un-publish and unsubscribe ");
+        LogFileWriter.print(TAG, "onStop: ###  \uD83C\uDFBE \uD83C\uDFBE MessagesClient un-publish and unsubscribe ");
     }
 
     private class GeoRequest {

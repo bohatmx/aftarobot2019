@@ -49,8 +49,9 @@ class Prefs {
       return null;
     }
     var jx = json.decode(string);
-    prettyPrint(jx, 'Vehicle from cache: ');
     var v = new VehicleDTO.fromJson(jx);
+    printLog(
+        '\n\n\🔵  🔵 App Vehicle is: ${v.vehicleReg} - ${v.vehicleType.make} ${v.vehicleType.model} - ${v.associationName}\n\n\n');
     return v;
   }
 
