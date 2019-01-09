@@ -2,14 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:aftarobotlibrary3/api/sharedprefs.dart';
-import 'package:aftarobotlibrary3/api/storage_api.dart';
 import 'package:aftarobotlibrary3/data/associationdto.dart';
 import 'package:aftarobotlibrary3/data/geofence_event.dart';
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
+import 'package:aftarobotlibrary3/data/vehicle_location.dart';
 import 'package:aftarobotlibrary3/data/vehicle_logdto.dart';
 import 'package:aftarobotlibrary3/data/vehicledto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
-import 'package:android_alarm_manager/android_alarm_manager.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -20,7 +19,7 @@ import 'package:latlong/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 //✅  🎾 🔵  📍  ℹ️
-class VehicleAppBloc implements UploadListener {
+class VehicleAppBloc {
   VehicleAppBloc() {
     printLog('+++ ℹ️ +++  ++++++++++++++++++ initializing Vehicle App Bloc');
     _setBackgroundLocation();
@@ -51,6 +50,8 @@ class VehicleAppBloc implements UploadListener {
       StreamController.broadcast();
   StreamController<List<ARGeofenceEvent>> _arGeofenceController =
       StreamController.broadcast();
+  StreamController<List<VehicleLocation>> _vehicleLocationController =
+      StreamController.broadcast();
 
   final Distance distance = new Distance();
 
@@ -72,12 +73,16 @@ class VehicleAppBloc implements UploadListener {
   List<ARGeofenceEvent> _geofenceEvents = List();
   List<ARGeofenceEvent> get geofenceEvents => _geofenceEvents;
 
+  List<VehicleLocation> _vehicleLocations = List();
+  List<VehicleLocation> get vehicleLocations => _vehicleLocations;
+
   get landmarksStream => _landmarksController.stream;
   get nearbyMessageStream => _nearbyMessagesController.stream;
   get locationStream => _locationController.stream;
   get associationStream => _assocController.stream;
   get vehicleStream => _vehicleController.stream;
   get geofenceEventStream => _arGeofenceController.stream;
+  get vehicleLocationStream => _vehicleLocationController.stream;
 
   void closeStreams() {
     _landmarksController.close();
@@ -86,6 +91,7 @@ class VehicleAppBloc implements UploadListener {
     _vehicleController.close();
     _assocController.close();
     _arGeofenceController.close();
+    _vehicleLocationController.close();
   }
 
   Future setVehicleForApp(VehicleDTO vehicle) async {
@@ -112,24 +118,7 @@ class VehicleAppBloc implements UploadListener {
           '\n###   ℹ️ ℹ️ ℹ️ App has vehicle ${_appVehicle.vehicleReg} set up. Cool! Ready to Rumble !!  🔵 \n\n');
       await signInAnonymously();
       getCurrentLocation();
-      //_initializeLogUploadAlarm();
     }
-  }
-
-  static Future initializeLogUploadAlarm() async {
-    printLog(
-        '\n+++  ℹ️ ℹ️ ℹ️ initialize Alarm Manager for uploading log files\n');
-    await AndroidAlarmManager.initialize();
-  }
-
-  static Future scheduleAlarm() async {
-    final int helloAlarmID = 0;
-    await AndroidAlarmManager.periodic(
-        const Duration(minutes: 10), helloAlarmID, () {
-      printLog(
-          '\n\n  📍  📍  📍 Alarm manager triggered upload of log file ...\n');
-      StorageAPI.uploadLogFile(listener: null);
-    });
   }
 
   void _setBackgroundLocation() {
@@ -159,8 +148,6 @@ class VehicleAppBloc implements UploadListener {
       //not doing nuthin ...
     });
 
-    //bg.BackgroundGeolocation.start();
-    //bg.BackgroundGeolocation.startGeofences();
     printLog('### ✅ background location set. will start tracking ...\n');
   }
 
@@ -180,18 +167,20 @@ class VehicleAppBloc implements UploadListener {
 
   _setGeofencing() async {
     printLog('+++ 🎾 setting up geofencing background listeners ...\n');
+
     bg.BackgroundGeolocation.onGeofence(_onGeofenceEvent);
+
     bg.BackgroundGeolocation.onGeofencesChange((changeEvent) {
-      printLog('\n\n+++ ✅ ✅ ✅  List of ACTIVATED GEOFENCES\n');
+      printLog('\n\n+++ ✅ ✅ ✅  List of ACTIVATED GEOFENCES\n\n');
       changeEvent.on.forEach((Geofence geofence) {
         //createGeofenceMarker(geofence)
         printLog('+++ 🔵  ${geofence.identifier}');
       });
       printLog("\n\n");
 
-      printLog('\n\n⚠️ List of DE- ACTIVATED GEOFENCES');
+      printLog('\n\n⚠️ List of DE- ACTIVATED GEOFENCES\n\n');
       changeEvent.off.forEach((String identifier) {
-        printLog('⚠️ $identifier -- DE-ACTIVATED --');
+        printLog('⚠️ $identifier ::  DE-ACTIVATED --');
       });
     });
   }
@@ -257,9 +246,14 @@ class VehicleAppBloc implements UploadListener {
   }
 
   _onLocation(bg.Location location) {
-    printLog(
-        '\n\n@@@@@@@@@@@ ✅  -- onLocation:  isMoving? ${location.isMoving}');
-    printLog('${location.toMap()}');
+    if (location.isMoving) {
+      printLog(
+          '\n\n\n✅ ✅ ✅ ✅  -- onLocation:  VEHICLE IS MOVING? ${location.isMoving}  ✅ ✅ ✅ ✅\n\n');
+    } else {
+      printLog('\n\n🎾  -- onLocation:  vehicle is stationary?\n');
+    }
+
+    //printLog('${location.toMap()}');
 
     _currentLocation = location;
     _locationController.sink.add(location);
@@ -316,8 +310,8 @@ class VehicleAppBloc implements UploadListener {
       'vehiclePath': _appVehicle.path,
     };
     var string = json.encode(map);
-    printLog(
-        "⚠️... sending $string to WildSide for vehicle location recording");
+//    printLog(
+//        "⚠️... sending $string to WildSide for vehicle location recording");
     try {
       isBusy = true;
       final String result = await vehicleLocationChannel.invokeMethod(
@@ -473,7 +467,11 @@ class VehicleAppBloc implements UploadListener {
           '\nsearchForVehiclesAroundUs ⚠️ ⚠️ we are still busy .... sorry!');
       return null;
     }
+    bg.Location location = await bg.BackgroundGeolocation.getCurrentPosition();
+    _currentLocation = location;
+
     if (latitude == null || longitude == null) {
+      await getCurrentLocation();
       latitude = _currentLocation.coords.latitude;
       longitude = _currentLocation.coords.longitude;
     }
@@ -496,7 +494,15 @@ class VehicleAppBloc implements UploadListener {
     try {
       var result = await vehicleSearchChannel.invokeMethod(
           'findVehicleLocations', json.encode(searchRequest));
-      printLog('\n\n🔵 🔵 🔵 VEHICLES FOUND AROUND US:\n');
+      List<dynamic> mList = json.decode(result);
+      _vehicleLocations.clear();
+      mList.forEach((map) {
+        var vl = VehicleLocation.fromJson(map);
+        _vehicleLocations.add(vl);
+      });
+      _vehicleLocationController.sink.add(_vehicleLocations);
+      printLog(
+          '\n\n🔵 🔵 🔵 VEHICLES FOUND AROUND US: ${_vehicleLocations.length}\n');
       printLog(result);
       isSearchingForVehicleLocations = false;
     } on PlatformException catch (e) {
@@ -639,26 +645,6 @@ class VehicleAppBloc implements UploadListener {
     await Prefs.saveVehicle(v);
     printLog(
         '### 🔵 --- vehicle registered on device : ${v.vehicleReg} ... getting current location');
-    return null;
-  }
-
-  @override
-  onComplete(String url, String totalByteCount, String bytesTransferred) {
-    print(
-        '######### COMPLETE: uploaded log file: bytesTransferred: $bytesTransferred of totalByteCount: $totalByteCount');
-    return null;
-  }
-
-  @override
-  onError(String message) {
-    print(message);
-    return null;
-  }
-
-  @override
-  onProgress(String totalByteCount, String bytesTransferred) {
-    print(
-        '######### uploading log file: bytesTransferred: $bytesTransferred of totalByteCount: $totalByteCount');
     return null;
   }
 }

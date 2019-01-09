@@ -45,6 +45,8 @@ flutter:
     - assets/fin3.jpeg
     - assets/computers.png
     - auth_client_keys.json
+    - taxi.png
+    - condominium.png
   fonts:
     - family: Raleway
       fonts:

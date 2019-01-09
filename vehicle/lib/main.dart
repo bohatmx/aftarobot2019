@@ -55,8 +55,6 @@ class _MyHomePageState extends State<MyHomePage> {
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => Registration()));
     } else {
-      printLog(
-          '\n\n🔵 🔵 🔵 _MyHomePageState: ############# CREATING NEW VehicleAppBloc 🔵 🔵 🔵 \n\n');
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => LandingPage()));
     }

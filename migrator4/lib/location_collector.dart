@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:aftarobotlibrary3/api/file_util.dart';
 import 'package:aftarobotlibrary3/beacons/beacon_api.dart';
 import 'package:aftarobotlibrary3/data/routedto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
@@ -24,7 +21,7 @@ class LocationCollector extends StatefulWidget {
 }
 
 class _LocationCollectorState extends State<LocationCollector>
-    implements SnackBarListener, ModesListener {
+    implements SnackBarListener, ModesListener, SnapToRoadsListener {
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
 
   List<ARLocation> locationsCollected = List();
@@ -126,7 +123,6 @@ class _LocationCollectorState extends State<LocationCollector>
     });
   }
 
-  StreamSubscription beaconStreamSubscription;
   _onLocation(bg.Location location) {
     print(
         '\n\n@@@@@@@@@@@ ✅  ✅  -- onLocation:  isMoving? ${location.isMoving}');
@@ -135,18 +131,9 @@ class _LocationCollectorState extends State<LocationCollector>
       message:
           'Moving? ${location.isMoving}   📍 Odometer: ${location.odometer} km',
     );
-    //todo remove after test
-    _startScan();
-    if (location.isMoving) {
-      _startScan();
-    }
   }
 
   GoogleBeaconBloc beaconBloc = googleBeaconBloc;
-  _startScan() {
-    print('\n\n\n##### start to look for beacons ..... 🎾 🎾 🎾 🎾 ');
-    beaconBloc.startBeaconScan(2);
-  }
 
   _onMotionChanged(bg.Location location) {
     print('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
@@ -281,7 +268,9 @@ class _LocationCollectorState extends State<LocationCollector>
   }
 
   void _getLocationsFromCache() async {
-    locationsCollected = await LocalDB.getARLocations();
+    locationsCollected =
+        await bloc.getRoutePoints(routeID: widget.route.routeID);
+
     setState(() {});
   }
 
@@ -290,7 +279,7 @@ class _LocationCollectorState extends State<LocationCollector>
 // ✅  🎾 🔵  📍   ℹ️
 
   List<SnappedPoint> snappedPoints;
-  void getSnappedPointsFromRoads() async {
+  void _getSnappedPointsFromRoads() async {
     print(
         "########################## getSnappedPointsFromRoads: Snap To Roads API");
     List<ARLocation> list = List();
@@ -302,14 +291,22 @@ class _LocationCollectorState extends State<LocationCollector>
       list.add(loc);
     });
 
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: "Loading snapped points ...",
+        textColor: Colors.white,
+        backgroundColor: Colors.black);
+
     try {
-      snappedPoints = await SnapToRoads.getSnappedPoints(list);
+      snappedPoints = await SnapToRoads.getSnappedPoints(
+          route: widget.route, listener: this, arLocations: list);
       list.clear();
       snappedPoints.forEach((sp) {
         list.add(sp.location);
       });
       print(
           '\n\n\n##################### sending ${list.length} to SnapToRoadsPage ########################\n\n\n');
+      _key.currentState.removeCurrentSnackBar();
       Navigator.push(
           context,
           MaterialPageRoute(
@@ -535,7 +532,7 @@ class _LocationCollectorState extends State<LocationCollector>
                     _showConfirmDialog();
                     break;
                   case 1:
-                    getSnappedPointsFromRoads();
+                    _getSnappedPointsFromRoads();
                     break;
                   case 2:
                     _startTimer();
@@ -555,6 +552,12 @@ class _LocationCollectorState extends State<LocationCollector>
     setState(() {
       collectionSeconds = seconds;
     });
+  }
+
+  @override
+  onResponse(List<SnappedPoint> snappedPoints) {
+    printLog('✅ Collector has received ${snappedPoints.length} from API call');
+    return null;
   }
 }
 

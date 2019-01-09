@@ -1,4 +1,4 @@
-import 'package:aftarobotlibrary3/data/landmarkdto.dart';
+import 'package:aftarobotlibrary3/data/vehicle_location.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -10,19 +10,19 @@ class VehiclesMap extends StatefulWidget {
 }
 
 class _VehiclesMapState extends State<VehiclesMap> {
-  List<LandmarkDTO> landmarks;
+  List<VehicleLocation> vehicleLocations;
   VehicleAppBloc bloc = VehicleAppBloc();
   GoogleMapController _mapController;
 
   @override
   void initState() {
     super.initState();
-    bloc.searchForLandmarks();
+    bloc.searchForVehiclesAroundUs();
   }
 
   void _setRouteMarkers() {
     try {
-      landmarks.forEach((si) {
+      vehicleLocations.forEach((si) {
         _mapController.animateCamera(CameraUpdate.newCameraPosition(
             CameraPosition(
                 target: LatLng(si.latitude, si.longitude), zoom: 16.0)));
@@ -31,7 +31,9 @@ class _VehiclesMapState extends State<VehiclesMap> {
           position: LatLng(si.latitude, si.longitude),
           icon: BitmapDescriptor.fromAsset('assets/condominium.png'),
           zIndex: 4.0,
-          infoWindowText: InfoWindowText(si.landmarkName, si.associationName),
+          infoWindowText: InfoWindowText(
+              '${si.vehicle.vehicleType.model} ${si.vehicle.vehicleType.model}',
+              si.date),
         ));
       });
       //put own marker
@@ -49,7 +51,7 @@ class _VehiclesMapState extends State<VehiclesMap> {
 
   void _onMapCreated() {
     printLog('###########  ℹ️ _onMapCreated ...............');
-    if (landmarks == null) {
+    if (vehicleLocations == null) {
       return;
     }
     _setRouteMarkers();
@@ -58,14 +60,14 @@ class _VehiclesMapState extends State<VehiclesMap> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      initialData: bloc.landmarks,
-      stream: bloc.landmarksStream,
+      initialData: bloc.vehicleLocations,
+      stream: bloc.vehicleLocationStream,
       builder: (context, snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.active:
             printLog(
-                '🔵 ConnectionState.active set landmarks from stream data');
-            landmarks = snapshot.data;
+                '🔵 ConnectionState.active set vehicleLocations from stream data');
+            vehicleLocations = snapshot.data;
             _onMapCreated();
             break;
           case ConnectionState.waiting:

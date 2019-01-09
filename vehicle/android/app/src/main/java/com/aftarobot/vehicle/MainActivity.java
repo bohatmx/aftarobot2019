@@ -91,7 +91,7 @@ public class MainActivity extends FlutterActivity {
         );
 
 
-        LogFileWriter.print(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up GEO_QUERY_CHANNEL  ...");
+        LogFileWriter.print(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up GEO_QUERY_CHANNEL  ...");
         new MethodChannel(getFlutterView(), GEO_QUERY_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
@@ -103,12 +103,12 @@ public class MainActivity extends FlutterActivity {
                         if (call.method.equalsIgnoreCase("findLandmarks")) {
                             findLandmarks(geoRequest);
                         } else {
-                            mResult.error("Method not right", "Error", "Like, Fucked!");
+                            mResult.error("‼️Method not right", "‼️Error", "‼️Like, Fucked!");
                         }
                     }
                 });
         ///
-        LogFileWriter.print(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up ADD_VEHICLE_LOCATION_CHANNEL  ...");
+        LogFileWriter.print(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up ADD_VEHICLE_LOCATION_CHANNEL  ...");
         new MethodChannel(getFlutterView(), ADD_VEHICLE_LOCATION_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
@@ -120,12 +120,12 @@ public class MainActivity extends FlutterActivity {
                         if (call.method.equalsIgnoreCase("writeVehicleLocation")) {
                             writeVehicleLocation(geoRequest);
                         } else {
-                            result.error("Method not right", "Error", "Like, Fucked!");
+                            result.error("‼️Method not right", "‼️Error", "‼️Like, Fucked!");
                         }
                     }
                 });
         ///
-        LogFileWriter.print(TAG, "\n\n onCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up FIND_VEHICLE_LOCATIONS_CHANNEL  ...");
+        LogFileWriter.print(TAG, "\n\nonCreate: \uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 set up FIND_VEHICLE_LOCATIONS_CHANNEL  ...");
         new MethodChannel(getFlutterView(), FIND_VEHICLE_LOCATIONS_CHANNEL).setMethodCallHandler(
                 new MethodChannel.MethodCallHandler() {
                     @Override
@@ -137,7 +137,7 @@ public class MainActivity extends FlutterActivity {
                         if (call.method.equalsIgnoreCase("findVehicleLocations")) {
                             findVehicleLocations(geoRequest);
                         } else {
-                            mVehicleSearchResult.error("Method not right", "Error", "Like, Fucked!");
+                            mVehicleSearchResult.error("‼️Method not right", "‼️Error", "‼️Like, Fucked!");
                         }
                     }
                 });
@@ -162,7 +162,7 @@ public class MainActivity extends FlutterActivity {
             @Override
             public void onError(String message) {
                 Log.e(TAG, "onError: ".concat(message) );
-                mVehicleSearchResult.error("Failed to find vehicles", message, "Cooked!");
+                mVehicleSearchResult.error("‼️Failed to find vehicles", message, "‼️Cooked!");
             }
         });
     }
@@ -182,8 +182,8 @@ public class MainActivity extends FlutterActivity {
 
             @Override
             public void onError(String message) {
-                Log.e(TAG, "onError: " + message );
-                mVehicleLocationResult.error(message, "Error", "Fucked!");
+                Log.e(TAG, "‼️onError: " + message );
+                mVehicleLocationResult.error(message, "‼️Error", "‼️Fucked!");
             }
         });
     }
@@ -200,7 +200,7 @@ public class MainActivity extends FlutterActivity {
                     try {
                         mResult.success(G.toJson(geoPoints));
                     } catch (IllegalStateException e) {
-                        LogFileWriter.print(TAG, "onLandmarkPointsFound: ⚠️  ⚠️  ⚠️  ⚠️  run into the familiar problem: " + e.getMessage());
+                        LogFileWriter.print(TAG, "‼️‼️onLandmarkPointsFound: ⚠️  ⚠️  ⚠️  ⚠️  run into the familiar problem: " + e.getMessage());
                     }
 
                 }

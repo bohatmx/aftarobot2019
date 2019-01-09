@@ -204,7 +204,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
                           Text(
-                            '📍$routeCount',
+                            '$routeCount',
                             style: Styles.blackBoldLarge,
                           ),
                           Text(
@@ -220,7 +220,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
                           Text(
-                            '📍$landmarkCount',
+                            '$landmarkCount',
                             style: Styles.blackBoldLarge,
                           ),
                           Text(
@@ -232,23 +232,8 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                       SizedBox(
                         width: 80,
                       ),
-                      Column(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 10,
-                          ),
-                          Text(
-                            switchStatus == false ? 'Hide' : 'Show',
-                            style: switchStatus == false
-                                ? Styles.blackSmall
-                                : Styles.yellowBoldSmall,
-                          ),
-                          Switch(
-                            onChanged: _onSwitchChanged,
-                            value: switchStatus,
-                            activeColor: Colors.yellow,
-                          ),
-                        ],
+                      SizedBox(
+                        width: 10,
                       ),
                     ],
                   ),
@@ -532,9 +517,9 @@ class _RouteCardState extends State<RouteCard> {
               ],
             ),
             SizedBox(
-              height: 20,
+              height: 10,
             ),
-            _buildSpatialInfoList(),
+            //_buildSpatialInfoList(),
           ],
         ),
       ),

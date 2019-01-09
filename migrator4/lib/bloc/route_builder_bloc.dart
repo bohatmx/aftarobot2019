@@ -18,6 +18,7 @@ class RouteBuilderModel {
   List<RouteDTO> _routes = List();
   List<LandmarkDTO> _landmarks = List();
   List<ARLocation> _arLocations = List();
+  List<ARLocation> _routePoints = List();
   List<ARGeofenceEvent> _geofenceEvents = List();
   List<AssociationDTO> _associations = List();
   List<AssociationBag> _associationBags = List();
@@ -26,10 +27,15 @@ class RouteBuilderModel {
   List<RouteDTO> get routes => _routes;
   List<LandmarkDTO> get landmarks => _landmarks;
   List<ARLocation> get arLocations => _arLocations;
+  List<ARLocation> get routePoints => _routePoints;
   List<AssociationDTO> get associations => _associations;
   List<AssociationBag> get associationBags => _associationBags;
   List<ARGeofenceEvent> get geofenceEvents => _geofenceEvents;
   ARLocation get currentLocation => _currentLocation;
+
+  void receiveRoutePoints(List<ARLocation> routePoints) {
+    _routePoints = routePoints;
+  }
 
   Future initialize() async {
     print('### ℹ️  ℹ️  ℹ️  RouteBuilderBloc initializing');
@@ -88,7 +94,39 @@ class RouteBuilderBloc {
     _appModelController.sink.add(_appModel);
   }
 
-  addRoutePoint(ARLocation location) async {
+  Future<int> addRoutePoints({List<ARLocation> points, RouteDTO route}) async {
+    printLog(
+        '#### ℹ️ ℹ️  - adding collected points to route: ${route.name} - ${route.associationName}');
+
+    var start = DateTime.now();
+    int count = 0;
+    try {
+      for (var point in points) {
+        point.date = DateTime.now().toUtc().toIso8601String();
+        var ref = await fs
+            .collection('routePoints')
+            .document(route.routeID)
+            .collection('points')
+            .add(point.toJson());
+        count++;
+        printLog(
+            '#### ℹ️ ℹ️  route point written to Firestore: ${ref.path} 📍 #$count added');
+      }
+
+      _appModel.receiveRoutePoints(points);
+      _appModelController.sink.add(_appModel);
+      var end = DateTime.now();
+      printLog(
+          '\n#### ✅ ✅ ✅   ${points.length} route points written to Firestore for ${route.name}'
+          ' -  📍 elapsed time: ${end.difference(start).inSeconds} seconds.');
+      return 0;
+    } catch (e) {
+      print('⚠️ ⚠️ ⚠️  $e');
+      throw e;
+    }
+  }
+
+  addRawRoutePoint(ARLocation location) async {
     print('#### ℹ️ ℹ️  processing route point. adding utc date');
     location.date = DateTime.now().toUtc().toIso8601String();
     location.uid = getKey();
@@ -211,10 +249,10 @@ class RouteBuilderBloc {
           arLoc.longitude == prevLocation.longitude) {
         print('########## 📍  📍 DUPLICATE location .... ignored ');
       } else {
-        addRoutePoint(arLoc);
+        addRawRoutePoint(arLoc);
       }
     } else {
-      addRoutePoint(arLoc);
+      addRawRoutePoint(arLoc);
     }
     prevLocation = arLoc;
     return c;

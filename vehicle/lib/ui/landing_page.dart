@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:unicorndial/unicorndial.dart';
 import 'package:vehicle/ui/landmark_map.dart';
+import 'package:vehicle/ui/vehicles_map.dart';
 import 'package:vehicle/vehicle_bloc/vehicle_bloc.dart';
 
 class LandingPage extends StatefulWidget {
@@ -19,8 +20,6 @@ class _LandingPageState extends State<LandingPage> {
   @override
   void initState() {
     super.initState();
-    // _buildFabMenuList();
-    //_buildDialerList();
   }
 
   _buildDialerList() {
@@ -70,14 +69,24 @@ class _LandingPageState extends State<LandingPage> {
 //          onPressed: _startLandmarkMap,
 //        )));
 
-    childButtons.add(UnicornButton(
+    childButtons.add(
+      UnicornButton(
         hasLabel: true,
         labelText: "Taxis Around Us",
         currentButton: FloatingActionButton(
-            heroTag: "vehicles",
-            backgroundColor: Colors.blue.shade800,
-            mini: true,
-            child: Icon(Icons.directions_car))));
+          heroTag: "vehicles",
+          backgroundColor: Colors.blue.shade800,
+          mini: true,
+          child: Icon(Icons.directions_car),
+          onPressed: _findTaxisAroundUs,
+        ),
+      ),
+    );
+  }
+
+  void _findTaxisAroundUs() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => VehiclesMap()));
   }
 
   void _findCommuterRequests() async {

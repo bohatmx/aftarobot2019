@@ -1,8 +1,10 @@
 import 'package:aftarobotlibrary3/data/routedto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:aftarobotlibrary3/util/maps/snap_to_roads.dart';
+import 'package:aftarobotlibrary3/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:migrator4/bloc/route_builder_bloc.dart';
 
 /*
 Handles location points collected on the route roads and obtains snapped-to-road points
@@ -29,24 +31,44 @@ class _SnapToRoadsPageState extends State<SnapToRoadsPage> {
     super.initState();
   }
 
-  void writePointsToRoute() {}
+  void _writePointsToRoute() async {
+    printLog(
+        '_SnapToRoadsPageState::_writePointsToRoute - ⚠️ adding ${widget.arLocations.length} route points for '
+        ' ${widget.route.name}');
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: 'Adding route points ...',
+        textColor: Colors.yellow,
+        backgroundColor: Colors.black);
+
+    await routeBuilderBloc.addRoutePoints(
+        route: widget.route, points: widget.arLocations);
+
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: '${widget.arLocations.length} route points added',
+        textColor: Colors.white,
+        backgroundColor: Colors.black);
+  }
 
   void _setRouteMarkers() {
     print(
         'SnapToRoadsPage._setRouteMarkers **************************** ${widget.arLocations.length}');
 
     try {
+      _mapController.clearMarkers();
       widget.arLocations.forEach((arLocation) {
         _mapController.animateCamera(CameraUpdate.newCameraPosition(
             CameraPosition(
                 target: LatLng(arLocation.latitude, arLocation.longitude),
-                zoom: 12.0)));
+                zoom: 14.0)));
 
         _mapController.addMarker(MarkerOptions(
           position: LatLng(arLocation.latitude, arLocation.longitude),
-          icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+          icon: BitmapDescriptor.fromAsset('assets/taxi.png'),
           zIndex: 4.0,
-          infoWindowText: InfoWindowText('Collected on', '${arLocation.date}'),
+          infoWindowText: InfoWindowText('Collected Point',
+              arLocation.date == null ? '' : '${arLocation.date}'),
         ));
       });
     } catch (e) {
@@ -57,10 +79,11 @@ class _SnapToRoadsPageState extends State<SnapToRoadsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _key,
       appBar: AppBar(
         title: Text('Snapped Route Points'),
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(80),
+          preferredSize: Size.fromHeight(100),
           child: Column(
             children: <Widget>[
               Text(
@@ -72,7 +95,7 @@ class _SnapToRoadsPageState extends State<SnapToRoadsPage> {
               ),
               Text(
                 widget.route.name,
-                style: Styles.blueBoldSmall,
+                style: Styles.whiteBoldSmall,
               ),
               SizedBox(
                 height: 12,
@@ -95,6 +118,24 @@ class _SnapToRoadsPageState extends State<SnapToRoadsPage> {
               myLocationEnabled: true,
               compassEnabled: true,
               zoomGesturesEnabled: true,
+            ),
+          ),
+          Positioned(
+            left: 20,
+            top: 20,
+            child: RaisedButton(
+              elevation: 20,
+              color: Colors.pink,
+              onPressed: () {
+                _writePointsToRoute();
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Add To Route',
+                  style: Styles.whiteSmall,
+                ),
+              ),
             ),
           ),
         ],
