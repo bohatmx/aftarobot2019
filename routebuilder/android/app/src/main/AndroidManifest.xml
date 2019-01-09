@@ -26,6 +26,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="RouteBuilder"
         tools:replace="android:label">
+        <meta-data
+                android:name="com.google.android.geo.API_KEY"
+                android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
+        <meta-data
+                android:name="com.google.android.nearby.messages.API_KEY"
+                android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

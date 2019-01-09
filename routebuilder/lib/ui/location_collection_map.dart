@@ -5,8 +5,8 @@ import 'package:aftarobotlibrary3/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:routebuilder/bloc/route_builder_bloc.dart';
-import 'package:routebuilder/location_collector.dart';
 import 'package:routebuilder/ui/cards.dart';
+import 'package:routebuilder/ui/location_collector.dart';
 
 // ✅  🎾 🔵  📍   ℹ️
 class LocationCollectionMap extends StatefulWidget {
@@ -96,7 +96,7 @@ class _LocationCollectionMapState extends State<LocationCollectionMap>
     print('################ LocationCollectionMap build +++++ re-building');
     return StreamBuilder(
       initialData: bloc.model,
-      stream: bloc.stream,
+      stream: bloc.appModelStream,
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.active:

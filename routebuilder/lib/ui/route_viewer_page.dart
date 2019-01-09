@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:aftarobotlibrary3/api/file_util.dart';
-import 'package:aftarobotlibrary3/api/list_api.dart';
 import 'package:aftarobotlibrary3/data/associationdto.dart';
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
 import 'package:aftarobotlibrary3/data/routedto.dart';
@@ -12,8 +10,8 @@ import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:aftarobotlibrary3/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:routebuilder/location_collector.dart';
+import 'package:routebuilder/bloc/route_builder_bloc.dart';
+import 'package:routebuilder/ui/location_collector.dart';
 
 class RouteViewerPage extends StatefulWidget {
   @override
@@ -25,8 +23,6 @@ class RouteViewerPage extends StatefulWidget {
 */
 class _RouteViewerPageState extends State<RouteViewerPage>
     implements RouteCardListener, SnackBarListener {
-  List<RouteDTO> routes;
-  List<LandmarkDTO> landmarks;
   ScrollController scrollController = ScrollController();
   String status = 'AftaRobot Routes';
   int routeCount = 0, landmarkCount = 0;
@@ -38,40 +34,17 @@ class _RouteViewerPageState extends State<RouteViewerPage>
 
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
   int beaconCount = 0;
+  RouteBuilderBloc _bloc = routeBuilderBloc;
   @override
   void initState() {
     super.initState();
-    _getNewRoutes();
     _checkPermission();
   }
 
-  _requestPermission() async {
-    print('\n\n######################### requestPermission');
-    try {
-      Map<PermissionGroup, PermissionStatus> permissions =
-          await PermissionHandler()
-              .requestPermissions([PermissionGroup.location]);
-      print(permissions);
-      print("\n########### permission request for location is:  ✅ ");
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  _checkPermission() async {
-    print('\n\n######################### checkPermission');
-    try {
-      PermissionStatus locationPermission = await PermissionHandler()
-          .checkPermissionStatus(PermissionGroup.location);
-
-      if (locationPermission == PermissionStatus.denied) {
-        _requestPermission();
-      } else {
-        print(
-            "***************** location permission status is:  ✅  ✅ $locationPermission");
-      }
-    } catch (e) {
-      print(e);
+  void _checkPermission() async {
+    bool ok = await _bloc.checkPermission();
+    if (!ok) {
+      await _bloc.requestPermission();
     }
   }
 
@@ -110,57 +83,34 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     }
   }
 
-  Timer timer;
-  void _startTimer() {}
-  void _setCounters() {
-    setState(() {
-      routeCount = routes.length;
-      landmarkCount = landmarks.length;
-    });
-  }
-
-  void _getNewRoutes() async {
-    routes = await LocalDB.getRoutes();
-    landmarks = await LocalDB.getLandmarks();
-    _setCounters();
-    routes = await ListAPI.getRoutes();
-    landmarks = await ListAPI.getLandmarks();
-
-    _sortRoutes();
-    _setCounters();
-    LocalDB.saveRoutes(Routes(routes));
-    LocalDB.saveLandmarks(Landmarks(landmarks));
-  }
-
   void _sortRoutes() {
-    routes.sort((a, b) =>
+    appModel.routes.sort((a, b) =>
         (a.associationName + a.name).compareTo((b.associationName + b.name)));
   }
 
   void _refresh() async {
     print('_RouteViewerPageState._refresh .................');
-    routes = await ListAPI.getRoutes();
-    landmarks = await ListAPI.getLandmarks();
-    _sortRoutes();
-    _setCounters();
-
-    await LocalDB.saveRoutes(Routes(routes));
-    await LocalDB.saveLandmarks(Landmarks(landmarks));
-
-    print('_RouteViewerPageState._refresh ------- done. saved data in cache');
+    AppSnackbar.showSnackbarWithProgressIndicator(
+        scaffoldKey: _key,
+        message: 'Loading fresh data',
+        textColor: Colors.yellow,
+        backgroundColor: Colors.black);
+    await _bloc.getRoutes();
+    await _bloc.getLandmarks();
+    _key.currentState.removeCurrentSnackBar();
   }
 
   DateTime start, end;
 
   Widget _getListView() {
     return ListView.builder(
-        itemCount: routes == null ? 0 : routes.length,
+        itemCount: appModel == null ? 0 : appModel.routes.length,
         controller: scrollController,
         itemBuilder: (BuildContext context, int index) {
           return Padding(
             padding: const EdgeInsets.only(left: 16.0, right: 16, top: 16.0),
             child: RouteCard(
-              route: routes.elementAt(index),
+              route: appModel.routes.elementAt(index),
               number: index + 1,
               hideLandmarks: switchStatus,
               listener: this,
@@ -171,86 +121,113 @@ class _RouteViewerPageState extends State<RouteViewerPage>
 
   String switchLabel = 'Hide';
   bool switchStatus = false;
+  RouteBuilderModel appModel;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _key,
-      appBar: AppBar(
-        title: Text('AftaRobot Routes'),
-        backgroundColor: Colors.indigo.shade300,
-        actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0, top: 8.0),
-            child: IconButton(
-              onPressed: _refresh,
-              iconSize: 28,
-              icon: Icon(Icons.refresh),
-            ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(120),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(
-              child: Column(
-                children: <Widget>[
-                  Row(
+    return StreamBuilder<RouteBuilderModel>(
+      initialData: _bloc.model,
+      stream: _bloc.appModelStream,
+      builder: (context, snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.active:
+            printLog('🔵 ConnectionState.active set data from stream data');
+            appModel = snapshot.data;
+            _sortRoutes();
+            break;
+          case ConnectionState.waiting:
+            printLog(' 🎾 onnectionState.waiting .......');
+            break;
+          case ConnectionState.done:
+            printLog(' 🎾 ConnectionState.done ???');
+            break;
+          case ConnectionState.none:
+            printLog(' 🎾 ConnectionState.none - do nuthin ...');
+            break;
+        }
+        return Scaffold(
+          key: _key,
+          appBar: AppBar(
+            title: Text('AftaRobot Routes'),
+            backgroundColor: Colors.indigo.shade300,
+            actions: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0, top: 8.0),
+                child: IconButton(
+                  onPressed: _refresh,
+                  iconSize: 24,
+                  icon: Icon(Icons.refresh),
+                ),
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: Size.fromHeight(120),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: Column(
                     children: <Widget>[
-                      SizedBox(
-                        width: 20,
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                      Row(
                         children: <Widget>[
-                          Text(
-                            '$routeCount',
-                            style: Styles.blackBoldLarge,
+                          SizedBox(
+                            width: 20,
                           ),
-                          Text(
-                            'Routes',
-                            style: Styles.whiteSmall,
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: <Widget>[
+                              Text(
+                                appModel == null
+                                    ? '0'
+                                    : '${appModel.routes.length}',
+                                style: Styles.blackBoldLarge,
+                              ),
+                              Text(
+                                'Routes',
+                                style: Styles.whiteSmall,
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            width: 40,
+                          ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: <Widget>[
+                              Text(
+                                appModel == null
+                                    ? '0'
+                                    : '${appModel.landmarks.length}',
+                                style: Styles.blackBoldLarge,
+                              ),
+                              Text(
+                                'Landmarks',
+                                style: Styles.whiteSmall,
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            width: 80,
+                          ),
+                          SizedBox(
+                            width: 10,
                           ),
                         ],
                       ),
                       SizedBox(
-                        width: 40,
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          Text(
-                            '$landmarkCount',
-                            style: Styles.blackBoldLarge,
-                          ),
-                          Text(
-                            'Landmarks',
-                            style: Styles.whiteSmall,
-                          ),
-                        ],
+                        height: 8,
                       ),
                       SizedBox(
-                        width: 80,
-                      ),
-                      SizedBox(
-                        width: 10,
+                        height: 10,
                       ),
                     ],
                   ),
-                  SizedBox(
-                    height: 8,
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
-      body: _getListView(),
-      backgroundColor: Colors.brown.shade100,
+          body: _getListView(),
+          backgroundColor: Colors.brown.shade100,
+        );
+      },
     );
   }
 

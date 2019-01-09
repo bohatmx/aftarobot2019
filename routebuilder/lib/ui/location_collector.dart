@@ -1,4 +1,3 @@
-import 'package:aftarobotlibrary3/beacons/beacon_api.dart';
 import 'package:aftarobotlibrary3/data/routedto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:aftarobotlibrary3/util/maps/snap_to_roads.dart';
@@ -10,8 +9,8 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
     as bg;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:routebuilder/bloc/route_builder_bloc.dart';
-import 'package:routebuilder/location_collection_map.dart';
-import 'package:routebuilder/snaptoroads_page.dart';
+import 'package:routebuilder/ui/location_collection_map.dart';
+import 'package:routebuilder/ui/snaptoroads_page.dart';
 
 class LocationCollector extends StatefulWidget {
   final RouteDTO route;
@@ -132,8 +131,6 @@ class _LocationCollectorState extends State<LocationCollector>
           'Moving? ${location.isMoving}   📍 Odometer: ${location.odometer} km',
     );
   }
-
-  GoogleBeaconBloc beaconBloc = googleBeaconBloc;
 
   _onMotionChanged(bg.Location location) {
     print('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
@@ -341,7 +338,7 @@ class _LocationCollectorState extends State<LocationCollector>
       );
     });
     return StreamBuilder(
-        stream: bloc.stream,
+        stream: bloc.appModelStream,
         initialData: bloc.model,
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {

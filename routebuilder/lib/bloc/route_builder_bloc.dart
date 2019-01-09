@@ -10,9 +10,12 @@ import 'package:aftarobotlibrary3/data/routedto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:aftarobotlibrary3/util/maps/snap_to_roads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart';
 import 'package:meta/meta.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class RouteBuilderModel {
   List<RouteDTO> _routes = List();
@@ -36,11 +39,6 @@ class RouteBuilderModel {
   void receiveRoutePoints(List<ARLocation> routePoints) {
     _routePoints = routePoints;
   }
-
-  Future initialize() async {
-    print('### ℹ️  ℹ️  ℹ️  RouteBuilderBloc initializing');
-    return null;
-  }
 }
 
 /*
@@ -51,37 +49,198 @@ class RouteBuilderBloc {
       StreamController<RouteBuilderModel>.broadcast();
   final StreamController<String> _errorController =
       StreamController<String>.broadcast();
+  final StreamController<bg.Location> _currentLocationController =
+      StreamController<bg.Location>.broadcast();
   final RouteBuilderModel _appModel = RouteBuilderModel();
   final Firestore fs = Firestore.instance;
-  RouteBuilderBloc() {
-    print('\n\n\n### ℹ️  ℹ️  ℹ️  RouteBuilderBloc initializing ...');
-    _start();
-  }
-  _start() async {
-    await _appModel.initialize();
-    await getAssociationBags();
-
-    print('\n\n############ adding model to stream sink ...');
-  }
-
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  bg.Location _currentLocation;
+  bg.Location get currentLocation => _currentLocation;
   RouteBuilderModel get model => _appModel;
   closeStream() {
     _appModelController.close();
     _errorController.close();
+    _currentLocationController.close();
   }
 
-  get stream => _appModelController.stream;
+  get appModelStream => _appModelController.stream;
+  get currentLocationStream => _currentLocationController.stream;
 
-  getAssociationBags() async {
-    print('### ℹ️  getAssociationBags getting bags ..........');
-    var bags = await ListAPI.getAssociationBags();
-    _appModel.associationBags.addAll(bags);
+  RouteBuilderBloc() {
+    printLog('\n\n\n### ℹ️  ℹ️  ℹ️  RouteBuilderBloc initializing ...');
+    _initialize();
+  }
+
+  _initialize() async {
+    await _signIn();
+    _setBackgroundLocation();
+
+    await getRoutes();
+    await getLandmarks();
+  }
+
+  Future _signIn() async {
+    //todo - to be replaced by proper authentication
+    printLog(
+        '\n### ℹ️ sign in anonymously ...(to be replaced by real auth code)');
+    var user = await _auth.currentUser();
+    if (user == null) {
+      await _auth.signInAnonymously();
+    } else {
+      printLog(' ✅ User already authenticated');
+    }
+    return null;
+  }
+
+  Future<bool> requestPermission() async {
+    print('\n\n######################### requestPermission');
+    try {
+      Map<PermissionGroup, PermissionStatus> permissions =
+          await PermissionHandler()
+              .requestPermissions([PermissionGroup.location]);
+      print(permissions);
+      permissions.values.forEach((perm) {
+        printLog('check for perm:: Permission status: $perm');
+      });
+      print("\n########### permission request for location is:  ✅ ");
+      return true;
+    } catch (e) {
+      print(e);
+    }
+    return false;
+  }
+
+  Future<bool> checkPermission() async {
+    print('\n\n######################### checkPermission');
+    try {
+      PermissionStatus locationPermission = await PermissionHandler()
+          .checkPermissionStatus(PermissionGroup.location);
+
+      if (locationPermission == PermissionStatus.denied) {
+        return false;
+      } else {
+        print(
+            "***************** location permission status is:  ✅  ✅ $locationPermission");
+        return true;
+      }
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+    return false;
+  }
+
+  void _setBackgroundLocation() {
+    // 1.  Listen to events (See docs for all 12 available events).
+    bg.BackgroundGeolocation.onLocation(_onLocation);
+    bg.BackgroundGeolocation.onMotionChange(_onMotionChanged);
+    bg.BackgroundGeolocation.onActivityChange(_onActivityChanged);
+    bg.BackgroundGeolocation.onProviderChange(_onProviderChange);
+    bg.BackgroundGeolocation.onConnectivityChange(_onConnectivityChange);
+    _setGeofencing();
+
+    // 2.  Configure the plugin
+    bg.BackgroundGeolocation.ready(bg.Config(
+            desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+            distanceFilter: 10.0,
+            stopOnTerminate: false,
+            startOnBoot: true,
+            debug: true,
+            geofenceProximityRadius: 5000,
+            schedule: [
+              '1-7 4:00-22:00', // Sun-Sat: 4:00am to 10:00pm
+            ],
+            logLevel: bg.Config.LOG_LEVEL_ERROR,
+            reset: true))
+        .then((bg.State state) {
+      //not doing nuthin ...
+    });
+
+    printLog('### ✅ background location set. will start tracking ...\n');
+  }
+
+  _setGeofencing() async {
+    printLog('+++ 🎾 setting up geofencing background listeners ...\n');
+
+    bg.BackgroundGeolocation.onGeofence(_onGeofenceEvent);
+
+    bg.BackgroundGeolocation.onGeofencesChange((changeEvent) {
+      printLog('\n\n+++ ✅ ✅ ✅  List of ACTIVATED GEOFENCES\n\n');
+      changeEvent.on.forEach((Geofence geofence) {
+        //createGeofenceMarker(geofence)
+        printLog('+++ 🔵  ${geofence.identifier}');
+      });
+      printLog("\n\n");
+
+      printLog('\n\n⚠️ List of DE- ACTIVATED GEOFENCES\n\n');
+      changeEvent.off.forEach((String identifier) {
+        printLog('⚠️ $identifier ::  DE-ACTIVATED --');
+      });
+    });
+  }
+
+  _onGeofenceEvent(GeofenceEvent event) async {
+    printLog('\n\n+++  🎾 process geofence event');
+  }
+
+  _onMotionChanged(bg.Location location) {
+    printLog('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
+    _currentLocation = location;
+    _currentLocationController.sink.add(location);
+  }
+
+  _onConnectivityChange(bg.ConnectivityChangeEvent event) {
+    printLog(
+        '+++++++++++++++ _onConnectivityChange connected: ${event.connected}');
+  }
+
+  _onActivityChanged(bg.ActivityChangeEvent event) {
+    printLog('#############  ℹ️ _onActivityChanged: ${event.toMap()}');
+  }
+
+  _onLocation(bg.Location location) {
+    if (location.isMoving) {
+      printLog(
+          '\n\n\n✅ ✅ ✅ ✅  -- onLocation:  VEHICLE IS MOVING? ${location.isMoving}  ✅ ✅ ✅ ✅\n\n');
+    } else {
+      printLog('\n\n🎾  -- onLocation:  vehicle is stationary?\n');
+    }
+
+    _currentLocation = location;
+    _currentLocationController.sink.add(location);
+  }
+
+  _onProviderChange(ProviderChangeEvent event) {
+    printLog('_onProviderChange --- ');
+  }
+
+  Future getRoutes() async {
+    printLog('### ℹ️  getRoutes: getting ALL routes in Firestore ..........\n');
+    var routes = await ListAPI.getRoutes();
+
+    printLog(' 📍 adding model with routes to model and stream sink ...');
+    _appModel.routes.clear();
+    _appModel.routes.addAll(routes);
     _appModelController.sink.add(_appModel);
-    print('++++ ✅  association bags retrieved ${bags.length}');
+    printLog('++++ ✅  routes retrieved: ${routes.length}\n');
+    return _appModel.routes;
+  }
+
+  Future getLandmarks() async {
+    printLog(
+        '### ℹ️  getLandmarks: getting ALL landmarks in Firestore ..........\n');
+    var marks = await ListAPI.getLandmarks();
+
+    printLog(' 📍 adding model with landmarks to model and stream sink ...');
+    _appModel.landmarks.clear();
+    _appModel.landmarks.addAll(marks);
+    _appModelController.sink.add(_appModel);
+    printLog('++++ ✅  landmarks retrieved: ${marks.length}\n');
+    return _appModel.landmarks;
   }
 
   getRoutePoints({String routeID}) async {
-    print('### ℹ️  getRoutePoints getting route points ..........');
+    printLog('### ℹ️  getRoutePoints getting route points ..........');
     var qs = await fs
         .collection('rawRoutePoints')
         .document(routeID)
@@ -127,7 +286,7 @@ class RouteBuilderBloc {
   }
 
   addRawRoutePoint(ARLocation location) async {
-    print('#### ℹ️ ℹ️  processing route point. adding utc date');
+    printLog('#### ℹ️ ℹ️  processing route point. adding utc date');
     location.date = DateTime.now().toUtc().toIso8601String();
     location.uid = getKey();
     try {
@@ -138,7 +297,7 @@ class RouteBuilderBloc {
           .collection('points')
           .add(location.toJson());
 
-      print(
+      printLog(
           '#### ℹ️ ℹ️  collected AR location written to Firestore: ${ref.path} 📍 add to stream sink');
       _appModel.arLocations.add(location);
       _appModelController.sink.add(_appModel);
@@ -187,8 +346,7 @@ class RouteBuilderBloc {
   }
 
   addGeofenceEvent(ARGeofenceEvent event) async {
-    print('#### ℹ️ ℹ️  processing route point. adding utc date');
-    //event.timestamp = DateTime.now().toUtc().toIso8601String();
+    printLog('#### ℹ️ ℹ️  adding geofence event');
     try {
       var ref = await fs
           .collection('geofenceEvents')
@@ -196,8 +354,8 @@ class RouteBuilderBloc {
           .collection('points')
           .add(event.toJson());
 
-      print(
-          '#### ℹ️ ℹ️  geoefenceEvent location written to Firestore: ${ref.path} 📍 add to stream sink');
+      printLog(
+          '#### ℹ️  ✅  geoefenceEvent location written to Firestore: ${ref.path} 📍 add to stream sink');
       _appModel.geofenceEvents.add(event);
       _appModelController.sink.add(_appModel);
     } catch (e) {
@@ -207,23 +365,22 @@ class RouteBuilderBloc {
 
   Timer timer;
   int timerDuration = 10;
+
   startRoutePointCollectionTimer(
       {@required RouteDTO route, @required int collectionSeconds}) {
-    getGPSLocation(route);
+    collectRawRoutePoint(route);
 
-    if (timer == null) {
-      timer = Timer.periodic(Duration(seconds: collectionSeconds), (mt) {
-        print(
-            "%%%%%%%% ⚠️  timer triggered for 10 seconds :: - get GPS location and save");
-        getGPSLocation(route);
-      });
-    } else {}
+    timer = Timer.periodic(Duration(seconds: collectionSeconds), (mt) {
+      printLog(
+          "⚠️  timer triggered for $collectionSeconds seconds :: - get GPS location and save");
+      collectRawRoutePoint(route);
+    });
   }
 
   ARLocation prevLocation;
-  Future getGPSLocation(RouteDTO route) async {
-    print(
-        '_LocationCollectorState ############# getLocation starting ..............');
+  Future collectRawRoutePoint(RouteDTO route) async {
+    printLog(
+        'getGPSLocation ############# getLocation starting ..............');
     var c = await bg.BackgroundGeolocation.getCurrentPosition();
     var arLoc = ARLocation(
       routeID: route == null ? null : route.routeID,
@@ -242,7 +399,7 @@ class RouteBuilderBloc {
       speed: c.coords.speed,
       uid: c.uuid,
     );
-    prettyPrint(arLoc.toJson(), 'ARLocation format ....  ⚠️   ⚠️   ⚠️   ⚠️  ');
+
     assert(arLoc.latitude != null);
     if (prevLocation != null) {
       if (arLoc.latitude == prevLocation.latitude &&
