@@ -11,18 +11,20 @@ import 'package:aftarobotlibrary3/util/snack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:routebuilder/bloc/route_builder_bloc.dart';
+import 'package:routebuilder/ui/location_collection_map.dart';
 import 'package:routebuilder/ui/location_collector.dart';
 
+/*
+  This widget manages a list of routes. A route builder selects a route and starts the LocationCollector
+  for collection of raw route points.
+ */
 class RouteViewerPage extends StatefulWidget {
   @override
   _RouteViewerPageState createState() => _RouteViewerPageState();
 }
 
-/*
-  #region
-*/
 class _RouteViewerPageState extends State<RouteViewerPage>
-    implements RouteCardListener, SnackBarListener {
+    implements SnackBarListener {
   ScrollController scrollController = ScrollController();
   String status = 'AftaRobot Routes';
   int routeCount = 0, landmarkCount = 0;
@@ -46,15 +48,6 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     if (!ok) {
       await _bloc.requestPermission();
     }
-  }
-
-  void _startRouteBuilding() async {
-    print(
-        '\n########### startRouteBuilding ------------------------------ ...');
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => LocationCollector(route: route)));
   }
 
   Future _getDirections(
@@ -108,12 +101,11 @@ class _RouteViewerPageState extends State<RouteViewerPage>
         controller: scrollController,
         itemBuilder: (BuildContext context, int index) {
           return Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16, top: 16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16, top: 4.0),
             child: RouteCard(
               route: appModel.routes.elementAt(index),
               number: index + 1,
               hideLandmarks: switchStatus,
-              listener: this,
             ),
           );
         });
@@ -154,75 +146,12 @@ class _RouteViewerPageState extends State<RouteViewerPage>
                 padding: const EdgeInsets.only(right: 8.0, top: 8.0),
                 child: IconButton(
                   onPressed: _refresh,
-                  iconSize: 24,
+                  iconSize: 18,
                   icon: Icon(Icons.refresh),
                 ),
               ),
             ],
-            bottom: PreferredSize(
-              preferredSize: Size.fromHeight(120),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Center(
-                  child: Column(
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: <Widget>[
-                              Text(
-                                appModel == null
-                                    ? '0'
-                                    : '${appModel.routes.length}',
-                                style: Styles.blackBoldLarge,
-                              ),
-                              Text(
-                                'Routes',
-                                style: Styles.whiteSmall,
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            width: 40,
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: <Widget>[
-                              Text(
-                                appModel == null
-                                    ? '0'
-                                    : '${appModel.landmarks.length}',
-                                style: Styles.blackBoldLarge,
-                              ),
-                              Text(
-                                'Landmarks',
-                                style: Styles.whiteSmall,
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            width: 80,
-                          ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 8,
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            bottom: _getTotalsView(),
           ),
           body: _getListView(),
           backgroundColor: Colors.brown.shade100,
@@ -231,133 +160,61 @@ class _RouteViewerPageState extends State<RouteViewerPage>
     );
   }
 
-  List<LandmarkDTO> newLandmarks = List();
-
-  void _onSwitchChanged(bool value) {
-    print('_RouteViewerPageState._onSwitchChanged hideRoutes = $value');
-    setState(() {
-      switchStatus = value;
-    });
-  }
-
-  RouteDTO route;
-  @override
-  onRouteTapped(RouteDTO route) async {
-    this.route = route;
-    print(
-        '_RouteViewerPageState.onRouteTapped: &&&&&&&&&&& route: ${route.name}');
-    _showChoiceDialog();
-  }
-
-  void _showChoiceDialog() {
-    showDialog(
-        context: context,
-        builder: (_) => new AlertDialog(
-              title: new Text(
-                "Action Stations!",
-                style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: Theme.of(context).primaryColor),
-              ),
-              content: Container(
-                height: 120.0,
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Please select the way you want to go',
-                        style: Styles.blackBoldMedium,
+  Widget _getTotalsView() {
+    return PreferredSize(
+      preferredSize: Size.fromHeight(80),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Center(
+          child: Column(
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      Text(
+                        appModel == null ? '0' : '${appModel.routes.length}',
+                        style: Styles.blackBoldLarge,
                       ),
-                    ),
-                  ],
-                ),
+                      Text(
+                        'Routes',
+                        style: Styles.whiteSmall,
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: 40,
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      Text(
+                        appModel == null ? '0' : '${appModel.landmarks.length}',
+                        style: Styles.blackBoldLarge,
+                      ),
+                      Text(
+                        'Landmarks',
+                        style: Styles.whiteSmall,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              actions: <Widget>[
-                FlatButton(
-                  color: Colors.pink,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'Route Build',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _startRouteBuilding();
-                  },
-                ),
-                SizedBox(
-                  width: 20,
-                ),
-                FlatButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _proceedToMap(route);
-                  },
-                  color: Colors.teal.shade500,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'Start Map',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ));
-  }
-
-  void _proceedToMap(RouteDTO route) async {
-    //await _startDirectionsTest(route);
-    _goToMapSearch(context: context, route: route);
-  }
-
-  Future _startDirectionsTest(RouteDTO route) async {
-    route.spatialInfos.sort((a, b) => a.fromLandmark.rankSequenceNumber);
-    var info1 = route.spatialInfos.first;
-    var info2 = route.spatialInfos.last;
-
-    AppSnackbar.showSnackbar(
-        scaffoldKey: _key,
-        message:
-            'Getting route directions: ${info1.fromLandmark.landmarkName} to ${info2.fromLandmark.landmarkName}',
-        backgroundColor: Colors.black,
-        textColor: Colors.white);
-    var start = DateTime.now();
-
-    await _getDirections(
-      originLatitude: info1.fromLandmark.latitude,
-      originLongitude: info1.fromLandmark.longitude,
-      destinationLatitude: info2.fromLandmark.latitude,
-      destinationLongitude: info2.fromLandmark.longitude,
+              SizedBox(
+                height: 8,
+              ),
+              SizedBox(
+                height: 10,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-    var end = DateTime.now();
-    print(
-        '######### directions received, elapsed time: ${end.difference(start).inSeconds}');
-    return null;
-  }
-
-  void _goToMapSearch(
-      {BuildContext context, LandmarkDTO landmark, RouteDTO route}) {
-    if (route != null) {
-      Navigator.push(
-        context,
-        new MaterialPageRoute(
-            builder: (context) => CityMapSearch(
-                  route: route,
-                )),
-      );
-    } else {
-      Navigator.push(
-        context,
-        new MaterialPageRoute(
-            builder: (context) => CityMapSearch(
-                  landmark: landmark,
-                )),
-      );
-    }
   }
 
   @override
@@ -366,22 +223,13 @@ class _RouteViewerPageState extends State<RouteViewerPage>
   }
 }
 
-/*
-  #region
-*/
-abstract class RouteCardListener {
-  onRouteTapped(RouteDTO route);
-}
-
 class RouteCard extends StatefulWidget {
   final RouteDTO route;
   final Color color;
   final int number;
   final bool hideLandmarks;
-  final RouteCardListener listener;
 
-  RouteCard(
-      {this.route, this.color, this.number, this.hideLandmarks, this.listener});
+  RouteCard({this.route, this.color, this.number, this.hideLandmarks});
 
   @override
   _RouteCardState createState() => _RouteCardState();
@@ -439,43 +287,117 @@ class _RouteCardState extends State<RouteCard> {
     );
   }
 
+  List<PopupMenuItem<String>> menuItems = List();
+  _buildMenuItems() {
+    menuItems.clear();
+    menuItems.add(PopupMenuItem<String>(
+      value: 'Collect Route Points',
+      child: GestureDetector(
+        onTap: _startRoutePointCollector,
+        child: ListTile(
+          leading: Icon(
+            Icons.location_on,
+            color: getRandomColor(),
+          ),
+          title: Text('Collect Route Points', style: Styles.blackSmall),
+        ),
+      ),
+    ));
+    menuItems.add(PopupMenuItem<String>(
+      value: 'Display Route Map',
+      child: GestureDetector(
+        onTap: _startLocationCollectionMap,
+        child: ListTile(
+          leading: Icon(
+            Icons.map,
+            color: getRandomColor(),
+          ),
+          title: Text(
+            'Points Collected',
+            style: Styles.blackSmall,
+          ),
+        ),
+      ),
+    ));
+    menuItems.add(PopupMenuItem<String>(
+      value: 'Activate Route',
+      child: ListTile(
+        leading: Icon(
+          Icons.edit,
+          color: getRandomColor(),
+        ),
+        title: Text('Activate Route', style: Styles.blackSmall),
+      ),
+    ));
+    menuItems.add(PopupMenuItem<String>(
+      value: 'Remove Route',
+      child: ListTile(
+        leading: Icon(
+          Icons.cancel,
+          color: Colors.pink,
+        ),
+        title: Text('Remove Route', style: Styles.blackSmall),
+      ),
+    ));
+  }
+
+  _startRoutePointCollector() {
+    print('_startRoutePointCollector');
+    Navigator.pop(context);
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LocationCollector(route: widget.route)));
+  }
+
+  _startLocationCollectionMap() {
+    print('_startRouteMap');
+    Navigator.pop(context);
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LocationCollectionMap(route: widget.route)));
+  }
+
   @override
   Widget build(BuildContext context) {
+    _buildMenuItems();
     return Card(
       elevation: 4.0,
       color: getRandomPastelColor(),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: <Widget>[
-            InkWell(
-              onTap: () {
-                print(
-                    '_RouteCardState.build --- route name tapped: ${widget.route.name}');
-                if (widget.listener != null) {
-                  widget.listener.onRouteTapped(widget.route);
-                }
-              },
-              child: Row(
-                children: <Widget>[
-                  SizedBox(
-                    width: 40,
+            Row(
+              children: <Widget>[
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    widget.number == null ? '0' : '${widget.number}',
+                    style: Styles.pinkBoldSmall,
+                  ),
+                ),
+                Flexible(
+                  child: Container(
                     child: Text(
-                      widget.number == null ? '0' : '${widget.number}',
-                      style: Styles.pinkBoldSmall,
+                      widget.route.name,
+                      style: Styles.blackBoldMedium,
+                      overflow: TextOverflow.clip,
                     ),
                   ),
-                  Flexible(
-                    child: Container(
-                      child: Text(
-                        widget.route.name,
-                        style: Styles.blackBoldMedium,
-                        overflow: TextOverflow.clip,
-                      ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    PopupMenuButton<String>(
+                      itemBuilder: (context) {
+                        return menuItems;
+                      },
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
             Row(
               children: <Widget>[

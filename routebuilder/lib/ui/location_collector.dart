@@ -2,16 +2,22 @@ import 'package:aftarobotlibrary3/data/routedto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:aftarobotlibrary3/util/maps/snap_to_roads.dart';
 import 'package:aftarobotlibrary3/util/snack.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
-    as bg;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:routebuilder/bloc/route_builder_bloc.dart';
 import 'package:routebuilder/ui/location_collection_map.dart';
 import 'package:routebuilder/ui/snaptoroads_page.dart';
 
+/*
+  This widget manages the collection of route points. The route builder may collect these points either on foot or in a car.
+  The app automatically drops a point every few seconds depending on the mode.
+
+  After collection is complete, this widget passes the resulting points to the SnapToRoads page for viewing on the map and
+  saving to Firestore.
+
+  The points collected will be used to draw polylines for route and other maps.
+
+ */
 class LocationCollector extends StatefulWidget {
   final RouteDTO route;
   LocationCollector({this.route});
@@ -20,87 +26,42 @@ class LocationCollector extends StatefulWidget {
 }
 
 class _LocationCollectorState extends State<LocationCollector>
-    implements SnackBarListener, ModesListener, SnapToRoadsListener {
+    implements SnackBarListener, ModesListener {
   final GlobalKey<ScaffoldState> _key = new GlobalKey<ScaffoldState>();
 
   List<ARLocation> locationsCollected = List();
   var bloc = routeBuilderBloc;
-  RouteDTO route;
   bool isCancelTimer = false;
-  bg.Config config = bg.Config(
-      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-      distanceFilter: 10.0,
-      stopOnTerminate: false,
-      startOnBoot: true,
-      debug: true,
-      logLevel: bg.Config.LOG_LEVEL_VERBOSE,
-      schedule: [
-        '1-7 9:00-17:00', // Sun-Sat: 9:00am to 5:00pm (every day)
-      ],
-      reset: true);
+
   @override
   void initState() {
     super.initState();
     _checkPermission();
-    _getLocationsFromCache();
-    bg.BackgroundGeolocation.onActivityChange(_onActivityChanged);
-    bg.BackgroundGeolocation.onMotionChange(_onMotionChanged);
-    bg.BackgroundGeolocation.onConnectivityChange(_onConnectivityChange);
-    bg.BackgroundGeolocation.onLocation(_onLocation);
-    bg.BackgroundGeolocation.ready(bg.Config(
-            desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-            distanceFilter: 10.0,
-            stopOnTerminate: false,
-            startOnBoot: true,
-            debug: true,
-            logLevel: bg.Config.LOG_LEVEL_VERBOSE,
-            reset: true))
-        .then((bg.State state) {
-      print('++++++++++++ BackgroundGeolocation configured ....');
-      print(state);
-    });
-    if (widget.route != null) {
-      route = widget.route;
-      bloc.getRoutePoints(routeID: route.routeID);
-    } else {
-      _getPecanwoodRoute();
-    }
+    _getCollectionPoints();
   }
 
   @override
   void dispose() {
-    print('### dispose  🔵  🔵  🔵  🔵  🔵  - do nutjin, just checkin!');
+    print(
+        '### LocationCollector dispose  🔵  🔵  🔵  🔵  🔵  - do nuthin, just checkin!');
     super.dispose();
   }
 
   void _startCollectionMap() {
     Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => LocationCollectionMap(
-                  route: route,
-                )));
-  }
-
-  void _getPecanwoodRoute() async {
-    Firestore fs = Firestore.instance;
-    var qs = await fs
-        .collection('routes')
-        .where('routeID', isEqualTo: '-KVnZVSIg8UMl_gFtswm')
-        .getDocuments();
-    if (qs.documents.isNotEmpty) {
-      route = RouteDTO.fromJson(qs.documents.first.data);
-      bloc.getRoutePoints(routeID: route.routeID);
-      setState(() {});
-    } else {
-      print('------ ERROR: ⚠️ Inside Pecanwood not found');
-    }
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationCollectionMap(
+              route: widget.route,
+            ),
+      ),
+    );
   }
 
   _startTimer() {
     try {
       bloc.startRoutePointCollectionTimer(
-          route: route, collectionSeconds: collectionSeconds);
+          route: widget.route, collectionSeconds: collectionSeconds);
       _showSnack(color: Colors.teal, message: 'Location collection started');
     } catch (e) {
       print(e);
@@ -122,39 +83,6 @@ class _LocationCollectorState extends State<LocationCollector>
     });
   }
 
-  _onLocation(bg.Location location) {
-    print(
-        '\n\n@@@@@@@@@@@ ✅  ✅  -- onLocation:  isMoving? ${location.isMoving}');
-    print('${location.toMap()}');
-    _showSnack(
-      message:
-          'Moving? ${location.isMoving}   📍 Odometer: ${location.odometer} km',
-    );
-  }
-
-  _onMotionChanged(bg.Location location) {
-    print('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
-    if (location.isMoving) {
-      _showSnack(message: 'We are moving ...', color: Colors.green);
-      print(
-          '************************ WE ARE MOVING ......... LOOK FOR BEACON NOW!!');
-    } else {
-      print("------------------------  JUST CHILLIN .......");
-    }
-  }
-
-  _onConnectivityChange(bg.ConnectivityChangeEvent event) {
-    print(
-        '+++++++++++++++ _onConnectivityChange connected: ${event.connected}');
-    _showSnack(
-        message: 'Connectivity: ${event.connected}', color: Colors.green);
-  }
-
-  _onActivityChanged(bg.ActivityChangeEvent event) {
-    print('#############  ℹ️ _onActivityChanged: ${event.toMap()}');
-    _showSnack(message: event.toString());
-  }
-
   _showSnack({String message, Color color}) {
     AppSnackbar.showSnackbar(
         backgroundColor: Colors.black,
@@ -163,33 +91,10 @@ class _LocationCollectorState extends State<LocationCollector>
         message: message);
   }
 
-  _requestPermission() async {
-    print('\n\n######################### requestPermission');
-    try {
-      Map<PermissionGroup, PermissionStatus> permissions =
-          await PermissionHandler()
-              .requestPermissions([PermissionGroup.location]);
-      print(permissions);
-      print("\n########### permission request for location is:  ✅ ");
-    } catch (e) {
-      print(e);
-    }
-  }
-
   _checkPermission() async {
-    print('\n\n######################### checkPermission');
-    try {
-      PermissionStatus locationPermission = await PermissionHandler()
-          .checkPermissionStatus(PermissionGroup.location);
-
-      if (locationPermission == PermissionStatus.denied) {
-        _requestPermission();
-      } else {
-        print(
-            "***************** location permission status is:  ✅  ✅ $locationPermission");
-      }
-    } catch (e) {
-      print(e);
+    var ok = await bloc.checkPermission();
+    if (!ok) {
+      await bloc.requestPermission();
     }
   }
 
@@ -208,7 +113,7 @@ class _LocationCollectorState extends State<LocationCollector>
                 child: Column(
                   children: <Widget>[
                     Text(
-                      route == null ? '' : route.name,
+                      widget.route == null ? '' : widget.route.name,
                       style: Styles.blackBoldSmall,
                     ),
                     Padding(
@@ -252,31 +157,25 @@ class _LocationCollectorState extends State<LocationCollector>
   }
 
   void _eraseLocations() async {
-    setState(() {
-      prevLocation = null;
-      locationsCollected.clear();
-    });
     try {
-      bloc.deleteRoutePoints(routeID: route.routeID);
+      bloc.deleteRoutePoints(routeID: widget.route.routeID);
     } catch (e) {
       print(e);
       _showSnack(message: e.toString(), color: Colors.red);
     }
   }
 
-  void _getLocationsFromCache() async {
+  void _getCollectionPoints() async {
     locationsCollected =
         await bloc.getRoutePoints(routeID: widget.route.routeID);
 
     setState(() {});
   }
 
-  ARLocation prevLocation;
-
 // ✅  🎾 🔵  📍   ℹ️
 
   List<SnappedPoint> snappedPoints;
-  void _getSnappedPointsFromRoads() async {
+  void _getSnappedPointsFromRoadsAPI() async {
     print(
         "########################## getSnappedPointsFromRoads: Snap To Roads API");
     List<ARLocation> list = List();
@@ -296,7 +195,7 @@ class _LocationCollectorState extends State<LocationCollector>
 
     try {
       snappedPoints = await SnapToRoads.getSnappedPoints(
-          route: widget.route, listener: this, arLocations: list);
+          route: widget.route, arLocations: list);
       list.clear();
       snappedPoints.forEach((sp) {
         list.add(sp.location);
@@ -308,7 +207,7 @@ class _LocationCollectorState extends State<LocationCollector>
           context,
           MaterialPageRoute(
               builder: (BuildContext context) => SnapToRoadsPage(
-                    route: route,
+                    route: widget.route,
                     arLocations: list,
                   )));
     } catch (e) {
@@ -328,6 +227,7 @@ class _LocationCollectorState extends State<LocationCollector>
   @override
   void onActionPressed(int action) {}
   ScrollController scrollController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -393,7 +293,9 @@ class _LocationCollectorState extends State<LocationCollector>
                           Flexible(
                             child: Container(
                               child: Text(
-                                route == null ? '' : route.name,
+                                widget.route == null
+                                    ? 'UNAVAILABLE ROUTE'
+                                    : widget.route.name,
                                 style: Styles.whiteMedium,
                                 overflow: TextOverflow.clip,
                               ),
@@ -415,7 +317,9 @@ class _LocationCollectorState extends State<LocationCollector>
                           Flexible(
                             child: Container(
                               child: Text(
-                                route == null ? '' : route.associationName,
+                                widget.route == null
+                                    ? ''
+                                    : widget.route.associationName,
                                 style: Styles.blackBoldSmall,
                                 overflow: TextOverflow.clip,
                               ),
@@ -505,7 +409,7 @@ class _LocationCollectorState extends State<LocationCollector>
                 BottomNavigationBarItem(
                   icon: Icon(
                     Icons.cancel,
-                    size: 28,
+                    size: 24,
                     color: Colors.pink.shade300,
                   ),
                   title: Text('Erase All', style: Styles.blackSmall),
@@ -529,7 +433,7 @@ class _LocationCollectorState extends State<LocationCollector>
                     _showConfirmDialog();
                     break;
                   case 1:
-                    _getSnappedPointsFromRoads();
+                    _getSnappedPointsFromRoadsAPI();
                     break;
                   case 2:
                     _startTimer();
@@ -549,12 +453,6 @@ class _LocationCollectorState extends State<LocationCollector>
     setState(() {
       collectionSeconds = seconds;
     });
-  }
-
-  @override
-  onResponse(List<SnappedPoint> snappedPoints) {
-    printLog('✅ Collector has received ${snappedPoints.length} from API call');
-    return null;
   }
 }
 

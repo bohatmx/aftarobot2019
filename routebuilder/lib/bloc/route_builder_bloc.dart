@@ -67,7 +67,7 @@ class RouteBuilderBloc {
   get currentLocationStream => _currentLocationController.stream;
 
   RouteBuilderBloc() {
-    printLog('\n\n\n### ℹ️  ℹ️  ℹ️  RouteBuilderBloc initializing ...');
+    printLog('\n\n\n 🔵  🔵  🔵  🔵  🔵 RouteBuilderBloc initializing ...');
     _initialize();
   }
 
@@ -131,7 +131,7 @@ class RouteBuilderBloc {
   }
 
   void _setBackgroundLocation() {
-    // 1.  Listen to events (See docs for all 12 available events).
+    printLog('📍 setting background location config\n');
     bg.BackgroundGeolocation.onLocation(_onLocation);
     bg.BackgroundGeolocation.onMotionChange(_onMotionChanged);
     bg.BackgroundGeolocation.onActivityChange(_onActivityChanged);
