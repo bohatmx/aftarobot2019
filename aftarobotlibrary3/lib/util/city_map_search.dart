@@ -64,21 +64,21 @@ class _CityMapSearchState extends State<CityMapSearch>
       return;
     }
     try {
-      mRoute.spatialInfos.forEach((si) {
-        _mapController.animateCamera(CameraUpdate.newCameraPosition(
-            CameraPosition(
-                target:
-                    LatLng(si.fromLandmark.latitude, si.fromLandmark.longitude),
-                zoom: 12.0)));
-
-        _mapController.addMarker(MarkerOptions(
-          position: LatLng(si.fromLandmark.latitude, si.fromLandmark.longitude),
-          icon: BitmapDescriptor.fromAsset('assets/computers.png'),
-          zIndex: 4.0,
-          infoWindowText: InfoWindowText('${si.fromLandmark.landmarkName}',
-              '${si.fromLandmark.routeName}'),
-        ));
-      });
+//      mRoute.spatialInfos.forEach((si) {
+//        _mapController.animateCamera(CameraUpdate.newCameraPosition(
+//            CameraPosition(
+//                target:
+//                    LatLng(si.fromLandmark.latitude, si.fromLandmark.longitude),
+//                zoom: 12.0)));
+//
+//        _mapController.addMarker(MarkerOptions(
+//          position: LatLng(si.fromLandmark.latitude, si.fromLandmark.longitude),
+//          icon: BitmapDescriptor.fromAsset('assets/computers.png'),
+//          zIndex: 4.0,
+//          infoWindowText: InfoWindowText('${si.fromLandmark.landmarkName}',
+//              '${si.fromLandmark.routeName}'),
+//        ));
+//      });
     } catch (e) {
       print(e);
     }

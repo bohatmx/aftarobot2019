@@ -242,49 +242,6 @@ class _RouteCardState extends State<RouteCard> {
   @override
   void initState() {
     super.initState();
-    widget.route.spatialInfos.sort((a, b) => a.fromLandmark.rankSequenceNumber
-        .compareTo(b.fromLandmark.rankSequenceNumber));
-  }
-
-  void _expansionCallBack(int panelIndex, bool isExpanded) {
-    print(
-        ".................. _expansionCallBack panelIndex: $panelIndex isExpanded: $isExpanded");
-    setState(() {
-      this.isExpanded = !isExpanded;
-    });
-  }
-
-  Widget _buildSpatialInfoList() {
-    List<SpatialInfoPair> pairs = List();
-    widget.route.spatialInfos.forEach((si) {
-      pairs.add(SpatialInfoPair(
-        spatialInfo: si,
-        route: widget.route,
-      ));
-    });
-    List<ExpansionPanel> list = List();
-    var panel = ExpansionPanel(
-      isExpanded: isExpanded,
-      headerBuilder: (context, isExpanded) {
-        return Row(
-          children: <Widget>[
-            SizedBox(
-              width: 20,
-            ),
-            Text('Route Landmarks', style: Styles.greyLabelMedium)
-          ],
-        );
-      },
-      body: Column(
-        children: pairs,
-      ),
-    );
-    list.add(panel);
-    return ExpansionPanelList(
-      animationDuration: Duration(milliseconds: 500),
-      children: list,
-      expansionCallback: _expansionCallBack,
-    );
   }
 
   List<PopupMenuItem<String>> menuItems = List();
