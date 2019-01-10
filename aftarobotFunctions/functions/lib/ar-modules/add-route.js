@@ -39,6 +39,7 @@ exports.addRoute = functions.https.onRequest((request, response) => __awaiter(th
     return null;
     function writeRoute() {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log("############## writeRoute");
             try {
                 if (!route.routeID) {
                     route.routeID = uuid();
@@ -51,12 +52,12 @@ exports.addRoute = functions.https.onRequest((request, response) => __awaiter(th
                 if (qs0.docs.length > 0) {
                     const msg = `Route already exists: ${route.name}`;
                     console.error(msg);
-                    return response.status(201).send(msg);
+                    return response.status(201).send(route);
                 }
                 const ref = yield fs.collection(constants.Constants.FS_ROUTES).add(route);
                 route.path = ref.path;
                 yield ref.set(route);
-                console.log(`route written to Firestore ${ref.path}`);
+                console.log(`*** route written to Firestore ${route.path}`);
                 return response.status(200).send(route);
             }
             catch (e) {

@@ -19,6 +19,12 @@ import 'package:latlong/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 //✅  🎾 🔵  📍  ℹ️
+
+/*
+ create instance of bloc
+ */
+final VehicleAppBloc vehicleAppBloc = VehicleAppBloc();
+
 class VehicleAppBloc {
   VehicleAppBloc() {
     printLog('+++ ℹ️ +++  ++++++++++++++++++ initializing Vehicle App Bloc');
@@ -602,8 +608,8 @@ class VehicleAppBloc {
           '+++ ℹ️ℹ️ℹ️ℹ️ℹ️ successful geofence set up: $ok :: ${landmark.landmarkID} - ${landmark.landmarkName}');
     });
 
-    printLog(
-        ' 🔵 ## LANDMARK GEOFENCE  ::: ✅  #${landmark.rankSequenceNumber}  ${landmark.landmarkName} is being set up ...');
+//    printLog(
+//        ' 🔵 ## LANDMARK GEOFENCE  ::: ✅  #${landmark.rankSequenceNumber}  ${landmark.landmarkName} is being set up ...');
   }
 
   void listenForCommuterMessages() {

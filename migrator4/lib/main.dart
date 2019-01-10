@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:migrator4/dashboard.dart';
 import 'package:migrator4/generator.dart';
-import 'package:migrator4/location_test_page.dart';
 
 const API_KEY = "AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8";
 
@@ -92,42 +91,10 @@ class _GenerationPageState extends State<GenerationPage>
     );
   }
 
-  void _startLocationTestPage() {
-    Navigator.push(
-      context,
-      new MaterialPageRoute(builder: (context) => LocationTestPage()),
-    );
-  }
-
   void _startExistingPage() {
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => Dashboard()),
-    );
-  }
-
-  Widget _getThis() {
-    PageRouteBuilder(
-      pageBuilder: (BuildContext context, Animation<double> animation,
-          Animation<double> secondaryAnimation) {
-        return LocationTestPage();
-      },
-      transitionsBuilder: (BuildContext context, Animation<double> animation,
-          Animation<double> secondaryAnimation, Widget child) {
-        return SlideTransition(
-          position: new Tween<Offset>(
-            begin: const Offset(-1.0, 0.0),
-            end: Offset.zero,
-          ).animate(animation),
-          child: new SlideTransition(
-            position: new Tween<Offset>(
-              begin: Offset.zero,
-              end: const Offset(-1.0, 0.0),
-            ).animate(secondaryAnimation),
-            child: child,
-          ),
-        );
-      },
     );
   }
 
@@ -210,10 +177,6 @@ class _GenerationPageState extends State<GenerationPage>
         bottom: _getBottom(),
         backgroundColor: Colors.purple.shade300,
         actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.location_on),
-            onPressed: _startLocationTestPage,
-          ),
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refresh,

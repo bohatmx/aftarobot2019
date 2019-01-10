@@ -212,18 +212,18 @@ class AftaRobotMigration {
 
   static List<RouteDTO> routes = List();
   static Future<List<RouteDTO>> _getFilteredRoutes() async {
+    FirebaseDatabase firebaseDatabase = await _getDatabase();
     var tempRoutes = await getOldRoutes();
     List<RouteDTO> filteredRoutes = List();
     tempRoutes.forEach((r) {
       asses.forEach((ass) {
         if (ass.associationID == r.associationID) {
-          if (r.spatialInfos.length > 0) {
-            filteredRoutes.add(r);
-          }
+          filteredRoutes.add(r);
         }
       });
     });
     routes = filteredRoutes;
+
     print(
         'AftaRobotMigration._getFilteredRoutes - filtered routes: ${filteredRoutes.length}');
     return filteredRoutes;
@@ -672,6 +672,7 @@ class AftaRobotMigration {
 
   static int landmarkCount = 0, routeCount = 0;
   static AftaRobotMigrationListener migrationListener;
+  static List<RouteDTO> newRoutes = List();
   static Future migrateRoutes(
       {List<RouteDTO> routes, AftaRobotMigrationListener mListener}) async {
     print(
@@ -683,6 +684,9 @@ class AftaRobotMigration {
       asses = await ListAPI.getAssociations();
     }
     var start = DateTime.now();
+
+    await _getAllOldLandmarks();
+
     for (var route in routes) {
       bool isFound = false;
       asses.forEach((ass) {
@@ -691,27 +695,28 @@ class AftaRobotMigration {
         }
       });
       if (isFound) {
-        if (route.spatialInfos != null && route.spatialInfos.isNotEmpty) {
-          route.countryName = 'South Africa';
-          List<LandmarkDTO> landmarks = _getRouteLandmarks(route);
-          route.spatialInfos.clear();
+        route.countryName = 'South Africa';
+        var list = await _getRouteLandmarks(route);
+        if (list.isNotEmpty) {
           var routeWithPath = await _writeRoute(route);
-          if (routeWithPath != null) {
-            landmarks.forEach((m) {
-              m.routePath = routeWithPath.path;
-            });
-            print(
-                '\nAftaRobotMigration.migrateRoutes @@@@@ write ${landmarks.length} landmarks'
-                'for route: ${routeWithPath.name} - assoc: ${routeWithPath.associationName} path: ${routeWithPath.path}\n\n');
-            await _writeLandmarks(landmarks);
-          }
-        } else {
-          print(
-              '\nAftaRobotMigration.migrateRoutes -- route with no spatials: ${route.name} from assoc: ${route.associationName}');
+          newRoutes.add(routeWithPath);
         }
       } else {
         print(
             'AftaRobotMigration.migrateRoutes - ******** Route does not belong in chosen assocs ${route.name} - ${route.associationName}');
+      }
+    }
+    //do landmarks
+    for (var route in newRoutes) {
+      List<LandmarkDTO> landmarks = await _getRouteLandmarks(route);
+      if (landmarks.isNotEmpty) {
+        landmarks.forEach((m) {
+          m.routePath = route.path;
+        });
+        print(
+            '\nAftaRobotMigration.migrateRoutes @@@@@ write ${landmarks.length} landmarks'
+            'for route: ${route.name} - assoc: ${route.associationName} path: ${route.path}\n\n');
+        await _writeLandmarks(landmarks);
       }
     }
     var end = DateTime.now();
@@ -777,27 +782,36 @@ class AftaRobotMigration {
     return null;
   }
 
-  static List<LandmarkDTO> _getRouteLandmarks(RouteDTO route) {
+  static Future<List<LandmarkDTO>> _getRouteLandmarks(RouteDTO route) async {
     print(
-        'AftaRobotMigration._getRouteLandmarks .... filter from spatials ...');
-    List<LandmarkDTO> landmarks = List();
-    Map<String, LandmarkDTO> map = Map();
-    route.spatialInfos.forEach((si) {
-      var string = si.fromLandmark.landmarkName.toLowerCase();
-      if (!string.contains('virtual')) {
-        map[si.fromLandmark.landmarkID] = si.fromLandmark;
-        map[si.toLandmark.landmarkID] = si.toLandmark;
+        'AftaRobotMigration._getRouteLandmarks .... filter from big list ...${landmarks.length}');
+    List<LandmarkDTO> marks = List();
+    if (route == null || route.routeID == null) return marks;
+    landmarks.forEach((m) {
+      if (m != null && route != null) {
+        if (m.routeID == route.routeID) {
+          marks.add(m);
+        }
       }
     });
+    print(
+        'AftaRobotMigration._getRouteLandmarks ********  landmarks: ${marks.length}');
+    return marks;
+  }
 
-    map.forEach((key, landmark) {
-      landmark.associationName = route.associationName;
-      landmark.countryID = route.countryID;
-      landmarks.add(landmark);
-    });
+  static Future<List<LandmarkDTO>> _getAllOldLandmarks() async {
+    print('\n\nAftaRobotMigration._getAllLandmarks ️⚠️ ️⚠️ ️⚠️ ....  ...');
+    landmarks = List();
+    FirebaseDatabase firebaseDatabase = await _getDatabase();
+    DataSnapshot dataSnapshot2 =
+        await firebaseDatabase.reference().child('landmarks').once();
+    for (var value in dataSnapshot2.value.values) {
+      var mark = LandmarkDTO.fromJson(value);
+      landmarks.add(mark);
+    }
 
     print(
-        'AftaRobotMigration._getRouteLandmarks ******** filtered landmarks: ${landmarks.length}');
+        'AftaRobotMigration._getRouteLandmarks ️⚠️ ️⚠️ ️⚠️  ********  landmarks: ${landmarks.length}\n');
     return landmarks;
   }
 

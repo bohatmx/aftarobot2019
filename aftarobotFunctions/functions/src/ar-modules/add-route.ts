@@ -33,11 +33,11 @@ export const addRoute = functions.https.onRequest(async (request, response) => {
   return null;
 
   async function writeRoute() {
+    console.log("############## writeRoute");
     try {
       if (!route.routeID) {
         route.routeID = uuid();
       }
-
       const qs0 = await fs
         .collection(constants.Constants.FS_ROUTES)
         .where("associationID", "==", route.associationID)
@@ -46,14 +46,13 @@ export const addRoute = functions.https.onRequest(async (request, response) => {
       if (qs0.docs.length > 0) {
         const msg = `Route already exists: ${route.name}`;
         console.error(msg);
-        return response.status(201).send(msg);
+        return response.status(201).send(route);
       }
-
       const ref = await fs.collection(constants.Constants.FS_ROUTES).add(route);
       route.path = ref.path;
       await ref.set(route);
 
-      console.log(`route written to Firestore ${ref.path}`);
+      console.log(`*** route written to Firestore ${route.path}`);
       return response.status(200).send(route);
     } catch (e) {
       console.error(e);

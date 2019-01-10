@@ -148,6 +148,20 @@ class ListAPI {
     }
   }
 
+  static Future<List<LandmarkDTO>> getRouteLandmarks(String routeID) async {
+    List<LandmarkDTO> list = List();
+    var qs = await fs
+        .collection('landmarks')
+        .where('routeID', isEqualTo: routeID)
+        .getDocuments();
+    if (qs.documents.isNotEmpty) {
+      qs.documents.forEach((doc) {
+        list.add(LandmarkDTO.fromJson(doc.data));
+      });
+    }
+    return list;
+  }
+
   static Future<List<AssociationBag>> getAssociationBags(
       {AssociationBagListener listener}) async {
     List<VehicleTypeDTO> carTypes = List();

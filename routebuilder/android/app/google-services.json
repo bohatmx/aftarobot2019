@@ -1,35 +1,35 @@
 {
   "project_info": {
-    "project_number": "1027929957130",
-    "firebase_url": "https://aftarobot2019-dev1.firebaseio.com",
-    "project_id": "aftarobot2019-dev1",
-    "storage_bucket": "aftarobot2019-dev1.appspot.com"
+    "project_number": "122390487215",
+    "firebase_url": "https://aftarobot2019-dev3.firebaseio.com",
+    "project_id": "aftarobot2019-dev3",
+    "storage_bucket": "aftarobot2019-dev3.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1027929957130:android:fa288695a8965a0a",
+        "mobilesdk_app_id": "1:122390487215:android:02fc939c03bfe961",
         "android_client_info": {
-          "package_name": "com.aftarobot.beaconmanager"
+          "package_name": "com.aftarobot.commuter"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1027929957130-sut0ulm47cgalrchou8k5d7pbgd7qvjg.apps.googleusercontent.com",
+          "client_id": "122390487215-hdvg76eis5hsadifid89119e8jt0d6al.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.aftarobot.beaconmanager",
+            "package_name": "com.aftarobot.commuter",
             "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
           }
         },
         {
-          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+          "current_key": "AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A"
         }
       ],
       "services": {
@@ -40,7 +40,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
@@ -52,28 +52,28 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1027929957130:android:e4c2e1a4bcf2f0b2",
+        "mobilesdk_app_id": "1:122390487215:android:d5dfa46464e9190e",
         "android_client_info": {
-          "package_name": "com.aftarobot.carapp"
+          "package_name": "com.aftarobot.migrator4"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1027929957130-al3s8oss93ftt01btcrp43r9ek5l400g.apps.googleusercontent.com",
+          "client_id": "122390487215-lmgcug6fpdnud2gigg1v9j9j7l3rl0n4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.aftarobot.carapp",
+            "package_name": "com.aftarobot.migrator4",
             "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
           }
         },
         {
-          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+          "current_key": "AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A"
         }
       ],
       "services": {
@@ -84,7 +84,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
@@ -96,58 +96,14 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1027929957130:android:da9108253102eff7",
-        "android_client_info": {
-          "package_name": "com.aftarobot.migrator2"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1027929957130-uisdmr5ktqmc04eg8i43iq6sdba8tmpu.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.aftarobot.migrator2",
-            "certificate_hash": "c2a612e2c1c6c058f139ab260f5112807326ee17"
-          }
-        },
-        {
-          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
-        }
-      ],
-      "services": {
-        "analytics_service": {
-          "status": 1
-        },
-        "appinvite_service": {
-          "status": 2,
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        },
-        "ads_service": {
-          "status": 2
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1027929957130:android:df1bc510fd043f67",
+        "mobilesdk_app_id": "1:122390487215:android:df1bc510fd043f67",
         "android_client_info": {
           "package_name": "com.aftarobot.routebuilder"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1027929957130-qp7ck83652u5996rd11mnnt0fiii98k5.apps.googleusercontent.com",
+          "client_id": "122390487215-l3eqklhrsfagiupmoq9s5q1r5nsut5ap.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.aftarobot.routebuilder",
@@ -155,13 +111,13 @@
           }
         },
         {
-          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+          "current_key": "AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A"
         }
       ],
       "services": {
@@ -172,7 +128,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
@@ -184,14 +140,14 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1027929957130:android:56a6daf45e1fbcf2",
+        "mobilesdk_app_id": "1:122390487215:android:56a6daf45e1fbcf2",
         "android_client_info": {
           "package_name": "com.aftarobot.vehicle"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1027929957130-cpc17g0u002782jkinktuclfqqdai6d0.apps.googleusercontent.com",
+          "client_id": "122390487215-r2fjujjn0kgtav3qqgjra0snqf0l9d2s.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.aftarobot.vehicle",
@@ -199,13 +155,13 @@
           }
         },
         {
-          "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+          "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s"
+          "current_key": "AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A"
         }
       ],
       "services": {
@@ -216,7 +172,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "1027929957130-7d322nkdfh5f34d04rv2tuja0mboqd7t.apps.googleusercontent.com",
+              "client_id": "122390487215-2bc0027ve52ic5df7l2fdre0rstkt45j.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

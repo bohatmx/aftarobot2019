@@ -18,8 +18,6 @@ import 'package:migrator4/aftarobot_migrator_page.dart';
 import 'package:migrator4/background_loc.dart';
 import 'package:migrator4/city_migrate.dart';
 import 'package:migrator4/generator.dart';
-import 'package:migrator4/geofence_test_page.dart';
-import 'package:migrator4/location_collector.dart';
 import 'package:migrator4/main.dart';
 import 'package:migrator4/route_viewer_page.dart';
 
@@ -206,24 +204,10 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  void _startGeofenceTestPage() {
-    Navigator.push(
-      context,
-      new MaterialPageRoute(builder: (context) => GeofenceTestPage()),
-    );
-  }
-
   void _startGenerationPage() {
     Navigator.push(
       context,
       new MaterialPageRoute(builder: (context) => GenerationPage()),
-    );
-  }
-
-  void _startLocationCollectorTestPage() {
-    Navigator.push(
-      context,
-      new MaterialPageRoute(builder: (context) => LocationCollector()),
     );
   }
 
@@ -314,14 +298,6 @@ class _DashboardState extends State<Dashboard>
         bottom: _getBottom(),
         backgroundColor: Colors.purple.shade300,
         actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.my_location),
-            onPressed: _startGeofenceTestPage,
-          ),
-          IconButton(
-            icon: Icon(Icons.location_on),
-            onPressed: _startLocationCollectorTestPage,
-          ),
           IconButton(
             icon: Icon(Icons.beach_access),
             onPressed: _startBackgroundTest,

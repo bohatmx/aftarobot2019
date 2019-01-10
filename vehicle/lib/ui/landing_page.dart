@@ -13,9 +13,9 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  VehicleAppBloc bloc = VehicleAppBloc();
-  List<LandmarkDTO> landmarks = List();
-  var childButtons = List<UnicornButton>();
+  VehicleAppBloc _bloc = vehicleAppBloc;
+  List<LandmarkDTO> _landmarks = List();
+  var _childButtons = List<UnicornButton>();
 
   @override
   void initState() {
@@ -23,8 +23,8 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   _buildDialerList() {
-    childButtons.clear();
-    childButtons.add(UnicornButton(
+    _childButtons.clear();
+    _childButtons.add(UnicornButton(
         hasLabel: true,
         labelText: "Announcements",
         currentButton: FloatingActionButton(
@@ -35,7 +35,7 @@ class _LandingPageState extends State<LandingPage> {
           onPressed: () {},
         )));
 
-    childButtons.add(UnicornButton(
+    _childButtons.add(UnicornButton(
         hasLabel: true,
         labelText: "Refresh Information",
         currentButton: FloatingActionButton(
@@ -45,7 +45,7 @@ class _LandingPageState extends State<LandingPage> {
           child: Icon(Icons.refresh),
           onPressed: () {},
         )));
-    childButtons.add(UnicornButton(
+    _childButtons.add(UnicornButton(
         hasLabel: true,
         labelText: "Commuters",
         currentButton: FloatingActionButton(
@@ -69,7 +69,7 @@ class _LandingPageState extends State<LandingPage> {
 //          onPressed: _startLandmarkMap,
 //        )));
 
-    childButtons.add(
+    _childButtons.add(
       UnicornButton(
         hasLabel: true,
         labelText: "Taxis Around Us",
@@ -104,11 +104,11 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     _buildDialerList();
     return StreamBuilder(
-        stream: bloc.landmarksStream,
-        initialData: bloc.landmarks,
+        stream: _bloc.landmarksStream,
+        initialData: _bloc.landmarks,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
-            landmarks = snapshot.data;
+            _landmarks = snapshot.data;
           }
           SystemChrome.setPreferredOrientations([
             DeviceOrientation.landscapeRight,
@@ -121,7 +121,7 @@ class _LandingPageState extends State<LandingPage> {
                 body: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: LandmarkList(
-                    landmarks: landmarks,
+                    landmarks: _landmarks,
                   ),
                 ),
                 floatingActionButton: UnicornDialer(
@@ -129,17 +129,17 @@ class _LandingPageState extends State<LandingPage> {
                   parentButtonBackground: Colors.pink,
                   orientation: UnicornOrientation.VERTICAL,
                   parentButton: Icon(Icons.list),
-                  childButtons: childButtons,
+                  childButtons: _childButtons,
                 ),
               ),
-              bloc.geofenceEvents.isEmpty
+              _bloc.geofenceEvents.isEmpty
                   ? Container()
                   : Positioned(
                       right: 2,
                       top: 10,
                       child: StreamBuilder(
-                          initialData: bloc.geofenceEvents,
-                          stream: bloc.geofenceEventStream,
+                          initialData: _bloc.geofenceEvents,
+                          stream: _bloc.geofenceEventStream,
                           builder: (context, snapshot) {
                             return Card(
                               elevation: 16,
@@ -157,7 +157,7 @@ class _LandingPageState extends State<LandingPage> {
                                           width: 12,
                                         ),
                                         Text(
-                                          '${bloc.geofenceEvents.length}',
+                                          '${_bloc.geofenceEvents.length}',
                                           style: Styles.blackBoldLarge,
                                         ),
                                       ],
@@ -172,9 +172,9 @@ class _LandingPageState extends State<LandingPage> {
                                           width: 4,
                                         ),
                                         Text(
-                                          bloc.geofenceEvents.isEmpty
+                                          _bloc.geofenceEvents.isEmpty
                                               ? 'Nada'
-                                              : '${bloc.geofenceEvents.last.action}',
+                                              : '${_bloc.geofenceEvents.last.action}',
                                           style: Styles.pinkBoldMedium,
                                         ),
                                       ],

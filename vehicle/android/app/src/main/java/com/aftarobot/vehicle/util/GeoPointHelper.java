@@ -74,8 +74,8 @@ public class GeoPointHelper {
             @Override
             public void onKeyEntered(String s, GeoPoint geoPoint) {
                 map.put(s, geoPoint);
-                LogFileWriter.print(TAG, "onKeyEntered: \uD83D\uDD35 :: geoPoint found .... adding to hash map: " + map.size()
-                + " geoPoint: " + geoPoint.getLatitude() + " " + geoPoint.getLongitude() + "\n");
+//                LogFileWriter.print(TAG, "onKeyEntered: \uD83D\uDD35 :: geoPoint found .... adding to hash map: " + map.size()
+//                + " geoPoint: " + geoPoint.getLatitude() + " " + geoPoint.getLongitude() + "\n");
             }
 
             @Override

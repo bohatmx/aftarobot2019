@@ -6,11 +6,9 @@ import 'package:aftarobotlibrary3/data/associationdto.dart';
 import 'package:aftarobotlibrary3/data/countrydto.dart';
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
 import 'package:aftarobotlibrary3/data/routedto.dart';
-import 'package:aftarobotlibrary3/data/spatialinfodto.dart';
 import 'package:aftarobotlibrary3/data/userdto.dart';
 import 'package:aftarobotlibrary3/data/vehicledto.dart';
 import 'package:aftarobotlibrary3/data/vehicletypedto.dart';
-import 'package:aftarobotlibrary3/util/city_map_search.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:aftarobotlibrary3/util/snack.dart';
 import 'package:flutter/material.dart';
@@ -469,7 +467,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
         '_AftaRobotMigratorPageState._migrateRoutes ..... starting ..............');
     AppSnackbar.showSnackbarWithProgressIndicator(
         scaffoldKey: _key,
-        message: 'Removing debris and cleaning up... will take a WHILE!',
+        message: 'Removing debris and cleaning up',
         textColor: Colors.yellow,
         backgroundColor: Colors.black);
     var oldRoutes = await AftaRobotMigration.getOldRoutes();
@@ -567,7 +565,7 @@ class _AftaRobotMigratorPageState extends State<AftaRobotMigratorPage>
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        'Start BigTime Migration',
+                        'Start Migration',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
@@ -1207,37 +1205,6 @@ class _RouteCardState extends State<RouteCard> {
 
   @override
   Widget build(BuildContext context) {
-    List<ExpansionPanel> panels = List();
-    int mIndex = 0;
-    widget.route.spatialInfos.sort((a, b) => a.fromLandmark.rankSequenceNumber
-        .compareTo(b.fromLandmark.rankSequenceNumber));
-    if (widget.route.spatialInfos.isNotEmpty) {
-      widget.route.spatialInfos.forEach((si) {
-        bool iAmExpanding = false;
-        if (index == mIndex) {
-          iAmExpanding = isExpanded;
-        }
-        var panel = ExpansionPanel(
-            isExpanded: iAmExpanding,
-            body: SpatialInfoPair(
-              spatialInfo: si,
-              route: widget.route,
-            ),
-            headerBuilder: (BuildContext context, bool isExpanded) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 20.0, top: 8.0, bottom: 8),
-                child: Text(
-                  si.fromLandmark.landmarkName,
-                  style: Styles.blackBoldSmall,
-                ),
-              );
-            });
-
-        panels.add(panel);
-        mIndex++;
-      });
-    }
-
     return Card(
       elevation: 1.0,
       child: Padding(
@@ -1283,98 +1250,10 @@ class _RouteCardState extends State<RouteCard> {
             SizedBox(
               height: 20,
             ),
-            widget.route.spatialInfos.isEmpty
-                ? Container()
-                : ExpansionPanelList(
-                    children: panels,
-                    animationDuration: Duration(milliseconds: 500),
-                    expansionCallback: (int index, bool isExpanded) {
-                      print(
-                          'RouteCard.build - expansionCallback: index: $index isExpanded: $isExpanded - ${DateTime.now().toUtc().toIso8601String()}');
-                      setState(() {
-                        this.index = index;
-                        this.isExpanded = !isExpanded;
-                      });
-                    },
-                  ),
           ],
         ),
       ),
     );
-  }
-}
-
-class SpatialInfoPair extends StatelessWidget {
-  final SpatialInfoDTO spatialInfo;
-  final RouteDTO route;
-
-  SpatialInfoPair({this.route, this.spatialInfo});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        GestureDetector(
-          onTap: () {
-            _goToMapSearch(
-                context: context, landmark: spatialInfo.fromLandmark);
-          },
-          child: ListTile(
-            title: Text(
-              '${spatialInfo.fromLandmark.landmarkName} (seq: ${spatialInfo.fromLandmark.rankSequenceNumber})',
-              style: Styles.blackSmall,
-            ),
-            subtitle: Text(
-              '${spatialInfo.fromLandmark.latitude}  ${spatialInfo.fromLandmark.longitude}',
-              style: Styles.greyLabelSmall,
-            ),
-            leading: Icon(
-              Icons.airport_shuttle,
-              color: Colors.teal.shade600,
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            _goToMapSearch(context: context, landmark: spatialInfo.toLandmark);
-          },
-          child: ListTile(
-            title: Text(
-              '${spatialInfo.toLandmark.landmarkName} (seq: ${spatialInfo.toLandmark.rankSequenceNumber})',
-              style: Styles.blackSmall,
-            ),
-            subtitle: Text(
-              '${spatialInfo.toLandmark.latitude}  ${spatialInfo.toLandmark.longitude}',
-              style: Styles.greyLabelSmall,
-            ),
-            leading: Icon(
-              Icons.airport_shuttle,
-              color: Colors.pink.shade600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _goToMapSearch({BuildContext context, LandmarkDTO landmark}) {
-    if (route != null) {
-      Navigator.push(
-        context,
-        new MaterialPageRoute(
-            builder: (context) => CityMapSearch(
-                  route: route,
-                )),
-      );
-    } else {
-      Navigator.push(
-        context,
-        new MaterialPageRoute(
-            builder: (context) => CityMapSearch(
-                  landmark: landmark,
-                )),
-      );
-    }
   }
 }
 

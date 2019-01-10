@@ -77,7 +77,7 @@ public class VehicleLocationSearch {
                         vehicle.setPath(vehiclePath);
                         vehicleLocation.setVehicle(vehicle);
                         hashMap.put(vehicleID, vehicleLocation);
-                        LogFileWriter.print(TAG, "onGeoPointsFound:  ⚠️⚠️ ️found vehicle within time limit. Yay!");
+                        LogFileWriter.print(TAG, "onGeoPointsFound: \uD83D\uDD35 found vehicle within time limit. Yay! path: " + vehiclePath);
                     }
                 }
 

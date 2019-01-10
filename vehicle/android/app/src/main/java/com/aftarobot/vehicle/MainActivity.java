@@ -50,6 +50,7 @@ public class MainActivity extends FlutterActivity {
     EventChannel.EventSink messageEvents;
     MethodChannel.Result mResult;
     MethodChannel.Result mVehicleLocationResult, mVehicleSearchResult;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,6 +134,7 @@ public class MainActivity extends FlutterActivity {
                         mVehicleSearchResult = result;
                         Object args = call.arguments;
                         LogFileWriter.print(TAG, "\uD83D\uDCCD\uD83D\uDCCD ****************** onMethodCall: arguments: " + args.toString());
+
                         SearchVehiclesRequest geoRequest = G.fromJson(args.toString(), SearchVehiclesRequest.class);
                         if (call.method.equalsIgnoreCase("findVehicleLocations")) {
                             findVehicleLocations(geoRequest);
@@ -143,29 +145,35 @@ public class MainActivity extends FlutterActivity {
                 });
     }
 
+    void startMap() {
+        Intent m = new Intent(this, ARMapsActivity.class);
+        startActivity(m);
+    }
+
     void findVehicleLocations(SearchVehiclesRequest request) {
         VehicleLocationSearch.findVehicleLocations(request.minutes,
-                request.latitude, request.longitude, request.radius,new VehicleLocationListener() {
+                request.latitude, request.longitude, request.radius, new VehicleLocationListener() {
 
-            @Override
-            public void onVehiclesFound(List<VehicleLocation> vehicleLocations) {
-                LogFileWriter.print(TAG, "onVehiclesFound: \uD83D\uDD35  \uD83D\uDD35  +++ send found vehicles to Flutter: " + vehicleLocations.size());
-                LogFileWriter.print(TAG, "onVehiclesFound, details, details. what is sent to flutter: ".concat(G.toJson(vehicleLocations)).concat("\n\n"));
+                    @Override
+                    public void onVehiclesFound(List<VehicleLocation> vehicleLocations) {
+                        LogFileWriter.print(TAG, "onVehiclesFound: \uD83D\uDD35  \uD83D\uDD35  +++ send found vehicles to Flutter: " + vehicleLocations.size());
+                        LogFileWriter.print(TAG, "onVehiclesFound, details, details. what is sent to flutter: ".concat(G.toJson(vehicleLocations)).concat("\n\n"));
 
-                try {
-                    mVehicleSearchResult.success(G.toJson(vehicleLocations));
-                } catch (IllegalStateException e) {
-                    LogFileWriter.print(TAG, "onVehiclesFound: ⚠️  ⚠️  ⚠️  ⚠️  run into the familiar problem: " + e.getMessage());
-                }
-            }
+                        try {
+                            mVehicleSearchResult.success(G.toJson(vehicleLocations));
+                        } catch (IllegalStateException e) {
+                            LogFileWriter.print(TAG, "onVehiclesFound: ⚠️  ⚠️  ⚠️  ⚠️  run into the familiar problem: " + e.getMessage());
+                        }
+                    }
 
-            @Override
-            public void onError(String message) {
-                Log.e(TAG, "onError: ".concat(message) );
-                mVehicleSearchResult.error("‼️Failed to find vehicles", message, "‼️Cooked!");
-            }
-        });
+                    @Override
+                    public void onError(String message) {
+                        Log.e(TAG, "onError: ".concat(message));
+                        mVehicleSearchResult.error("‼️Failed to find vehicles", message, "‼️Cooked!");
+                    }
+                });
     }
+
     void writeVehicleLocation(AddVehicleLocationRequest request) {
         LogFileWriter.print(TAG, "writeVehicleLocation: ⚠️ ********* request: " + G.toJson(request));
         GeoPointHelper.writeVehicleLocation(request.vehiclePath, request.latitude, request.longitude, new AddVehicleLocationListener() {
@@ -176,22 +184,23 @@ public class MainActivity extends FlutterActivity {
                 try {
                     mVehicleLocationResult.success("Vehicle location written to Firestore: geoVehicleLocations: " + date);
                 } catch (IllegalStateException e) {
-                    Log.e(TAG, "onVehicleLocationAdded:  ⚠️ ⚠️IllegalStateException - tried to send response back to Flutter ::  ⚠️ ⚠️",e );
+                    Log.e(TAG, "onVehicleLocationAdded:  ⚠️ ⚠️IllegalStateException - tried to send response back to Flutter ::  ⚠️ ⚠️", e);
                 }
             }
 
             @Override
             public void onError(String message) {
-                Log.e(TAG, "‼️onError: " + message );
+                Log.e(TAG, "‼️onError: " + message);
                 mVehicleLocationResult.error(message, "‼️Error", "‼️Fucked!");
             }
         });
     }
+
     void findLandmarks(GeoRequest request) {
         LogFileWriter.print(TAG, "findLandmarks: #################################################################");
         GeoPointHelper.findLandmarksWithin(request.latitude, request.longitude, request.radius, new LandmarkGeoPointListener() {
             @Override
-            public void onLandmarkPointsFound(List<HashMap<String,String>> geoPoints) {
+            public void onLandmarkPointsFound(List<HashMap<String, String>> geoPoints) {
                 if (geoPoints.isEmpty()) {
                     LogFileWriter.print(TAG, "NO GEO POINTS FOUND:   \uD83D\uDD35,  like zero, zilch, nada!");
                 } else {
@@ -276,16 +285,24 @@ public class MainActivity extends FlutterActivity {
 
     @Override
     public void onStop() {
-        fgPublishClient.unpublish(mMessage);
-        bgPublishClient.unpublish(mMessage);
-        bgMessagesClient.unsubscribe(mMessageListener);
-        fgMessagesClient.unsubscribe(mMessageListener);
+        try {
+            if (fgPublishClient != null && mMessage != null) {
+                fgPublishClient.unpublish(mMessage);
+                bgPublishClient.unpublish(mMessage);
+            }
+            if (bgMessagesClient != null && mMessage != null) {
+                bgMessagesClient.unsubscribe(mMessageListener);
+                fgMessagesClient.unsubscribe(mMessageListener);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "onStop: unable to unpublish");
+        }
         super.onStop();
         LogFileWriter.print(TAG, "onStop: ###  \uD83C\uDFBE \uD83C\uDFBE MessagesClient un-publish and unsubscribe ");
     }
 
     private class GeoRequest {
-        double latitude,longitude,radius;
+        double latitude, longitude, radius;
 
         public double getLatitude() {
             return latitude;
@@ -313,7 +330,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private class AddVehicleLocationRequest {
-        double latitude,longitude;
+        double latitude, longitude;
         String vehiclePath;
 
         public double getLatitude() {
@@ -342,7 +359,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private class SearchVehiclesRequest {
-        double latitude,longitude, radius;
+        double latitude, longitude, radius;
         int minutes;
 
         public double getLatitude() {
