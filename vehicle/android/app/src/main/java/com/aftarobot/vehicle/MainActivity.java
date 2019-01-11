@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -69,6 +70,9 @@ public class MainActivity extends FlutterActivity {
                         messageEvents = events;
                         LogFileWriter.print(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### trying ... MessagesClient publish and subscribe ");
 
+                        Log.d(TAG, "onListen: " + arguments.toString());
+                        vehicle = G.fromJson(arguments.toString(), VehicleDTO.class);
+                        LogFileWriter.print(TAG, G.toJson(vehicle));
                         if (vehicle == null) {
                             mMessage = new Message(("AftaRobot Taxi - "
                                     + new Date().getTime()).getBytes());
@@ -145,9 +149,9 @@ public class MainActivity extends FlutterActivity {
                 });
     }
 
-    void startMap() {
-        Intent m = new Intent(this, ARMapsActivity.class);
-        startActivity(m);
+    void getVehicle() {
+
+
     }
 
     void findVehicleLocations(SearchVehiclesRequest request) {
@@ -271,7 +275,7 @@ public class MainActivity extends FlutterActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String message = intent.getStringExtra("message");
-            LogFileWriter.print(TAG, "CommuterBroadcastReceiver \uD83D\uDCCD onReceive: sending message to Flutter");
+            LogFileWriter.print(TAG, "\uD83D\uDD34 CommuterBroadcastReceiver \uD83D\uDCCD onReceive: sending message to Flutter");
             messageEvents.success(message);
         }
     }

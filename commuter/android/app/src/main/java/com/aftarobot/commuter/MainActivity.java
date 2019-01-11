@@ -57,21 +57,24 @@ public class MainActivity extends FlutterActivity {
 
                     @Override
                     public void onListen(Object arguments, EventChannel.EventSink events) {
-                        LogFileWriter.print(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD EventChannel ready to go ... waiting to publish and subscribe. - "
+                        LogFileWriter.print(TAG, "\n\n### onListen ++++ \uD83D\uDCCD \uD83D\uDCCD TAXI_MESSAGE_CHANNEL ready to go ... waiting to publish and subscribe. - "
                                 + new Date().toString());
                         messageEvents = events;
                         LogFileWriter.print(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### trying ... MessagesClient publish and subscribe ");
-
-                        String s = "AftaRobot Commuter :: FG " + new Date().getTime();
+                        Log.d(TAG, "onListen: ".concat(arguments.toString()));
+                        String s = "AftaRobot Commuter :: " + new Date().getTime();
+                        if (arguments.toString() != null) {
+                            s = arguments.toString();
+                        }
                         mMessage = new Message(s.getBytes());
 
-                        startMessageListener();
+                        startMessageListener(arguments.toString());
                         fgMessagesClient = Nearby.getMessagesClient(MainActivity.this);
                         fgPublishClient = Nearby.getMessagesClient(MainActivity.this);
 
                         fgPublishClient.publish(mMessage);
                         fgMessagesClient.subscribe(mMessageListener);
-                        LogFileWriter.print(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### MessagesClient published and subscribed!!! ");
+                        LogFileWriter.print(TAG, "onCreate: \uD83D\uDD35 \uD83D\uDD35 ### TAXI_MESSAGE_CHANNEL MessagesClient published and subscribed!!! ");
                     }
 
                     @Override
@@ -161,7 +164,7 @@ public class MainActivity extends FlutterActivity {
         });
     }
 
-    void startMessageListener() {
+    void startMessageListener(String uid) {
         LogFileWriter.print(TAG, "startMessageListener: +++ \uD83D\uDCCD \uD83D\uDCCD  set up Message Listener");
         mMessageListener = new MessageListener() {
             @Override
@@ -180,14 +183,14 @@ public class MainActivity extends FlutterActivity {
                 TaxiMessageReceiver.MESSAGE_RECEIVED_INTENT);
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(new TaxiBroadcastReceiver(), filter);
-        backgroundSubscribe();
+        backgroundSubscribe(uid);
         LogFileWriter.print(TAG, "startMessageListener: \uD83D\uDD35 MessageListener started. Fingers crossed :)");
     }
 
     // Subscribe to messages in the background.
     MessagesClient bgMessagesClient, fgMessagesClient, fgPublishClient, bgPublishClient;
 
-    private void backgroundSubscribe() {
+    private void backgroundSubscribe(String uid) {
         LogFileWriter.print(TAG, "\uD83D\uDCCD \uD83D\uDCCD Subscribing for background TAXI messages....");
         SubscribeOptions options = new SubscribeOptions.Builder()
                 .setStrategy(Strategy.BLE_ONLY)
@@ -197,7 +200,12 @@ public class MainActivity extends FlutterActivity {
 
         bgPublishClient = Nearby.getMessagesClient(this);
         String s = "AftaRobot Commuter :: BG "  + new Date().getTime();
-        mMessage = new Message(s.getBytes());
+        if (uid == null) {
+            uid = s;
+        } else {
+            uid += "@" + new Date().toString();
+        }
+        mMessage = new Message(uid.getBytes());
         bgPublishClient.publish(mMessage);
 
     }

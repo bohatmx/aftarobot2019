@@ -19,7 +19,7 @@ public class TaxiMessageReceiver extends BroadcastReceiver {
         Nearby.getMessagesClient(context).handleIntent(intent, new MessageListener() {
             @Override
             public void onFound(Message message) {
-                Log.d(TAG, " ✅ Found message, in background: " + new String(message.getContent()));
+                Log.d(TAG, "\n\n✅ Found message, in background: " + new String(message.getContent()));
                 LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(context);
                 Intent m = new Intent(MESSAGE_RECEIVED_INTENT);
                 m.putExtra("message", new String(message.getContent()));
@@ -28,7 +28,7 @@ public class TaxiMessageReceiver extends BroadcastReceiver {
 
             @Override
             public void onLost(Message message) {
-                Log.i(TAG, "Lost message via PendingIntent: " + message);
+                Log.i(TAG, "\uD83C\uDFBE Lost message via PendingIntent: " + message);
             }
         });
     }

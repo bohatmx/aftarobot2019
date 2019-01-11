@@ -27,7 +27,7 @@ final VehicleAppBloc vehicleAppBloc = VehicleAppBloc();
 
 class VehicleAppBloc {
   VehicleAppBloc() {
-    printLog('+++ ℹ️ +++  ++++++++++++++++++ initializing Vehicle App Bloc');
+    printLog('\n\n🔴 🔴 +++ ℹ️  initializing Vehicle App Bloc 🔴 🔴');
     _setBackgroundLocation();
     _initialize();
   }
@@ -122,7 +122,9 @@ class VehicleAppBloc {
     } else {
       printLog(
           '\n###   ℹ️ ℹ️ ℹ️ App has vehicle ${_appVehicle.vehicleReg} set up. Cool! Ready to Rumble !!  🔵 \n\n');
+
       await signInAnonymously();
+      listenForCommuterMessages();
       getCurrentLocation();
     }
   }
@@ -402,7 +404,6 @@ class VehicleAppBloc {
     return list;
   }
 
-  void _calculateDistancesBetweenLandmarks() {}
   Future getCurrentLocation() async {
     printLog(
         '###  🎾 getCurrentLocation -- ............ and then search for landmarks ..............');
@@ -616,10 +617,13 @@ class VehicleAppBloc {
   }
 
   void listenForCommuterMessages() {
-    printLog('+++  🔵 starting commuter message channel .......');
+    printLog(
+        '🔵 🔴 listenForCommuterMessages :: starting commuter message channel .......');
+
     try {
-      _messagesSubscription =
-          messageStream.receiveBroadcastStream().listen((message) {
+      _messagesSubscription = messageStream
+          .receiveBroadcastStream(json.encode(_appVehicle.toJson()))
+          .listen((message) {
         printLog('### - 🔵 - message received :: ${message.toString()}');
         printLog('### - 📍 - place arriving message on the stream');
         //todo check if this is from a commuter

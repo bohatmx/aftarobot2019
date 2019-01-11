@@ -98,6 +98,7 @@ class CommuterBloc {
 
     await getCurrentLocation();
     _setGeofencing();
+    listenForTaxiMessages();
     return user;
   }
 
@@ -417,12 +418,14 @@ class CommuterBloc {
 //        ' 🔵 ## LANDMARK GEOFENCE  ::: ✅  #${landmark.rankSequenceNumber}  ${landmark.landmarkName} is being set up ...');
   }
 
-  void listenForTaxiMessages() {
+  void listenForTaxiMessages() async {
     printLog('+++  🔵 starting commuter message channel .......');
     try {
+      var user = await auth.currentUser();
+
       _messagesSubscription =
-          messageStream.receiveBroadcastStream().listen((message) {
-        printLog('### - 🔵 - message received :: ${message.toString()}');
+          messageStream.receiveBroadcastStream(user.uid).listen((message) {
+        printLog('### - 🔴 - message received :: ${message.toString()}');
         printLog('### - 📍 - place arriving message on the stream');
         //todo check if this is from a taxi
         _nearbyMessagesController.sink.add(message.toString());
