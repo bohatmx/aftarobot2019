@@ -54,7 +54,7 @@ class VehicleAppBloc {
       StreamController.broadcast();
   StreamController<List<VehicleDTO>> _vehicleController =
       StreamController.broadcast();
-  StreamController<List<ARGeofenceEvent>> _arGeofenceController =
+  StreamController<List<VehicleGeofenceEvent>> _arGeofenceController =
       StreamController.broadcast();
   StreamController<List<VehicleLocation>> _vehicleLocationController =
       StreamController.broadcast();
@@ -76,8 +76,8 @@ class VehicleAppBloc {
   VehicleDTO _appVehicle;
   VehicleDTO get appVehicle => _appVehicle;
 
-  List<ARGeofenceEvent> _geofenceEvents = List();
-  List<ARGeofenceEvent> get geofenceEvents => _geofenceEvents;
+  List<VehicleGeofenceEvent> _geofenceEvents = List();
+  List<VehicleGeofenceEvent> get geofenceEvents => _geofenceEvents;
 
   List<VehicleLocation> _vehicleLocations = List();
   List<VehicleLocation> get vehicleLocations => _vehicleLocations;
@@ -204,7 +204,7 @@ class VehicleAppBloc {
         name = m.landmarkName;
       }
     });
-    var m = ARGeofenceEvent(
+    var m = VehicleGeofenceEvent(
       vehicleID: _appVehicle.vehicleID,
       vehicleReg: _appVehicle.vehicleReg,
       make: _appVehicle.vehicleType.make + " " + _appVehicle.vehicleType.model,
@@ -225,11 +225,14 @@ class VehicleAppBloc {
         landmark = m;
       }
     });
-    //write geofence event to landmark
+    //write geofence event to landmark node
     await fs
         .document(landmark.path)
         .collection('geofenceEvents')
         .add(m.toJson());
+
+    //write to top node
+    await fs.collection('geofenceEvents').add(m.toJson());
     printLog(
         '+++ 🔵 +++ geofence event recorded for landmark: $name id: ${event.identifier} vehicle: ${_appVehicle.vehicleReg} action: ${m.action} at ${m.timestamp}');
     _geofenceEvents.add(m);

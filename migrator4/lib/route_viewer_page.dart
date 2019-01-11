@@ -146,7 +146,7 @@ class _RouteViewerPageState extends State<RouteViewerPage>
         controller: scrollController,
         itemBuilder: (BuildContext context, int index) {
           return Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16, top: 16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16, top: 2.0),
             child: RouteCard(
               route: routes.elementAt(index),
               number: index + 1,
@@ -284,21 +284,13 @@ class _RouteCardState extends State<RouteCard> {
     super.initState();
   }
 
-  void _expansionCallBack(int panelIndex, bool isExpanded) {
-    print(
-        ".................. _expansionCallBack panelIndex: $panelIndex isExpanded: $isExpanded");
-    setState(() {
-      this.isExpanded = !isExpanded;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4.0,
       color: getRandomPastelColor(),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: <Widget>[
             InkWell(

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.aftarobot.commuter;
+package com.aftarobot.commuter.util;
 
 import java.io.Serializable;
 
@@ -15,9 +15,17 @@ public class VehicleDTO implements Serializable, Comparable<VehicleDTO> {
     private String vehicleID, ownerID,
             associationID, countryID, ownerName, associationName;
     private VehicleTypeDTO vehicleType;
-    private String year, stringDate,
+    private String year, stringDate,path,
             vehicleReg;
     private Boolean selected;
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
 
     public String getAssociationName() {
         return associationName;

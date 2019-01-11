@@ -81,6 +81,10 @@ class _RouteViewerPageState extends State<RouteViewerPage>
         (a.associationName + a.name).compareTo((b.associationName + b.name)));
   }
 
+  void _addNewRoute() {
+    printLog('add new route ....');
+  }
+
   void _refresh() async {
     print('_RouteViewerPageState._refresh .................');
     AppSnackbar.showSnackbarWithProgressIndicator(
@@ -142,6 +146,14 @@ class _RouteViewerPageState extends State<RouteViewerPage>
             title: Text('AftaRobot Routes'),
             backgroundColor: Colors.indigo.shade300,
             actions: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0, top: 8.0),
+                child: IconButton(
+                  onPressed: _addNewRoute,
+                  iconSize: 18,
+                  icon: Icon(Icons.add_box),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0, top: 8.0),
                 child: IconButton(

@@ -22,7 +22,7 @@ class RouteBuilderModel {
   List<LandmarkDTO> _landmarks = List();
   List<ARLocation> _arLocations = List();
   List<ARLocation> _routePoints = List();
-  List<ARGeofenceEvent> _geofenceEvents = List();
+  List<VehicleGeofenceEvent> _geofenceEvents = List();
   List<AssociationDTO> _associations = List();
   List<AssociationBag> _associationBags = List();
   ARLocation _currentLocation;
@@ -33,7 +33,7 @@ class RouteBuilderModel {
   List<ARLocation> get routePoints => _routePoints;
   List<AssociationDTO> get associations => _associations;
   List<AssociationBag> get associationBags => _associationBags;
-  List<ARGeofenceEvent> get geofenceEvents => _geofenceEvents;
+  List<VehicleGeofenceEvent> get geofenceEvents => _geofenceEvents;
   ARLocation get currentLocation => _currentLocation;
 
   void receiveRoutePoints(List<ARLocation> routePoints) {
@@ -51,6 +51,11 @@ class RouteBuilderBloc {
       StreamController<String>.broadcast();
   final StreamController<bg.Location> _currentLocationController =
       StreamController<bg.Location>.broadcast();
+  final StreamController<bg.GeofenceEvent> _geofenceEventController =
+      StreamController<bg.GeofenceEvent>.broadcast();
+
+  List<GeofenceEvent> _geofenceEvents = List();
+
   final RouteBuilderModel _appModel = RouteBuilderModel();
   final Firestore fs = Firestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -61,16 +66,18 @@ class RouteBuilderBloc {
     _appModelController.close();
     _errorController.close();
     _currentLocationController.close();
+    _geofenceEventController.close();
   }
 
   get appModelStream => _appModelController.stream;
   get currentLocationStream => _currentLocationController.stream;
+  get geofenceEventStream => _geofenceEventController.stream;
 
   RouteBuilderBloc() {
     printLog('\n\n\n 🔵  🔵  🔵  🔵  🔵 RouteBuilderBloc initializing ...');
     _initialize();
   }
-
+  static const GEOFENCE_PROXIMITY_RADIUS = 5000, DISTANCE_FILTER = 10.0;
   _initialize() async {
     await _signIn();
     _setBackgroundLocation();
@@ -142,11 +149,11 @@ class RouteBuilderBloc {
     // 2.  Configure the plugin
     bg.BackgroundGeolocation.ready(bg.Config(
             desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-            distanceFilter: 10.0,
+            distanceFilter: DISTANCE_FILTER,
             stopOnTerminate: false,
             startOnBoot: true,
             debug: true,
-            geofenceProximityRadius: 5000,
+            geofenceProximityRadius: GEOFENCE_PROXIMITY_RADIUS,
             schedule: [
               '1-7 4:00-22:00', // Sun-Sat: 4:00am to 10:00pm
             ],
@@ -181,6 +188,8 @@ class RouteBuilderBloc {
 
   _onGeofenceEvent(GeofenceEvent event) async {
     printLog('\n\n+++  🎾 process geofence event');
+    _geofenceEvents.add(event);
+    _geofenceEventController.sink.add(event);
   }
 
   _onMotionChanged(bg.Location location) {
@@ -201,11 +210,10 @@ class RouteBuilderBloc {
   _onLocation(bg.Location location) {
     if (location.isMoving) {
       printLog(
-          '\n\n\n✅ ✅ ✅ ✅  -- onLocation:  VEHICLE IS MOVING? ${location.isMoving}  ✅ ✅ ✅ ✅\n\n');
+          '\n\n\n✅ ✅   -- onLocation:  VEHICLE IS MOVING? ${location.isMoving}   ✅ ✅\n\n');
     } else {
       printLog('\n\n🎾  -- onLocation:  vehicle is stationary?\n');
     }
-
     _currentLocation = location;
     _currentLocationController.sink.add(location);
   }
@@ -345,7 +353,7 @@ class RouteBuilderBloc {
     }
   }
 
-  addGeofenceEvent(ARGeofenceEvent event) async {
+  addGeofenceEvent(VehicleGeofenceEvent event) async {
     printLog('#### ℹ️ ℹ️  adding geofence event');
     try {
       var ref = await fs

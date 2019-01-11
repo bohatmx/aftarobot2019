@@ -89,7 +89,7 @@ class DataAPI {
     return ref;
   }
 
-  static Future addGeofenceEvent(ARGeofenceEvent event) async {
+  static Future addGeofenceEvent(VehicleGeofenceEvent event) async {
     var ref = await fs
         .collection('geofenceEvents')
         .document(event.landmarkID)

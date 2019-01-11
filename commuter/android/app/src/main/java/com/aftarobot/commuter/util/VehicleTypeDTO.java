@@ -1,4 +1,4 @@
-package com.aftarobot.commuter;
+package com.aftarobot.commuter.util;
 
 import android.support.annotation.NonNull;
 
@@ -10,12 +10,12 @@ import java.io.Serializable;
  * Created by aubreymalabie on 9/10/16.
  */
 
-public class VehicleTypeDTO implements Serializable, Comparable<VehicleTypeDTO>{
+public class VehicleTypeDTO implements Serializable, Comparable<VehicleTypeDTO> {
 
     public VehicleTypeDTO() {
     }
 
-    public VehicleTypeDTO( String make, String model, int capacity) {
+    public VehicleTypeDTO(String make, String model, int capacity) {
         this.capacity = capacity;
         this.make = make;
         this.model = model;

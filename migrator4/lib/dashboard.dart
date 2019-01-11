@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:migrator4/aftarobot_migrator_page.dart';
-import 'package:migrator4/background_loc.dart';
 import 'package:migrator4/city_migrate.dart';
 import 'package:migrator4/generator.dart';
 import 'package:migrator4/main.dart';
@@ -197,13 +196,6 @@ class _DashboardState extends State<Dashboard>
     setState(() {});
   }
 
-  void _startBackgroundTest() {
-    Navigator.push(
-      context,
-      new MaterialPageRoute(builder: (context) => HelloWorldApp()),
-    );
-  }
-
   void _startGenerationPage() {
     Navigator.push(
       context,
@@ -297,12 +289,6 @@ class _DashboardState extends State<Dashboard>
         leading: IconButton(icon: Icon(Icons.apps), onPressed: _doSomething),
         bottom: _getBottom(),
         backgroundColor: Colors.purple.shade300,
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.beach_access),
-            onPressed: _startBackgroundTest,
-          ),
-        ],
       ),
       backgroundColor: Colors.purple.shade100,
       body: Stack(
