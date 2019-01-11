@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:aftarobotlibrary3/data/geofence_event.dart';
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
 import 'package:aftarobotlibrary3/data/vehicle_location.dart';
+import 'package:aftarobotlibrary3/util/distance.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -337,19 +338,26 @@ class CommuterBloc {
       List<dynamic> list = json.decode(result);
       printLog('. ✅ ... number of searched geoPoints returned: ${list.length}');
 
+      List<String> ids = List();
       list.forEach((t) {
         if (t is Map) {
           t.forEach((key, value) {
-            _getLocatedLandmark(key);
+            ids.add(key);
           });
         }
       });
-      printLog("\n");
+
+      for (var id in ids) {
+        await _getLocatedLandmark(id);
+      }
       bg.BackgroundGeolocation.startGeofences();
       isSearchingForLandmarks = false;
+      print(
+          '########################## _landmarks :: ${_landmarks.length} - should be sorted');
+
       return _landmarks;
     } on PlatformException catch (e) {
-      printLog('\nVehicleBloc: Why is the result coming back twice??????????? '
+      printLog('\nWhy is the result coming back twice??????????? '
           '- will check for already located landmarks: ${_landmarks.length}');
       isSearchingForLandmarks = false;
       printLog(e.toString());
@@ -357,17 +365,32 @@ class CommuterBloc {
     }
   }
 
+  Future<List<LandmarkDTO>> getRouteLandmarks({String routeID}) async {
+    List<LandmarkDTO> list = List();
+    var qs = await fs
+        .collection('landmarks')
+        .where('routeID', isEqualTo: routeID)
+        .getDocuments();
+    qs.documents.forEach((doc) {
+      var mark = LandmarkDTO.fromJson(doc.data);
+      list.add(mark);
+    });
+
+    return list;
+  }
+
   Future _getLocatedLandmark(String id) async {
     DocumentSnapshot ds = await fs.collection('landmarks').document(id).get();
     if (ds.exists) {
       var lm = LandmarkDTO.fromJson(ds.data);
       _landmarks.add(lm);
+      await calculateAndSortByDistance(
+          landmarks: _landmarks,
+          latitude: _currentLocation.coords.latitude,
+          longitude: _currentLocation.coords.longitude);
+      _landmarkStreamController.sink.add(_landmarks);
       _addLandmarkGeoFence(lm);
     }
-
-    _landmarks.sort(
-        (ascii, b) => ascii.rankSequenceNumber.compareTo(b.rankSequenceNumber));
-    _landmarkStreamController.sink.add(_landmarks);
   }
 
   void _addLandmarkGeoFence(LandmarkDTO landmark) async {

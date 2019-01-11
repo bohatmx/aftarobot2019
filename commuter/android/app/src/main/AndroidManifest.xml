@@ -28,7 +28,11 @@
         android:label="commuter">
         <meta-data
             android:name="com.google.android.nearby.messages.API_KEY"
-            android:value="AIzaSyC9Qq0qss2GGOO_-VNOWLB5DUjSGqBWe7s" />
+            android:value="AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A" />
+        <meta-data
+                android:name="com.google.android.geo.API_KEY"
+                android:value="AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A" />
+
 
         <activity
             android:name=".MainActivity"

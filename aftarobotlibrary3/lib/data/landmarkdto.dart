@@ -16,6 +16,7 @@ class LandmarkDTO with LandmarkDistance {
   int rankSequenceNumber;
   double latitude;
   double longitude;
+  double distance;
   String landmarkName;
   String status;
   String cityName;
@@ -42,6 +43,7 @@ class LandmarkDTO with LandmarkDistance {
     this.date,
     this.routePath,
     this.thisIsMainRank,
+    this.distance,
   });
 
   LandmarkDTO.fromJson(Map data) {
@@ -49,6 +51,7 @@ class LandmarkDTO with LandmarkDistance {
     this.cityID = data['cityID'];
     this.associationID = data['associationID'];
     this.routeID = data['routeID'];
+    this.distance = data['distance'];
     this.countryID = data['countryID'];
     this.routeName = data['routeName'];
     this.associationName = data['associationName'];
@@ -104,6 +107,7 @@ class LandmarkDTO with LandmarkDistance {
       'rankSequenceNumber': rankSequenceNumber,
       'latitude': latitude,
       'longitude': longitude,
+      'distance': distance,
       'landmarkName': landmarkName,
       'status': status,
       'cityName': cityName,

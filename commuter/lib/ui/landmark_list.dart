@@ -1,6 +1,8 @@
 import 'package:aftarobotlibrary3/data/landmarkdto.dart';
 import 'package:aftarobotlibrary3/util/functions.dart';
 import 'package:commuter/bloc/commuter_bloc.dart';
+import 'package:commuter/ui/commuter_request_page.dart';
+import 'package:commuter/ui/landmark_map.dart';
 import 'package:flutter/material.dart';
 
 class LandmarkList extends StatefulWidget {
@@ -21,6 +23,18 @@ class LandmarkListState extends State<LandmarkList> {
 
   void _refresh() {
     _bloc.getCurrentLocation();
+  }
+
+  void _startRequestFromNearestLandmark() {
+    printLog('_startRequestFromNearestLandmark');
+    if (_landmarks.isEmpty) return;
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CommuterRequestPage(
+                  landmark: _landmarks.elementAt(0),
+                )));
   }
 
   Widget _buildSummaries() {
@@ -98,33 +112,75 @@ class LandmarkListState extends State<LandmarkList> {
                 itemCount: _landmarks.length,
                 itemBuilder: (context, index) {
                   return new LandmarkCard(
-                      landmark: _landmarks.elementAt(index));
+                    landmark: _landmarks.elementAt(index),
+                    bloc: _bloc,
+                  );
                 }),
+            bottomNavigationBar: BottomNavigationBar(
+                onTap: (index) {
+                  switch (index) {
+                    case 0:
+                      _startRequestFromNearestLandmark();
+                      break;
+                  }
+                },
+                items: _barItems),
           );
         });
   }
+
+  List<BottomNavigationBarItem> _barItems = [
+    BottomNavigationBarItem(
+      title: Text('Request Taxi'),
+      icon: Icon(Icons.airport_shuttle),
+    ),
+    BottomNavigationBarItem(
+      title: Text('Ride Vouchers'),
+      icon: Icon(Icons.cake),
+    ),
+    BottomNavigationBarItem(
+      title: Text('Panic'),
+      icon: Icon(
+        Icons.dialpad,
+        color: Colors.pink,
+      ),
+    ),
+  ];
 }
 
-class LandmarkCard extends StatelessWidget {
+class LandmarkCard extends StatefulWidget {
   final LandmarkDTO landmark;
+  final CommuterBloc bloc;
+  LandmarkCard({@required this.landmark, @required this.bloc});
 
-  LandmarkCard({this.landmark});
+  @override
+  LandmarkCardState createState() {
+    return new LandmarkCardState();
+  }
+}
 
+class LandmarkCardState extends State<LandmarkCard> {
   _startTaxiRequest() {}
+
   _searchForTaxis() {}
+
   final List<PopupMenuItem<String>> menuItems = List();
+
   _buildMenuItems() {
     menuItems.clear();
     menuItems.add(PopupMenuItem<String>(
       value: '',
       child: GestureDetector(
         onTap: _startTaxiRequest,
-        child: ListTile(
-          leading: Icon(
-            Icons.edit,
-            color: getRandomColor(),
+        child: Card(
+          elevation: 2,
+          child: ListTile(
+            leading: Icon(
+              Icons.edit,
+              color: getRandomColor(),
+            ),
+            title: Text('Request Taxi', style: Styles.blackSmall),
           ),
-          title: Text('Request Taxi', style: Styles.blackSmall),
         ),
       ),
     ));
@@ -132,36 +188,48 @@ class LandmarkCard extends StatelessWidget {
       value: '',
       child: GestureDetector(
         onTap: _searchForTaxis,
+        child: Card(
+          elevation: 2,
+          child: ListTile(
+            leading: Icon(
+              Icons.airport_shuttle,
+              color: getRandomColor(),
+            ),
+            title: Text(
+              'Taxis',
+              style: Styles.blackSmall,
+            ),
+          ),
+        ),
+      ),
+    ));
+    menuItems.add(PopupMenuItem<String>(
+      value: '',
+      child: Card(
+        elevation: 2,
         child: ListTile(
           leading: Icon(
-            Icons.airport_shuttle,
+            Icons.people,
             color: getRandomColor(),
           ),
-          title: Text(
-            'Taxis at Landmark',
-            style: Styles.blackSmall,
+          title: Text('Commuters', style: Styles.blackSmall),
+        ),
+      ),
+    ));
+    menuItems.add(PopupMenuItem<String>(
+      value: '',
+      child: GestureDetector(
+        onTap: _startLandmarkMap,
+        child: Card(
+          elevation: 2,
+          child: ListTile(
+            leading: Icon(
+              Icons.map,
+              color: getRandomColor(),
+            ),
+            title: Text('Route Map', style: Styles.blackSmall),
           ),
         ),
-      ),
-    ));
-    menuItems.add(PopupMenuItem<String>(
-      value: '',
-      child: ListTile(
-        leading: Icon(
-          Icons.people,
-          color: getRandomColor(),
-        ),
-        title: Text('Commuters at Landmark', style: Styles.blackSmall),
-      ),
-    ));
-    menuItems.add(PopupMenuItem<String>(
-      value: '',
-      child: ListTile(
-        leading: Icon(
-          Icons.map,
-          color: getRandomColor(),
-        ),
-        title: Text('Route Map', style: Styles.blackSmall),
       ),
     ));
   }
@@ -199,7 +267,7 @@ class LandmarkCard extends StatelessWidget {
                   width: 12,
                 ),
                 Text(
-                  '${landmark.landmarkName}',
+                  '${widget.landmark.landmarkName}',
                   style: Styles.blackBoldMedium,
                 ),
               ],
@@ -210,8 +278,29 @@ class LandmarkCard extends StatelessWidget {
                   width: 48,
                 ),
                 Text(
-                  '${landmark.routeName}',
+                  '${widget.landmark.routeName}',
                   style: Styles.blackSmall,
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 8,
+            ),
+            Row(
+              children: <Widget>[
+                SizedBox(
+                  width: 48,
+                ),
+                Text(
+                  'Distance away: ',
+                  style: Styles.blackSmall,
+                ),
+                SizedBox(
+                  width: 20,
+                ),
+                Text(
+                  '${_getFormattedDistance(widget.landmark.distance)}',
+                  style: Styles.blackBoldSmall,
                 ),
               ],
             ),
@@ -222,6 +311,27 @@ class LandmarkCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getFormattedDistance(double distance) {
+    if (distance < 20) {
+      return 'Arrived';
+    }
+    if (distance < 1000) {
+      return distance.toStringAsFixed(0) + ' metres';
+    }
+    var km = distance / 1000;
+    return km.toStringAsFixed(1) + ' km';
+  }
+
+  void _startLandmarkMap() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LandmarkMap(
+                  commuterBloc: widget.bloc,
+                  landmark: widget.landmark,
+                )));
   }
 }
 

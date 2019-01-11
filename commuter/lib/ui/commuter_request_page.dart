@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class CommuterRequestPage extends StatefulWidget {
   final LandmarkDTO landmark;
 
-  CommuterRequestPage({this.landmark});
+  CommuterRequestPage({@required this.landmark});
 
   @override
   _CommuterRequestPageState createState() => _CommuterRequestPageState();
