@@ -26,7 +26,7 @@ class LandmarkListState extends State<LandmarkList> {
   }
 
   void _startRequestFromNearestLandmark() {
-    printLog('_startRequestFromNearestLandmark');
+    printLog('🔴 _startRequestFromNearestLandmark');
     if (_landmarks.isEmpty) return;
 
     Navigator.push(
@@ -81,11 +81,11 @@ class LandmarkListState extends State<LandmarkList> {
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.active:
-              printLog('🔵 ConnectionState.active set data from stream data');
+              printLog('🔴 ConnectionState.active set data from stream data\n');
               _landmarks = snapshot.data;
               break;
             case ConnectionState.waiting:
-              printLog(' 🎾 onnectionState.waiting .......');
+              printLog(' 🎾 ConnectionState.waiting .......');
               break;
             case ConnectionState.done:
               printLog(' 🎾 ConnectionState.done ???');

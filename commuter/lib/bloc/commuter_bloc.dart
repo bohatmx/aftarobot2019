@@ -74,7 +74,8 @@ class CommuterBloc {
   get vehicleGeofenceStream => _vehicleGeofenceStreamController.stream;
 
   CommuterBloc() {
-    printLog('\n\n🔵 🔵 🔵 🔵 .............. initializing CommuterBloc !!\n\n');
+    printLog(
+        '\n\n🔵 🔵 🔵 🔵 .............. initializing CommuterBloc !! 🔴 🔴 🔴 🔴 \n\n');
     _initialize();
   }
 
@@ -83,7 +84,7 @@ class CommuterBloc {
     if (user == null) {
       await auth.signInAnonymously();
     }
-    printLog('🔵  user signed in ...  checking location permission');
+    printLog('🔵  user signed in ...  checking location permission 🔴 ');
     var ok = await _checkPermission();
     if (!ok) {
       ok = await _requestPermission();
@@ -165,7 +166,7 @@ class CommuterBloc {
   }
 
   _onMotionChanged(bg.Location location) {
-    printLog('&&&&&&&&&&&&&  ℹ️ onMotionChanged: location ${location.toMap()}');
+    printLog('🔴 ℹ️ onMotionChanged: location ${location.toMap()}');
     _currentLocation = location;
   }
 
@@ -175,7 +176,7 @@ class CommuterBloc {
   }
 
   _onActivityChanged(bg.ActivityChangeEvent event) {
-    printLog('#############  ℹ️ _onActivityChanged: ${event.toMap()}');
+    printLog('🔴 ℹ️ _onActivityChanged: ${event.toMap()}');
     if (event.activity == 'moving' && event.confidence > .8) {
       //todo - check for vehicle app via nearby messaging ... write commuterInVehicle
     }
@@ -333,7 +334,7 @@ class CommuterBloc {
       };
       var result = await geoQueryChannel.invokeMethod(
           'findLandmarks', json.encode(args));
-      printLog('\n\nCommuterBloc: Result back from geoQuery ....  ✅ ');
+      printLog('\n\n🔴 CommuterBloc: Result back from geoQuery ....  ✅ ');
 
       List<dynamic> list = json.decode(result);
       printLog('. ✅ ... number of searched geoPoints returned: ${list.length}');

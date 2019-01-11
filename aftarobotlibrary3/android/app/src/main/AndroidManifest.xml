@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.aftarobot.aftarobotlibrary3">
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.aftarobot.aftarobotlibrary3">
 
     <!-- The INTERNET permission is required for development. Specifically,
          flutter needs it to communicate with the running application
@@ -15,7 +16,16 @@
     <application
         android:name="io.flutter.app.FlutterApplication"
         android:label="aftarobotlibrary3"
+        tools:replace="android:label"
         android:icon="@mipmap/ic_launcher">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A" />
+        <meta-data
+                android:name="com.google.android.nearby.messages.API_KEY"
+                android:value="AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A" />
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

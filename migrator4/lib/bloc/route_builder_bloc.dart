@@ -19,7 +19,7 @@ class RouteBuilderModel {
   List<LandmarkDTO> _landmarks = List();
   List<ARLocation> _arLocations = List();
   List<ARLocation> _routePoints = List();
-  List<ARGeofenceEvent> _geofenceEvents = List();
+  List<VehicleGeofenceEvent> _geofenceEvents = List();
   List<AssociationDTO> _associations = List();
   List<AssociationBag> _associationBags = List();
   ARLocation _currentLocation;
@@ -30,7 +30,7 @@ class RouteBuilderModel {
   List<ARLocation> get routePoints => _routePoints;
   List<AssociationDTO> get associations => _associations;
   List<AssociationBag> get associationBags => _associationBags;
-  List<ARGeofenceEvent> get geofenceEvents => _geofenceEvents;
+  List<VehicleGeofenceEvent> get geofenceEvents => _geofenceEvents;
   ARLocation get currentLocation => _currentLocation;
 
   void receiveRoutePoints(List<ARLocation> routePoints) {
@@ -186,7 +186,7 @@ class RouteBuilderBloc {
     }
   }
 
-  addGeofenceEvent(ARGeofenceEvent event) async {
+  addGeofenceEvent(VehicleGeofenceEvent event) async {
     print('#### ℹ️ ℹ️  processing route point. adding utc date');
     //event.timestamp = DateTime.now().toUtc().toIso8601String();
     try {

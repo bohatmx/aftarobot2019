@@ -27,10 +27,10 @@
     android:icon="@mipmap/ic_launcher">
         <meta-data
                 android:name="com.google.android.geo.API_KEY"
-                android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
+                android:value="AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A" />
         <meta-data
                 android:name="com.google.android.nearby.messages.API_KEY"
-                android:value="AIzaSyBj5ONubUcdtweuIdQPFszc2Z_kZdhd5g8" />
+                android:value="AIzaSyAZyHg_Z_CGZ-mCgTRuQpouY6jVwM3Mf-A" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
